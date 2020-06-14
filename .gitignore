@@ -1,0 +1,15 @@
+# Ignore everything
+/*
+
+# Git
+!/.gitignore
+!/readme.md
+
+# Go
+!/go.mod
+!/go.sum
+!/*.go
+!/discord
+!/github
+!/commands
+!/utils
