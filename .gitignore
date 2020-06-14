@@ -4,6 +4,7 @@
 # Git
 !/.gitignore
 !/readme.md
+!/license.md
 
 # Go
 !/go.mod
