@@ -10,6 +10,8 @@
 !/go.mod
 !/go.sum
 !/*.go
+!/build.sh
+
 !/discord
 !/github
 !/commands

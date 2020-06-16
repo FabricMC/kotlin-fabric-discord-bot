@@ -32,7 +32,7 @@ func (ctx *CommandContext) SendMessage(msg string) error {
 }
 
 func (ctx *CommandContext) SendAuditMessage(action string) error {
-	_, err := ctx.session.ChannelMessageSend(systemChannelID, fmt.Sprintf("%s peformed the follwing action: %s", ctx.message.Author.Username, action))
+	_, err := ctx.session.ChannelMessageSend(systemChannelID, fmt.Sprintf("%s performed the following action: %s", ctx.message.Author.Username, action))
 	return err
 }
 
