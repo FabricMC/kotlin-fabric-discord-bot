@@ -8,12 +8,12 @@ import (
 )
 
 var (
-	commandMap = map[string]func(ctx *CommandContext) error{}
+	commandMap = map[string]*Command{}
 )
 
 func onMessage(s *discordgo.Session, m *discordgo.MessageCreate) {
 	// Dont handle our own messages
-	if m.Author.ID == botId {
+	if m.Author.ID == s.State.User.ID {
 		return
 	}
 
@@ -28,28 +28,39 @@ func onMessage(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if strings.HasPrefix(messageSplit[0], "!") {
 		command, exists := commandMap[messageSplit[0]]
 		if exists {
-			handler := CommandContext{messageSplit[1:], s, m}
-			err := command(&handler)
-			if err != nil {
-				log.Println("an error occurred when processing command", err)
+			ctx := CommandContext{messageSplit[1:], s, m}
+			permission, err := ctx.HasPermission(command.requiredPermission)
 
-				err = handler.SendMessage("An error occurred when processing command, see bot log for more details")
+			if err == nil && permission {
+				err = command.commandHandler(&ctx)
 				if err != nil {
-					// What can we do now ;)
+					log.Println("an error occurred when processing command "+messageSplit[0], err)
+
+					err = ctx.SendMessage("An error occurred when processing command, see bot log for more details")
+					if err != nil {
+						// What can we do now ;)
+					}
 				}
+			} else {
+				// No permission, going to do nothing for now
 			}
 		}
 	}
 }
 
-func RegisterCommandHandler(command string, commandHandler func(ctx *CommandContext) error) error {
+type Command struct {
+	commandHandler     func(ctx *CommandContext) error
+	requiredPermission int
+}
+
+func RegisterCommandHandler(command string, permissions int, commandHandler func(ctx *CommandContext) error) error {
 	_, exists := commandMap[command]
 
 	if exists {
 		return errors.New("duplicate command")
 	}
 
-	commandMap[command] = commandHandler
+	commandMap[command] = &Command{commandHandler, permissions}
 
 	return nil
 }

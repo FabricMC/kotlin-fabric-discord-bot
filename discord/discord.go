@@ -7,7 +7,6 @@ import (
 
 var (
 	client          *discordgo.Session
-	botId           string
 	systemChannelID string
 )
 
@@ -28,12 +27,6 @@ func Connect() error {
 		return err
 	}
 	client = dg
-
-	u, err := dg.User("@me")
-	if err != nil {
-		return err
-	}
-	botId = u.ID
 
 	client.AddHandler(onMessage)
 

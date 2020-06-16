@@ -4,6 +4,7 @@ import (
 	"github.com/FabricMC/fabric-discord-bot/commands"
 	"github.com/FabricMC/fabric-discord-bot/discord"
 	"github.com/FabricMC/fabric-discord-bot/github"
+	"github.com/bwmarrin/discordgo"
 	"log"
 	"os"
 	"os/signal"
@@ -13,7 +14,7 @@ import (
 func main() {
 	log.Println("Starting fabric-discord-bot")
 
-	err := discord.RegisterCommandHandler("!github", commands.GithubCommand)
+	err := discord.RegisterCommandHandler("!github", discordgo.PermissionBanMembers, commands.GithubCommand)
 	if err != nil {
 		log.Fatal("Failed to register command", err)
 	}

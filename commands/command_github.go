@@ -4,38 +4,25 @@ import (
 	"fmt"
 	"github.com/FabricMC/fabric-discord-bot/discord"
 	"github.com/FabricMC/fabric-discord-bot/github"
-	"github.com/bwmarrin/discordgo"
 )
 
 func GithubCommand(ctx *discord.CommandContext) error {
-	permission, err := ctx.HasPermission(discordgo.PermissionBanMembers)
-	if err != nil {
-		return err
+	if len(ctx.Content) != 2 {
+		err := ctx.SendMessage("Invalid arguments")
+		if err != nil {
+			return err
+		}
+		return nil
 	}
 
-	if permission {
-		if len(ctx.Content) != 2 {
-			err := ctx.SendMessage("Invalid arguments")
-			if err != nil {
-				return err
-			}
-			return nil
-		}
-
-		//TODO make a whole message system for this stuff, for now this will do
-		subCommand := ctx.Content[0]
-		if subCommand == "ban" || subCommand == "block" {
-			return banCommand(ctx)
-		} else if subCommand == "unban" || subCommand == "unblock" {
-			return unbanCommand(ctx)
-		} else {
-			err := ctx.SendMessage("Sub command not found")
-			if err != nil {
-				return err
-			}
-		}
+	//TODO make a whole message system for this stuff, for now this will do
+	subCommand := ctx.Content[0]
+	if subCommand == "ban" || subCommand == "block" {
+		return banCommand(ctx)
+	} else if subCommand == "unban" || subCommand == "unblock" {
+		return unbanCommand(ctx)
 	} else {
-		err := ctx.SendMessage("You are not permitted to use this command")
+		err := ctx.SendMessage("Sub command not found")
 		if err != nil {
 			return err
 		}
