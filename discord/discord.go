@@ -1,6 +1,7 @@
 package discord
 
 import (
+	"github.com/FabricMC/fabric-discord-bot/backgroundcat"
 	"github.com/FabricMC/fabric-discord-bot/utils"
 	"github.com/bwmarrin/discordgo"
 )
@@ -29,6 +30,7 @@ func Connect() error {
 	client = dg
 
 	client.AddHandler(onMessage)
+	client.AddHandler(backgroundcat.OnMessage)
 
 	err = dg.Open()
 	if err != nil {
