@@ -15,13 +15,12 @@ const (
 	IMPORTANT severity = "❗" // Important, probably worth looking into
 )
 
-//go:generate stringer -type=logSource -linecomment
-type logSource int
+type logSource string
 
 const (
-	Unknown         logSource = iota
-	MultiMC                   // MultiMC
-	VanillaLauncher           // the vanilla launcher
+	Unknown logSource = "Unkown"
+	MultiMC logSource = "MultiMC"
+	Vanilla logSource = "the vanilla Launcher"
 )
 
 type Mistake struct {
