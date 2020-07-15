@@ -77,10 +77,10 @@ func OnMessage(s *discordgo.Session, m *discordgo.MessageCreate) {
 }
 
 var (
-	Pasteee  = regexp.MustCompile(`ht{2}ps:/{2}paste\.ee/p/[^\s/]+`)
-	Hastebin = regexp.MustCompile(`ht{2}ps?:/{2}has?tebin\.com/[^\s/]+`) // Also matches Hatebin
-	Pastebin = regexp.MustCompile(`ht{2}ps?:/{2}pastebin\.com/[^\s/]+`)
-	Pastegg  = regexp.MustCompile(`ht{2}ps:/{2}paste\.g{2}/p/[^\s/]+/[^\s/]+`)
+	Pasteee  = regexp.MustCompile(`https?://paste\.ee/p/[^\s/]+`)
+	Hastebin = regexp.MustCompile(`https?://has?tebin\.com/[^\s/]+`) // Also matches Hatebin
+	Pastebin = regexp.MustCompile(`https?://pastebin\.com/[^\s/]+`)
+	Pastegg  = regexp.MustCompile(`https?://paste\.gg/p/[^\s/]+/[^\s/]+`)
 )
 
 var PasteRegexes = [...]*regexp.Regexp{
