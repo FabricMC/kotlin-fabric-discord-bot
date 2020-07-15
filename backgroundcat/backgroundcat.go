@@ -25,32 +25,20 @@ func OnMessage(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
-	channel := make(chan string)
-	go func() {
-		resp, err := http.Get(link)
-		if err != nil {
-			log.Println(err)
-			channel <- ""
-			return
-		}
-		defer resp.Body.Close()
+	resp, err := http.Get(link)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	defer resp.Body.Close()
 
-		logs, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			log.Println(err)
-			channel <- ""
-			return
-		}
-
-		channel <- string(logs)
-	}()
-
-	logs := <-channel
-	if logs == "" {
+	logs, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Println(err)
 		return
 	}
 
-	mistakes, logSource := AggregateMistakes(logs)
+	mistakes, logSource := AggregateMistakes(string(logs))
 	if len(mistakes) == 0 {
 		return
 	}
