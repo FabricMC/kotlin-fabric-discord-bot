@@ -15,12 +15,12 @@ const (
 	IMPORTANT severity = "❗" // Important, probably worth looking into
 )
 
-type logSource string
+type logSource int
 
-const (
-	Unknown logSource = "Unkown"
-	MultiMC logSource = "MultiMC"
-	Vanilla logSource = "the vanilla Launcher"
+const ( // Poor man's enum
+	Unknown logSource = iota
+	MultiMC
+	Vanilla
 )
 
 type Mistake struct {
@@ -30,7 +30,7 @@ type Mistake struct {
 
 var errNotApplicable = errors.New("not applicable to the log")
 
-func AggregateMistakes(logs string) ([]Mistake, logSource) {
+func AggregateMistakes(logs string) []Mistake {
 	var mistakes []Mistake
 	source := getLogSource(logs)
 	for _, parser := range parsers {
@@ -40,7 +40,7 @@ func AggregateMistakes(logs string) ([]Mistake, logSource) {
 		}
 		mistakes = append(mistakes, mistake)
 	}
-	return mistakes, source
+	return mistakes
 }
 
 func getLogSource(logs string) logSource {
