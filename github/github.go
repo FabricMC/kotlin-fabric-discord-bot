@@ -77,7 +77,7 @@ func UnblockUser(org string, user string) (bool, error) {
 	return true, nil
 }
 
-// Locks all of a user's issues and PRs in the given repository
+// Locks and closes all of a user's issues and PRs in the given repository
 //
 // Returns all successfully locked issues/PRs
 func LockAll(org string, repository string, user string, reason string) ([]int64, error) {
@@ -89,10 +89,18 @@ func LockAll(org string, repository string, user string, reason string) ([]int64
 
 	lockedIssues := make([]int64, 0, len(issues)) // Pre-allocate a slice with capacity
 	for _, issue := range issues {
-		_, err := client.Issues.Lock(context.Background(), org, *issue.Repository.Name, *issue.Number, &github.LockIssueOptions{LockReason: reason})
-		if err != nil {
-			return lockedIssues, err
+		_, lockErr := client.Issues.Lock(context.Background(), org, *issue.Repository.Name, *issue.Number, &github.LockIssueOptions{LockReason: reason})
+
+		closed := "closed" // Can't do {State: &"closed"}
+		_, _, closeErr := client.Issues.Edit(context.Background(), org, *issue.Repository.Name, *issue.Number, &github.IssueRequest{State: &closed})
+
+		if lockErr != nil {
+			return lockedIssues, lockErr
 		}
+		if closeErr != nil {
+			return lockedIssues, closeErr
+		}
+
 		lockedIssues = append(lockedIssues, *issue.ID)
 	}
 

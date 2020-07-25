@@ -110,20 +110,20 @@ func lockAllCommand(ctx *discord.CommandContext) error {
 	case 0:
 		msg = "Locked nothing."
 	case 1:
-		msg = fmt.Sprintf("Locked %s in repository **https://github.com/%s/%s**.", readable, github.Organization, repository)
+		msg = fmt.Sprintf("Closed and locked %s in repository **https://github.com/%s/%s**.", readable, github.Organization, repository)
 	default:
-		msg = fmt.Sprintf("Locked **%d** issues/PRs in repository **https://github.com/%s/%s**: %s.", len(lockedIssues), github.Organization, repository, readable)
+		msg = fmt.Sprintf("Closed and locked **%d** issues/PRs in repository **https://github.com/%s/%s**: %s.", len(lockedIssues), github.Organization, repository, readable)
 	}
 
 	if err == nil {
 		ctx.SendMessageWithAudit(
 			msg,
-			fmt.Sprintf("locked all issues/PRs from **%s** in the **%s/%s** repository with reason **%s**.\n\nLocked %s.", user, github.Organization, repository, reason, readable),
+			fmt.Sprintf("closed and locked all issues/PRs from **%s** in the **%s/%s** repository with reason **%s**.\n\nLocked %s.", user, github.Organization, repository, reason, readable),
 		)
 	} else {
 		ctx.SendMessageWithAudit(
 			msg,
-			fmt.Sprintf("locked all issues/PRs from **%s** in the **%s/%s** repository with reason **%s** (errors occured).\n\nLocked %s.", user, github.Organization, repository, reason, readable),
+			fmt.Sprintf("closed and locked all issues/PRs from **%s** in the **%s/%s** repository with reason **%s** (errors occured).\n\nLocked %s.", user, github.Organization, repository, reason, readable),
 		)
 	}
 
