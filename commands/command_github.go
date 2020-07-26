@@ -75,16 +75,29 @@ func unbanCommand(ctx *discord.CommandContext) error {
 }
 
 func lockAllCommand(ctx *discord.CommandContext) error {
-	if len(ctx.Content) < 4 {
-		err := ctx.SendMessage("Invalid arguments. Usage: `github lockall <repository> <user> <reason>`")
+	if len(ctx.Content) < 3 {
+		err := ctx.SendMessage("Invalid arguments. Usage: `github lockall <repository> <user> [reason]`. If no reason is given, the default is `spam`")
 		return err
 	}
 	repository := ctx.Content[1]
 	user := ctx.Content[2]
-	reason := ctx.Content[3]
-	// blegh
-	if reason == "too" && ctx.Content[4] == "heated" {
-		reason = "too heated"
+	var reason string
+	switch len(ctx.Content) {
+	case 3:
+		{
+			reason = "spam"
+		}
+	case 4:
+		{
+			reason = ctx.Content[3]
+		}
+	default:
+		{
+			// blegh
+			if ctx.Content[3] == "too" && ctx.Content[4] == "heated" {
+				reason = "too heated"
+			}
+		}
 	}
 
 	if !isValidLockReason(reason) {
