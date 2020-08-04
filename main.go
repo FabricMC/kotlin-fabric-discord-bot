@@ -16,7 +16,11 @@ func main() {
 
 	err := discord.RegisterCommandHandler("!github", discordgo.PermissionBanMembers, commands.GithubCommand)
 	if err != nil {
-		log.Fatal("Failed to register command", err)
+		log.Fatal("Failed to register !github command", err)
+	}
+	err = discord.RegisterCommandHandler("!slowmode", discordgo.PermissionManageMessages, commands.SlowmodeCommand)
+	if err != nil {
+		log.Fatal("Failed to register !slowmode command", err)
 	}
 
 	err = discord.Connect()

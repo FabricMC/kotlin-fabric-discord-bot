@@ -8,8 +8,8 @@ import (
 type CommandContext struct {
 	Content []string
 
-	session *discordgo.Session
-	message *discordgo.MessageCreate
+	Session *discordgo.Session
+	Message *discordgo.MessageCreate
 }
 
 func (ctx *CommandContext) SendMessageWithAudit(msg string, action string) error {
@@ -27,24 +27,24 @@ func (ctx *CommandContext) SendMessageWithAudit(msg string, action string) error
 }
 
 func (ctx *CommandContext) SendMessage(msg string) error {
-	_, err := ctx.session.ChannelMessageSend(ctx.message.ChannelID, msg)
+	_, err := ctx.Session.ChannelMessageSend(ctx.Message.ChannelID, msg)
 	return err
 }
 
 func (ctx *CommandContext) SendAuditMessage(action string) error {
-	_, err := ctx.session.ChannelMessageSend(systemChannelID, fmt.Sprintf("%s performed the following action: %s", ctx.message.Author.Username, action))
+	_, err := ctx.Session.ChannelMessageSend(systemChannelID, fmt.Sprintf("%s performed the following action: %s", ctx.Message.Author.Username, action))
 	return err
 }
 
 func (ctx *CommandContext) GetChannelName() (string, error) {
-	channel, err := client.Channel(ctx.message.ChannelID)
+	channel, err := client.Channel(ctx.Message.ChannelID)
 	if err != nil {
 		return "", err
 	}
 
 	channelName := channel.Name
 	if channel.Type == discordgo.ChannelTypeDM || channel.Type == discordgo.ChannelTypeGroupDM {
-		channelName = ctx.message.Author.Username
+		channelName = ctx.Message.Author.Username
 	}
 
 	return channelName, nil
@@ -52,9 +52,9 @@ func (ctx *CommandContext) GetChannelName() (string, error) {
 
 // Based off https://github.com/bwmarrin/discordgo/wiki/FAQ#determining-if-a-role-has-a-permission
 func (ctx *CommandContext) HasPermission(permission int) (bool, error) {
-	member, err := ctx.session.State.Member(ctx.message.GuildID, ctx.message.Author.ID)
+	member, err := ctx.Session.State.Member(ctx.Message.GuildID, ctx.Message.Author.ID)
 	if err != nil {
-		if member, err = ctx.session.GuildMember(ctx.message.GuildID, ctx.message.Author.ID); err != nil {
+		if member, err = ctx.Session.GuildMember(ctx.Message.GuildID, ctx.Message.Author.ID); err != nil {
 			return false, err
 		}
 	}
@@ -62,7 +62,7 @@ func (ctx *CommandContext) HasPermission(permission int) (bool, error) {
 	// Iterate through the role IDs stored in member.Roles
 	// to check permissions
 	for _, roleID := range member.Roles {
-		role, err := ctx.session.State.Role(ctx.message.GuildID, roleID)
+		role, err := ctx.Session.State.Role(ctx.Message.GuildID, roleID)
 		if err != nil {
 			return false, err
 		}
