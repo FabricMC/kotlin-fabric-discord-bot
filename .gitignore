@@ -5,6 +5,7 @@
 !/.gitignore
 !/readme.md
 !/license.md
+!/.github
 
 # Docker
 !Dockerfile
