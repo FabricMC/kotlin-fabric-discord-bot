@@ -2,6 +2,7 @@ package github
 
 import (
 	"context"
+
 	"github.com/FabricMC/fabric-discord-bot/utils"
 	"github.com/google/go-github/v32/github"
 	"golang.org/x/oauth2"
@@ -74,4 +75,34 @@ func UnblockUser(org string, user string) (bool, error) {
 	}
 
 	return true, nil
+}
+
+// Locks and closes all of a user's issues and PRs in the given repository
+//
+// Returns all successfully locked issues/PRs
+func LockAll(org string, repository string, user string, reason string) ([]int64, error) {
+	// All pull requests are issues, but not all issues are pull requests
+	issues, _, err := client.Issues.ListByRepo(context.Background(), org, repository, &github.IssueListByRepoOptions{Creator: user, State: "all"})
+	if err != nil {
+		return nil, err
+	}
+
+	lockedIssues := make([]int64, 0, len(issues)) // Pre-allocate a slice with capacity
+	for _, issue := range issues {
+		_, lockErr := client.Issues.Lock(context.Background(), org, *issue.Repository.Name, *issue.Number, &github.LockIssueOptions{LockReason: reason})
+
+		closed := "closed" // Can't do {State: &"closed"}
+		_, _, closeErr := client.Issues.Edit(context.Background(), org, *issue.Repository.Name, *issue.Number, &github.IssueRequest{State: &closed})
+
+		if lockErr != nil {
+			return lockedIssues, lockErr
+		}
+		if closeErr != nil {
+			return lockedIssues, closeErr
+		}
+
+		lockedIssues = append(lockedIssues, *issue.ID)
+	}
+
+	return lockedIssues, nil
 }
