@@ -6,6 +6,9 @@
 !/readme.md
 !/license.md
 
+# Docker
+!Dockerfile
+
 # Go
 !/go.mod
 !/go.sum
