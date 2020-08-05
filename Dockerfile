@@ -7,7 +7,7 @@ RUN go mod download -x
 
 COPY . .
 
-env GOOS=linux
+ENV GOOS=linux
 RUN go build -tags 'osusergo netgo' -o /go/bin/app 
 
 FROM gcr.io/distroless/static-debian10
