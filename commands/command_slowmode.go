@@ -53,7 +53,7 @@ func SlowmodeCommand(ctx *discord.CommandContext) error {
 			include empty values, due to the `json:"omitempty"` directive on all their fields.
 			This makes sense, because this is a PATCH endpoint, but the issue is that
 			RateLimitPerUser is an int.
-			Ints can't be nil, but they still have still have a defined empty value: 0.
+			Ints can't be nil, but they still have a defined empty value: 0.
 			This is very inconvenient for us because the json marshaller sees the 0 and
 			the `omitempty` directive, assumes the 0 is a default value, and doesn't include it.
 			Discord then interprets not sending this field as not wanting to change it.
