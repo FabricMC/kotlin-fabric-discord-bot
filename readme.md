@@ -6,5 +6,8 @@ This bot is designed for a specific discord server, so it most likely will not f
 
 * DISCORD_TOKEN = The discord bot token
 * DISCORD_SYSTEM_CHANNEL = the channel ID to post the auid logs to
+
+### Optional Environment Variables 
+
 * GITHUB_TOKEN = The github personal access token, with admin:org permission
 * GITHUB_ORG = The target github organisation for the github commands.

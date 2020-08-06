@@ -14,3 +14,8 @@ func GetEnv(key string) (string, error) {
 
 	return token, nil
 }
+
+func HasEnv(key string) bool {
+	token := os.Getenv(key)
+	return len(token) != 0
+}

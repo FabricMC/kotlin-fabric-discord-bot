@@ -4,6 +4,7 @@ import (
 	"github.com/FabricMC/fabric-discord-bot/commands"
 	"github.com/FabricMC/fabric-discord-bot/discord"
 	"github.com/FabricMC/fabric-discord-bot/github"
+	"github.com/FabricMC/fabric-discord-bot/utils"
 	"github.com/bwmarrin/discordgo"
 	"log"
 	"os"
@@ -14,11 +15,19 @@ import (
 func main() {
 	log.Println("Starting fabric-discord-bot")
 
-	err := discord.RegisterCommandHandler("!github", discordgo.PermissionBanMembers, commands.GithubCommand)
-	if err != nil {
-		log.Fatal("Failed to register !github command", err)
+	if utils.HasEnv("GITHUB_TOKEN") {
+		err := discord.RegisterCommandHandler("!github", discordgo.PermissionBanMembers, commands.GithubCommand)
+		if err != nil {
+			log.Fatal("Failed to register !github command", err)
+		}
+
+		err = github.Connect()
+		if err != nil {
+			log.Fatal("Failed to connect to github", err)
+		}
 	}
-	err = discord.RegisterCommandHandler("!slowmode", discordgo.PermissionManageMessages, commands.SlowmodeCommand)
+
+	err := discord.RegisterCommandHandler("!slowmode", discordgo.PermissionManageMessages, commands.SlowmodeCommand)
 	if err != nil {
 		log.Fatal("Failed to register !slowmode command", err)
 	}
@@ -26,11 +35,6 @@ func main() {
 	err = discord.Connect()
 	if err != nil {
 		log.Fatal("Failed to connect to discord", err)
-	}
-
-	err = github.Connect()
-	if err != nil {
-		log.Fatal("Failed to connect to github", err)
 	}
 
 	// Wait here until CTRL-C or other term signal is received.
