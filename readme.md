@@ -11,3 +11,5 @@ This bot is designed for a specific discord server, so it most likely will not f
 
 * GITHUB_TOKEN = The github personal access token, with admin:org permission
 * GITHUB_ORG = The target github organisation for the github commands.
+* DISCORD_MINECRAFT_CHANNELS = A comma separated list of discord channels to send minecraft version updates to
+* DISCORD_JIRA_CHANNELS = A comma separated list of discord channels to send JIRA version updates to

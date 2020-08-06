@@ -5,6 +5,7 @@ import (
 	"github.com/FabricMC/fabric-discord-bot/discord"
 	"github.com/FabricMC/fabric-discord-bot/github"
 	"github.com/FabricMC/fabric-discord-bot/utils"
+	"github.com/FabricMC/fabric-discord-bot/versioncheck"
 	"github.com/bwmarrin/discordgo"
 	"log"
 	"os"
@@ -35,6 +36,13 @@ func main() {
 	err = discord.Connect()
 	if err != nil {
 		log.Fatal("Failed to connect to discord", err)
+	}
+
+	if utils.HasEnv("DISCORD_MINECRAFT_CHANNELS") {
+		err = versioncheck.Setup()
+		if err != nil {
+			log.Fatal("Failed to setup version check", err)
+		}
 	}
 
 	// Wait here until CTRL-C or other term signal is received.
