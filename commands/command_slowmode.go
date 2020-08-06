@@ -3,7 +3,6 @@ package commands
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"regexp"
 	"strconv"
 
@@ -42,10 +41,13 @@ func SlowmodeCommand(ctx *discord.CommandContext) error {
 		channelID = ctx.Message.ChannelID
 	}
 
-	log.Println(channelID)
 	var err error
 	if time > 0 {
 		_, err = ctx.Session.ChannelEditComplex(channelID, &discordgo.ChannelEdit{RateLimitPerUser: int(time)})
+
+		if err == nil {
+			err = ctx.SendMessageWithAudit("Slow mode enabled", "Enabled slow mode ("+strconv.FormatUint(time, 10)+"s) in <#"+channelID+">")
+		}
 	} else {
 		/*
 			(Apple:)
@@ -80,6 +82,10 @@ func SlowmodeCommand(ctx *discord.CommandContext) error {
 			return err
 		}
 		err = json.Unmarshal(body, &discordgo.Channel{})
+
+		if err == nil {
+			err = ctx.SendMessageWithAudit("Slow mode disabled", "Disabled slow mode in <#"+channelID+">")
+		}
 	}
 
 	return err
