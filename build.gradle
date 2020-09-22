@@ -12,6 +12,7 @@ targetCompatibility = 1.11
 version '1.0-SNAPSHOT'
 
 repositories {
+    mavenLocal()
     jcenter()
 
     maven {

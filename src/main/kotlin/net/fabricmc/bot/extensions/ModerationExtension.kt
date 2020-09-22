@@ -8,12 +8,14 @@ import com.kotlindiscord.kord.extensions.ExtensibleBot
 import com.kotlindiscord.kord.extensions.checks.topRoleHigherOrEqual
 import com.kotlindiscord.kord.extensions.extensions.Extension
 import net.fabricmc.bot.conf.config
+import net.fabricmc.bot.constants.Colours
 import net.fabricmc.bot.defaultCheck
 import net.fabricmc.bot.enums.Roles
 import net.fabricmc.bot.toSeconds
 import net.time4j.Duration
 import net.time4j.IsoUnit
-import java.awt.Color
+
+private const val SLOWMODE_LIMIT = 60 * 60 * 6  // Six hours
 
 /**
  * Moderation extension, containing non-infraction commands for server management.
@@ -24,12 +26,14 @@ class ModerationExtension(bot: ExtensibleBot) : Extension(bot) {
     /**
      * Arguments for the slowmode command.
      *
-     * @param durations List of durations representing the slowmode interval.
+     * @param durationInt Int-style duration representing the slowmode interval.
+     * @param duration Duration representing the slowmode interval.
      * @param channel Channel to set the slowmode interval in.
      **/
     data class SlowmodeArgs(
-        val durations: List<Duration<IsoUnit>>,
-        val channel: Channel?
+        val durationInt: Int? = null,
+        val duration: Duration<IsoUnit>? = null,
+        val channel: Channel? = null
     )
 
     override suspend fun setup() {
@@ -46,7 +50,7 @@ class ModerationExtension(bot: ExtensibleBot) : Extension(bot) {
                 Omit the duration or set it to `0s` to disable.
             """.trimIndent()
 
-            signature<SlowmodeArgs>()
+            signature = "[duration] [channel]"
 
             check(::defaultCheck,
                     topRoleHigherOrEqual(config.getRole(Roles.MODERATOR))
@@ -54,18 +58,33 @@ class ModerationExtension(bot: ExtensibleBot) : Extension(bot) {
 
             action {
                 with(parse<SlowmodeArgs>()) {
-                    val duration = this.durations
-                            .fold(Duration.ofZero<IsoUnit>()) { left, right -> left.plus(right) }
-                            .toSeconds().toInt()
+                    if (this.duration != null && this.durationInt != null) {
+                        message.channel.createMessage(
+                            "${message.author!!.mention} Provide an integer or a duration with units, not both."
+                        )
 
-                    val channel = (this.channel ?: message.channel) as TextChannel
+                        return@action
+                    }
+
+                    val duration = this.duration?.toSeconds()?.toInt() ?: this.durationInt ?: 0
+
+                    if (duration > SLOWMODE_LIMIT) {
+                        message.channel.createMessage(
+                            "${message.author!!.mention} Duration should be no longer than 6 hours."
+                        )
+
+                        return@action
+                    }
+
+                    val channel = (this.channel ?: message.channel.asChannel()) as TextChannel
 
                     channel.edit { rateLimitPerUser = duration }
 
                     message.channel.createEmbed {
-                        color = Color.RED
+                        color = Colours.POSITIVE
 
                         description = "Slowmode set to $duration seconds in ${channel.mention}"
+                        title = ""
                     }
                 }
             }
