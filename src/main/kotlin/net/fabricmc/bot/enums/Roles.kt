@@ -6,7 +6,6 @@ package net.fabricmc.bot.enums
  * @param value A human-readable representation of the given role.
  */
 enum class Roles(val value: String) {
-    OWNER("Owner"),
     ADMIN("Admin"),
     MODERATOR("Moderator"),
 

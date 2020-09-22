@@ -16,7 +16,4 @@ object RolesSpec : ConfigSpec() {
 
     /** Configured muted role ID. **/
     val muted by required<Long>()
-
-    /** Configured owner role ID. **/
-    val owner by required<Long>()
 }

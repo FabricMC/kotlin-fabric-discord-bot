@@ -3,7 +3,7 @@ package net.fabricmc.bot.conf.spec
 import com.uchuhimo.konf.ConfigSpec
 
 /**
- * A class representing the `channeld` section of the configuration.
+ * A class representing the `channels` section of the configuration.
  *
  * This is used by Konf, and will not need to be accessed externally.
  */

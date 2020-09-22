@@ -7,6 +7,7 @@ import com.kotlindiscord.kord.extensions.ExtensibleBot
 import mu.KotlinLogging
 import net.fabricmc.bot.conf.buildInfo
 import net.fabricmc.bot.conf.config
+import net.fabricmc.bot.extensions.ModerationExtension
 
 /** The current instance of the bot. **/
 val bot = ExtensibleBot(prefix = config.prefix, token = config.token)
@@ -18,5 +19,6 @@ suspend fun main() {
 
     logger.info { "Starting Fabric Discord Bot, version ${buildInfo.version}." }
 
+    bot.addExtension(ModerationExtension::class)
     bot.start()
 }

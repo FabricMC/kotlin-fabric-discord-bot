@@ -90,8 +90,7 @@ suspend fun inBotChannel(event: Event): Boolean {
 suspend fun botChannelOrModerator(): suspend (Event) -> Boolean = or(
         ::inBotChannel,
         hasRole(config.getRole(Roles.MODERATOR)),
-        hasRole(config.getRole(Roles.ADMIN)),
-        hasRole(config.getRole(Roles.OWNER))
+        hasRole(config.getRole(Roles.ADMIN))
 )
 
 /**

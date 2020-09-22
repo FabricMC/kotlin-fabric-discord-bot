@@ -4,10 +4,22 @@ This bot is designed for a specific discord server, so it most likely will not f
 
 ### Required Environment Variables 
 
-* DISCORD_TOKEN = The discord bot token
-* DISCORD_SYSTEM_CHANNEL = the channel ID to post the auid logs to
+* BOT_TOKEN = The discord bot token
 
 ### Optional Environment Variables 
+
+* BOT_GUILD = The ID of the discord guild this bot should operate on
+* BOT_PREFIX = The prefix required for commands
+
+* CHANNELS_BOT_COMMANDS = The ID of the bot commands channel
+* CHANNELS_ACTION_LOG = The ID of the action log channel
+* CHANNELS_MODERATOR_LOG = The ID of the moderator log channel
+
+* ROLES_ADMIN = The ID of the admin role
+* ROLES_MOD = The ID of the moderator role
+* ROLES_MUTED = The ID of the muted role
+
+## Stuff from the old bot
 
 * GITHUB_TOKEN = The github personal access token, with admin:org permission
 * GITHUB_ORG = The target github organisation for the github commands.

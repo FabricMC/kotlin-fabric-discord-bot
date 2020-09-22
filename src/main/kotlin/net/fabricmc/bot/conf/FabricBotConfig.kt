@@ -89,7 +89,6 @@ class FabricBotConfig {
             Roles.ADMIN     -> Snowflake(config[RolesSpec.admin])
             Roles.MODERATOR -> Snowflake(config[RolesSpec.mod])
             Roles.MUTED     -> Snowflake(config[RolesSpec.muted])
-            Roles.OWNER     -> Snowflake(config[RolesSpec.owner])
         }
     }
 
