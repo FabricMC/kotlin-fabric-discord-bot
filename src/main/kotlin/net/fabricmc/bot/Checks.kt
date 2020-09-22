@@ -3,7 +3,7 @@ package net.fabricmc.bot
 import com.gitlab.kordlib.core.event.Event
 import com.kotlindiscord.kord.extensions.checks.*
 import mu.KotlinLogging
-import net.fabricmc.bot.config.config
+import net.fabricmc.bot.conf.config
 import net.fabricmc.bot.enums.Channels
 import net.fabricmc.bot.enums.Roles
 

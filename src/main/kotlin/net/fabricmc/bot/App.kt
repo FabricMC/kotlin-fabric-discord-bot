@@ -5,8 +5,8 @@ package net.fabricmc.bot
 
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import mu.KotlinLogging
-import net.fabricmc.bot.config.buildInfo
-import net.fabricmc.bot.config.config
+import net.fabricmc.bot.conf.buildInfo
+import net.fabricmc.bot.conf.config
 
 /** The current instance of the bot. **/
 val bot = ExtensibleBot(prefix = config.prefix, token = config.token)

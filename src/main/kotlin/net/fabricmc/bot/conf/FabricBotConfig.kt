@@ -1,4 +1,4 @@
-package net.fabricmc.bot.config
+package net.fabricmc.bot.conf
 
 import com.gitlab.kordlib.common.entity.Snowflake
 import com.gitlab.kordlib.core.entity.Guild
@@ -11,9 +11,9 @@ import net.fabricmc.bot.MissingChannelException
 import net.fabricmc.bot.MissingGuildException
 import net.fabricmc.bot.MissingRoleException
 import net.fabricmc.bot.bot
-import net.fabricmc.bot.config.spec.BotSpec
-import net.fabricmc.bot.config.spec.ChannelsSpec
-import net.fabricmc.bot.config.spec.RolesSpec
+import net.fabricmc.bot.conf.spec.BotSpec
+import net.fabricmc.bot.conf.spec.ChannelsSpec
+import net.fabricmc.bot.conf.spec.RolesSpec
 import net.fabricmc.bot.enums.Channels
 import net.fabricmc.bot.enums.Roles
 import java.io.File

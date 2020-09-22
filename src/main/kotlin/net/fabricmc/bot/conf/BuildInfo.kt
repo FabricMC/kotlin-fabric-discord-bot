@@ -1,4 +1,4 @@
-package net.fabricmc.bot.config
+package net.fabricmc.bot.conf
 
 import java.util.*
 

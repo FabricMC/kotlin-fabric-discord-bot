@@ -1,4 +1,4 @@
-package net.fabricmc.bot.config.spec
+package net.fabricmc.bot.conf.spec
 
 import com.uchuhimo.konf.ConfigSpec
 
