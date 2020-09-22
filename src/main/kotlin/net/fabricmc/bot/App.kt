@@ -3,9 +3,20 @@
  */
 package net.fabricmc.bot
 
-// import com.kotlindiscord.kord.extensions.ExtensibleBot
+import com.kotlindiscord.kord.extensions.ExtensibleBot
+import mu.KotlinLogging
+import net.fabricmc.bot.config.buildInfo
+import net.fabricmc.bot.config.config
 
-/** @suppress **/
-fun main() {
-//    val bot = ExtensibleBot()
+/** The current instance of the bot. **/
+val bot = ExtensibleBot(prefix = config.prefix, token = config.token)
+/**
+ * The main function. Every story has a beginning!
+ */
+suspend fun main() {
+    val logger = KotlinLogging.logger {}
+
+    logger.info { "Starting Fabric Discord Bot, version ${buildInfo.version}." }
+
+    bot.start()
 }
