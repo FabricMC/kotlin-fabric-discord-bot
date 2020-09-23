@@ -56,6 +56,7 @@ dependencies {
     implementation 'org.codehaus.groovy:groovy:3.0.4'  // For logback config
 
     // Database: https://cashapp.github.io/sqldelight/jvm_sqlite/
+    implementation 'com.squareup.sqldelight:coroutines-extensions-jvm:1.4.3'
     implementation 'com.squareup.sqldelight:sqlite-driver:1.4.3'
 
     // GitHub API: https://github-api.kohsuke.org/
