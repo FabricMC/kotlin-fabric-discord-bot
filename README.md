@@ -5,6 +5,7 @@ This bot is designed for a specific discord server, so it most likely will not f
 ### Required Environment Variables 
 
 * BOT_TOKEN = The discord bot token
+* GITHUB_OAUTH = GitHub OAuth token (if we end up using that functionality)
 
 ### Optional Environment Variables 
 
