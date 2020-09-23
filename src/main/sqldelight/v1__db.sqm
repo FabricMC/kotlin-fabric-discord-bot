@@ -1,0 +1,31 @@
+CREATE TABLE user (
+    pk INTEGER PRIMARY KEY NOT NULL AUTO_INCREMENT,
+    id BIGINT UNIQUE NOT NULL,
+
+    avatarUrl TEXT NOT NULL,
+    discriminator INTEGER NOT NULL,
+    present BOOLEAN NOT NULL,
+    username TEXT NOT NULL
+);
+
+CREATE INDEX user_id ON user(id);
+
+CREATE TABLE role (
+    pk INTEGER PRIMARY KEY NOT NULL AUTO_INCREMENT,
+    id BIGINT UNIQUE NOT NULL,
+
+    colour INTEGER NOT NULL,
+    name TEXT NOT NULL
+);
+
+CREATE INDEX role_id ON role(id);
+
+CREATE TABLE user_role(
+    pk INTEGER PRIMARY KEY NOT NULL AUTO_INCREMENT,
+
+    role BIGINT NOT NULL,
+    user BIGINT NOT NULL,
+
+    FOREIGN KEY(role) REFERENCES role(id),
+    FOREIGN KEY(user) REFERENCES user(id)
+);

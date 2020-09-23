@@ -4,16 +4,20 @@ import com.gitlab.kordlib.common.entity.Snowflake
 import com.gitlab.kordlib.core.entity.Guild
 import com.gitlab.kordlib.core.entity.Role
 import com.gitlab.kordlib.core.entity.channel.Channel
+import com.squareup.sqldelight.sqlite.driver.asJdbcDriver
 import com.uchuhimo.konf.Config
 import com.uchuhimo.konf.Feature
 import com.uchuhimo.konf.source.toml
+import com.zaxxer.hikari.HikariConfig
 import net.fabricmc.bot.MissingChannelException
 import net.fabricmc.bot.MissingGuildException
 import net.fabricmc.bot.MissingRoleException
 import net.fabricmc.bot.bot
 import net.fabricmc.bot.conf.spec.BotSpec
 import net.fabricmc.bot.conf.spec.ChannelsSpec
+import net.fabricmc.bot.conf.spec.DBSpec
 import net.fabricmc.bot.conf.spec.RolesSpec
+import net.fabricmc.bot.database.Database
 import net.fabricmc.bot.enums.Channels
 import net.fabricmc.bot.enums.Roles
 import java.io.File
@@ -33,15 +37,25 @@ import java.io.File
  * The currently-loaded configuration is always available at the [config] property.
  */
 class FabricBotConfig {
-    private var config = Config { addSpec(BotSpec); addSpec(ChannelsSpec); addSpec(RolesSpec) }
+    private var config = Config { addSpec(BotSpec); addSpec(ChannelsSpec); addSpec(DBSpec); addSpec(RolesSpec) }
             .from.enabled(Feature.FAIL_ON_UNKNOWN_PATH).toml.resource("default.toml")
             .from.env()
             .from.systemProperties()
+
+    private val dbConfig = HikariConfig()
+
+    /** SQLDelight Database instance. **/
+    val db by lazy { Database(dbConfig.dataSource.asJdbcDriver()) }
 
     init {
         if (File("config.toml").exists()) {
             config = config.from.toml.watchFile("config.toml")
         }
+
+        dbConfig.jdbcUrl = "jdbc:" + config[DBSpec.url]
+
+        dbConfig.username = config[DBSpec.username]
+        dbConfig.password = config[DBSpec.password]
     }
 
     /**
@@ -70,8 +84,8 @@ class FabricBotConfig {
     @Throws(MissingChannelException::class)
     suspend fun getChannel(channel: Channels): Channel {
         val snowflake = when (channel) {
-            Channels.ACTION_LOG    -> Snowflake(config[ChannelsSpec.actionLog])
-            Channels.BOT_COMMANDS  -> Snowflake(config[ChannelsSpec.botCommands])
+            Channels.ACTION_LOG -> Snowflake(config[ChannelsSpec.actionLog])
+            Channels.BOT_COMMANDS -> Snowflake(config[ChannelsSpec.botCommands])
             Channels.MODERATOR_LOG -> Snowflake(config[ChannelsSpec.moderatorLog])
         }
 
@@ -86,9 +100,9 @@ class FabricBotConfig {
      */
     fun getRoleSnowflake(role: Roles): Snowflake {
         return when (role) {
-            Roles.ADMIN     -> Snowflake(config[RolesSpec.admin])
+            Roles.ADMIN -> Snowflake(config[RolesSpec.admin])
             Roles.MODERATOR -> Snowflake(config[RolesSpec.mod])
-            Roles.MUTED     -> Snowflake(config[RolesSpec.muted])
+            Roles.MUTED -> Snowflake(config[RolesSpec.muted])
         }
     }
 
@@ -117,6 +131,7 @@ class FabricBotConfig {
     suspend fun getGuild(): Guild =
             bot.kord.getGuild(guildSnowflake) ?: throw MissingGuildException(guildSnowflake.longValue)
 }
+
 /**
  * The currently loaded [FabricBotConfig].
  *

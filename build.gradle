@@ -57,7 +57,8 @@ dependencies {
 
     // Database: https://cashapp.github.io/sqldelight/jvm_sqlite/
     implementation 'com.squareup.sqldelight:coroutines-extensions-jvm:1.4.3'
-    implementation 'com.squareup.sqldelight:sqlite-driver:1.4.3'
+    implementation 'com.squareup.sqldelight:jdbc-driver:1.4.3'
+    implementation 'com.zaxxer:HikariCP:3.4.5'
 
     // GitHub API: https://github-api.kohsuke.org/
     implementation 'org.kohsuke:github-api:1.116'
@@ -82,7 +83,12 @@ gitHooks {
 
 sqldelight {
     Database {
+        deriveSchemaFromMigrations = true
+        dialect = "mysql"
+        migrationOutputDirectory = file("$buildDir/resources/main/migrations")
         packageName = "net.fabricmc.bot.database"
+        schemaOutputDirectory = file("src/main/sqldelight/databases")
+        sourceFolders = ["sqldelight"]
     }
 }
 
@@ -94,6 +100,9 @@ jar {
     }
 }
 
+compileKotlin.configure {
+    dependsOn "generateMainDatabaseMigrations"
+}
 
 processResources {
     dependsOn "generateBuildInfo"

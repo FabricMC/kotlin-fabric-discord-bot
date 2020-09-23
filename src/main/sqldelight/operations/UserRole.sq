@@ -1,0 +1,40 @@
+select {
+    SELECT user_role.* FROM user_role
+    WHERE user_role.pk = :pk;
+}
+
+selectByRole {
+    SELECT user_role.* FROM user_role
+    WHERE user_role.role = :id;
+}
+
+selectByUser {
+    SELECT user_role.* FROM user_role
+    WHERE user_role.user = :id;
+}
+
+selectAll {
+    SELECT user_role.* FROM user_role;
+}
+
+upsert {
+    UPDATE user_role
+    SET role = :role,
+        user = :user
+    WHERE pk = :pk;
+
+    INSERT OR IGNORE INTO user_role(role, user)
+        VALUES (:role, :user);
+}
+
+delete {
+    DELETE FROM user_role WHERE pk = :pk;
+}
+
+deleteByRole {
+    DELETE FROM user_role WHERE role = :id;
+}
+
+deleteByUser {
+    DELETE FROM user_role WHERE user = :id;
+}

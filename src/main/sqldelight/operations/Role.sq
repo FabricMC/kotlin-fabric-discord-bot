@@ -1,0 +1,23 @@
+select {
+    SELECT role.* FROM role
+    WHERE role.id = :id;
+}
+
+selectAll {
+    SELECT role.* FROM role;
+}
+
+upsert {
+    UPDATE role
+    SET colour = :colour,
+        name = :name
+    WHERE id = :id;
+
+    INSERT OR IGNORE INTO role(id, colour, name)
+        VALUES (:id, :colour, :name);
+}
+
+delete {
+    DELETE FROM user_role WHERE role = :id;
+    DELETE FROM role WHERE id = :id;
+}
