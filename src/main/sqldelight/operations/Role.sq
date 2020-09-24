@@ -1,7 +1,7 @@
-get: SELECT role.* FROM role WHERE role.id = :id;
-getAll: SELECT role.* FROM role;
+getRole: SELECT role.* FROM role WHERE role.id = :id;
+getAllRoles: SELECT role.* FROM role;
 
-upsert {
+upsertRole {
     UPDATE role
     SET colour = :colour,
         name = :name
@@ -11,7 +11,7 @@ upsert {
         VALUES (:id, :colour, :name);
 }
 
-drop {
+dropRole {
     DELETE FROM user_role WHERE role_id = :id;
     DELETE FROM role WHERE id = :id;
 }

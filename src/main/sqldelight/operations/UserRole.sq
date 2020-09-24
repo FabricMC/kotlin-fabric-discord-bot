@@ -1,18 +1,18 @@
-get:
+getUserRole:
     SELECT user_role.* FROM user_role
     WHERE user_role.pk = :pk;
 
-getByRole:
+getUserRoleByRole:
     SELECT user_role.* FROM user_role
     WHERE user_role.role_id = :id;
 
-getByUser:
+getUserRoleByUser:
     SELECT user_role.* FROM user_role
     WHERE user_role.user_id = :id;
 
-getAll: SELECT user_role.* FROM user_role;
+getAllUserRoles: SELECT user_role.* FROM user_role;
 
-upsert {
+upsertUserRole {
     UPDATE user_role
     SET role_id = :role_id,
         user_id = :user_id
@@ -22,14 +22,14 @@ upsert {
         VALUES (:role_id, :user_id);
 }
 
-drop {
+dropUserRole {
     DELETE FROM user_role WHERE pk = :pk;
 }
 
-dropByRole {
+dropUserRoleByRole {
     DELETE FROM user_role WHERE role_id = :role_id;
 }
 
-dropByUser {
+dropUserRoleByUser {
     DELETE FROM user_role WHERE user_id = :user_id;
 }

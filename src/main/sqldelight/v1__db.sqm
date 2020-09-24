@@ -35,7 +35,7 @@ CREATE TABLE user_role(
 );
 
 CREATE TABLE infraction(
-    pk BIGINT PRIMARY KEY AUTO_INCREMENT,
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
 
     reason VARCHAR(1000) NOT NULL,
 

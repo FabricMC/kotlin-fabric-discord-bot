@@ -1,16 +1,16 @@
-get:
+getUser:
     SELECT user.*, role.* FROM user
     INNER JOIN user_role ON user.id = user_role.user_id
     INNER JOIN role ON role.id = user_role.role_id
     WHERE user.id = :id;
 
-getAll:
+getAllUsers:
     SELECT user.*, role.* FROM user
     INNER JOIN user_role ON user.id = user_role.user_id
     INNER JOIN role ON role.id = user_role.role_id;
 
 
-upsert {
+upsertUser {
     UPDATE user
     SET avatarUrl = :avatarUrl,
         discriminator = :discriminator,

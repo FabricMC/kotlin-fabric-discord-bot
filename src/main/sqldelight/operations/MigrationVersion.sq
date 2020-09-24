@@ -1,6 +1,6 @@
-get: SELECT * FROM migration_version;
+getMigrationVersion: SELECT * FROM migration_version;
 
-set {
+setMigrationVersion {
     DELETE FROM migration_version
         WHERE 1=1;
 

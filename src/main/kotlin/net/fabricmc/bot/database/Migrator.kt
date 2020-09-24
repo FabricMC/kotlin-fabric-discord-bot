@@ -16,13 +16,13 @@ object Migrator {
         )
 
         val queries = config.db.migrationVersionQueries
-        val queryList = queries.get().executeAsList()
+        val queryList = queries.getMigrationVersion().executeAsList()
 
         if (queryList.isEmpty()) {
             logger.info { "Creating database from scratch." }
 
             FabricBotDB.Schema.create(config.dbDriver)
-            queries.set(FabricBotDB.Schema.version)
+            queries.setMigrationVersion(FabricBotDB.Schema.version)
 
             return
         }
@@ -41,6 +41,6 @@ object Migrator {
             FabricBotDB.Schema.migrate(config.dbDriver, version, version + 1)
         }
 
-        queries.set(FabricBotDB.Schema.version)
+        queries.setMigrationVersion(FabricBotDB.Schema.version)
     }
 }
