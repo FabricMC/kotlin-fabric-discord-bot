@@ -2,10 +2,41 @@
 
 This bot is designed for a specific discord server, so it most likely will not fit the needs of your server.
 
+## Configuration
+
+Note that the bot can be configured using a config file called `config.toml` instead if you prefer. The part
+of the environment variable name before the first underscore is the section you should use, and the rest
+is the camelCase key you should use within that section.
+
+For example, you might do this in a bash script:
+
+```bash
+export CHANNELS_ACTION_LOG=746875064200462416
+```
+
+In `config.toml`, you might do this:
+
+```toml
+[channels]
+actionLog = 746875064200462416
+```
+
+You may also use system properties to configure the bot. Configuration takes the following order of precedence, with
+later sources overriding earlier ones:
+
+* `default.toml` bundled inside the JAR
+* Environment variables
+* System properties
+* `config.toml` if it exists
+
 ### Required Environment Variables 
 
 * BOT_TOKEN = The discord bot token
 * GITHUB_OAUTH = GitHub OAuth token (if we end up using that functionality)
+
+* DB_URL = MySQL URL, eg `mysql://host:port/database`
+* DB_USERNAME = Database username to auth with
+* DB_PASSWORD = Database password to auth with
 
 ### Optional Environment Variables 
 
