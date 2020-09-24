@@ -1,11 +1,5 @@
-select {
-    SELECT role.* FROM role
-    WHERE role.id = :id;
-}
-
-selectAll {
-    SELECT role.* FROM role;
-}
+get: SELECT role.* FROM role WHERE role.id = :id;
+getAll: SELECT role.* FROM role;
 
 upsert {
     UPDATE role
@@ -17,7 +11,7 @@ upsert {
         VALUES (:id, :colour, :name);
 }
 
-delete {
-    DELETE FROM user_role WHERE role = :id;
+drop {
+    DELETE FROM user_role WHERE role_id = :id;
     DELETE FROM role WHERE id = :id;
 }

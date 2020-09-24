@@ -1,5 +1,9 @@
 import net.fabricmc.bot.enums.InfractionTypes;
 
+CREATE TABLE IF NOT EXISTS migration_version (
+    version INT NOT NULL
+);
+
 CREATE TABLE user (
     id BIGINT PRIMARY KEY NOT NULL,
 
@@ -12,8 +16,7 @@ CREATE TABLE user (
 CREATE INDEX user_id ON user(id);
 
 CREATE TABLE role (
-    pk INTEGER PRIMARY KEY NOT NULL AUTO_INCREMENT,
-    id BIGINT UNIQUE NOT NULL,
+    id BIGINT PRIMARY KEY NOT NULL,
 
     colour INTEGER NOT NULL,
     name TEXT NOT NULL
@@ -24,20 +27,20 @@ CREATE INDEX role_id ON role(id);
 CREATE TABLE user_role(
     pk INTEGER PRIMARY KEY NOT NULL AUTO_INCREMENT,
 
-    role BIGINT NOT NULL,
-    user BIGINT NOT NULL,
+    role_id BIGINT NOT NULL,
+    user_id BIGINT NOT NULL,
 
-    FOREIGN KEY(role) REFERENCES role(id),
-    FOREIGN KEY(user) REFERENCES user(id)
+    FOREIGN KEY(role_id) REFERENCES role(id),
+    FOREIGN KEY(user_id) REFERENCES user(id)
 );
 
 CREATE TABLE infraction(
-    pk INTEGER PRIMARY KEY NOT NULL AUTO_INCREMENT,
+    pk BIGINT PRIMARY KEY AUTO_INCREMENT,
 
     reason VARCHAR(1000) NOT NULL,
 
-    infractor BIGINT NOT NULL,
-    target BIGINT NOT NULL,
+    infractor_id BIGINT NOT NULL,
+    target_id BIGINT NOT NULL,
 
     created DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     expires DATETIME DEFAULT NULL,
@@ -45,6 +48,6 @@ CREATE TABLE infraction(
 
     infraction_type VARCHAR(50) as InfractionTypes NOT NULL,
 
-    FOREIGN KEY(infractor) REFERENCES user(id),
-    FOREIGN KEY(target) REFERENCES user(id)
+    FOREIGN KEY(infractor_id) REFERENCES user(id),
+    FOREIGN KEY(target_id) REFERENCES user(id)
 );

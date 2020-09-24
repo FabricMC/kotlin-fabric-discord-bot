@@ -1,0 +1,9 @@
+get: SELECT * FROM migration_version;
+
+set {
+    DELETE FROM migration_version
+        WHERE 1=1;
+
+    INSERT INTO migration_version(version)
+        VALUES (:version);
+}

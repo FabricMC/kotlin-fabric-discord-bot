@@ -1,15 +1,14 @@
-select {
+get:
     SELECT user.*, role.* FROM user
-    INNER JOIN user_role ON user.id = user_role.user
-    INNER JOIN role ON role.id = user_role.role
+    INNER JOIN user_role ON user.id = user_role.user_id
+    INNER JOIN role ON role.id = user_role.role_id
     WHERE user.id = :id;
-}
 
-selectAll {
+getAll:
     SELECT user.*, role.* FROM user
-    INNER JOIN user_role ON user.id = user_role.user
-    INNER JOIN role ON role.id = user_role.role;
-}
+    INNER JOIN user_role ON user.id = user_role.user_id
+    INNER JOIN role ON role.id = user_role.role_id;
+
 
 upsert {
     UPDATE user

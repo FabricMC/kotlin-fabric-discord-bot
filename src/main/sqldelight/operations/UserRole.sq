@@ -1,40 +1,35 @@
-select {
+get:
     SELECT user_role.* FROM user_role
     WHERE user_role.pk = :pk;
-}
 
-selectByRole {
+getByRole:
     SELECT user_role.* FROM user_role
-    WHERE user_role.role = :id;
-}
+    WHERE user_role.role_id = :id;
 
-selectByUser {
+getByUser:
     SELECT user_role.* FROM user_role
-    WHERE user_role.user = :id;
-}
+    WHERE user_role.user_id = :id;
 
-selectAll {
-    SELECT user_role.* FROM user_role;
-}
+getAll: SELECT user_role.* FROM user_role;
 
 upsert {
     UPDATE user_role
-    SET role = :role,
-        user = :user
+    SET role_id = :role_id,
+        user_id = :user_id
     WHERE pk = :pk;
 
-    INSERT OR IGNORE INTO user_role(role, user)
-        VALUES (:role, :user);
+    INSERT OR IGNORE INTO user_role(role_id, user_id)
+        VALUES (:role_id, :user_id);
 }
 
-delete {
+drop {
     DELETE FROM user_role WHERE pk = :pk;
 }
 
-deleteByRole {
-    DELETE FROM user_role WHERE role = :id;
+dropByRole {
+    DELETE FROM user_role WHERE role_id = :role_id;
 }
 
-deleteByUser {
-    DELETE FROM user_role WHERE user = :id;
+dropByUser {
+    DELETE FROM user_role WHERE user_id = :user_id;
 }

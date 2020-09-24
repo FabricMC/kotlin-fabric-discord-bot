@@ -1,55 +1,58 @@
-select {
-    SELECT infraction.*, user.* FROM infraction
-    INNER JOIN user ON user.id = infraction.infractor OR user.id = infraction.target
-    WHERE infraction.pk = :pk;
-}
+-- get:
+--     SELECT infraction.*, user.* FROM infraction
+--     INNER JOIN user ON user.id = infraction.infractor_id OR user.id = infraction.target_id
+--     WHERE infraction.pk = :pk;
 
-selectByInfractor {
-    SELECT infraction.*, user.* FROM infraction
-    INNER JOIN user ON user.id = infraction.infractor OR user.id = infraction.target
-    WHERE infraction.infractor = :id;
-}
+-- getAll:
+--     SELECT infraction.*, user.* FROM infraction
+--     INNER JOIN user ON user.id = infraction.infractor_id OR user.id = infraction.target_id;
 
-selectByInfractorActive {
-    SELECT infraction.*, user.* FROM infraction
-    INNER JOIN user ON user.id = infraction.infractor OR user.id = infraction.target
-    WHERE infraction.infractor = :id;
-}
+-- I have no idea what the hell is wrong tbh
 
-selectByInfractorInactive {
-    SELECT infraction.*, user.* FROM infraction
-    INNER JOIN user ON user.id = infraction.infractor OR user.id = infraction.target
-    WHERE infraction.infractor = :id;
-}
+-- getById:
+--     SELECT infraction.*, user.* FROM infraction
+--     INNER JOIN user ON user.id = infraction.infractor_id OR user.id = infraction.target_id
+--     WHERE infraction.id = :id;
 
-selectByUser {
-    SELECT infraction.*, user.* FROM infraction
-    INNER JOIN user ON user.id = infraction.infractor OR user.id = infraction.target
-    WHERE infraction.target = :id AND infraction.active = FALSE;
-}
+-- getAll:
+--     SELECT infraction.*, user.* FROM infraction
+--     INNER JOIN user ON user.id = infraction.infractor_id OR user.id = infraction.target_id;
 
-selectByUserActive {
+getByInfractor:
     SELECT infraction.*, user.* FROM infraction
-    INNER JOIN user ON user.id = infraction.infractor OR user.id = infraction.target
-    WHERE infraction.target = :id AND infraction.active = TRUE;
-}
+    INNER JOIN user ON user.id = infraction.infractor_id OR user.id = infraction.target_id
+    WHERE infraction.infractor_id = :id;
 
-selectByUserInactive {
+getByInfractorActive:
     SELECT infraction.*, user.* FROM infraction
-    INNER JOIN user ON user.id = infraction.infractor OR user.id = infraction.target
-    WHERE infraction.target = :id AND infraction.active = FALSE;
-}
+    INNER JOIN user ON user.id = infraction.infractor_id OR user.id = infraction.target_id
+    WHERE infraction.infractor_id = :id;
 
-selectAll {
+getByInfractorInactive:
     SELECT infraction.*, user.* FROM infraction
-    INNER JOIN user ON user.id = infraction.infractor OR user.id = infraction.target;
-}
+    INNER JOIN user ON user.id = infraction.infractor_id OR user.id = infraction.target_id
+    WHERE infraction.infractor_id = :id;
+
+getByUser:
+    SELECT infraction.*, user.* FROM infraction
+    INNER JOIN user ON user.id = infraction.infractor_id OR user.id = infraction.target_id
+    WHERE infraction.target_id = :id AND infraction.active = FALSE;
+
+getByUserActive:
+    SELECT infraction.*, user.* FROM infraction
+    INNER JOIN user ON user.id = infraction.infractor_id OR user.id = infraction.target_id
+    WHERE infraction.target_id = :id AND infraction.active = TRUE;
+
+getByUserInactive:
+    SELECT infraction.*, user.* FROM infraction
+    INNER JOIN user ON user.id = infraction.infractor_id OR user.id = infraction.target_id
+    WHERE infraction.target_id = :id AND infraction.active = FALSE;
 
 update {
     UPDATE infraction
     SET reason = :reason,
-        infractor = :infractor,
-        target = :target,
+        infractor_id = :infractor_id,
+        target_id = :target_id,
         created = :created,
         expires = :expires,
         active = :active,
@@ -57,7 +60,7 @@ update {
     WHERE pk = :pk;
 }
 
-insert {
-    INSERT OR IGNORE INTO infraction(reason, infractor, target, expires, active, infraction_type)
-        VALUES (:reason, :infractor, :target, :expires, :active, :infraction_type);
+add {
+    INSERT OR IGNORE INTO infraction(reason, infractor_id, target_id, expires, active, infraction_type)
+        VALUES (:reason, :infractor_id, :target_id, :expires, :active, :infraction_type);
 }
