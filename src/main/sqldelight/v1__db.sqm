@@ -1,6 +1,7 @@
+import net.fabricmc.bot.enums.InfractionTypes;
+
 CREATE TABLE user (
-    pk INTEGER PRIMARY KEY NOT NULL AUTO_INCREMENT,
-    id BIGINT UNIQUE NOT NULL,
+    id BIGINT PRIMARY KEY NOT NULL,
 
     avatarUrl TEXT NOT NULL,
     discriminator INTEGER NOT NULL,
@@ -28,4 +29,22 @@ CREATE TABLE user_role(
 
     FOREIGN KEY(role) REFERENCES role(id),
     FOREIGN KEY(user) REFERENCES user(id)
+);
+
+CREATE TABLE infraction(
+    pk INTEGER PRIMARY KEY NOT NULL AUTO_INCREMENT,
+
+    reason VARCHAR(1000) NOT NULL,
+
+    infractor BIGINT NOT NULL,
+    target BIGINT NOT NULL,
+
+    created DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    expires DATETIME DEFAULT NULL,
+    active BOOLEAN NOT NULL DEFAULT TRUE,
+
+    infraction_type VARCHAR(50) as InfractionTypes NOT NULL,
+
+    FOREIGN KEY(infractor) REFERENCES user(id),
+    FOREIGN KEY(target) REFERENCES user(id)
 );

@@ -7,10 +7,12 @@ import com.kotlindiscord.kord.extensions.ExtensibleBot
 import mu.KotlinLogging
 import net.fabricmc.bot.conf.buildInfo
 import net.fabricmc.bot.conf.config
+import net.fabricmc.bot.database.Migrator
 import net.fabricmc.bot.extensions.ModerationExtension
 
 /** The current instance of the bot. **/
 val bot = ExtensibleBot(prefix = config.prefix, token = config.token)
+
 /**
  * The main function. Every story has a beginning!
  */
@@ -18,6 +20,8 @@ suspend fun main() {
     val logger = KotlinLogging.logger {}
 
     logger.info { "Starting Fabric Discord Bot, version ${buildInfo.version}." }
+
+    Migrator.migrate()
 
     bot.addExtension(ModerationExtension::class)
     bot.start()

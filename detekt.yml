@@ -214,7 +214,7 @@ exceptions:
       - RuntimeException
 
 formatting:
-  active: true
+  active: false  # Right now, I can't get it to work with IDE settings
   android: false
   autoCorrect: false
   AnnotationOnSeparateLine:

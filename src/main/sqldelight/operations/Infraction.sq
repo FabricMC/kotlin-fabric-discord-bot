@@ -1,0 +1,63 @@
+select {
+    SELECT infraction.*, user.* FROM infraction
+    INNER JOIN user ON user.id = infraction.infractor OR user.id = infraction.target
+    WHERE infraction.pk = :pk;
+}
+
+selectByInfractor {
+    SELECT infraction.*, user.* FROM infraction
+    INNER JOIN user ON user.id = infraction.infractor OR user.id = infraction.target
+    WHERE infraction.infractor = :id;
+}
+
+selectByInfractorActive {
+    SELECT infraction.*, user.* FROM infraction
+    INNER JOIN user ON user.id = infraction.infractor OR user.id = infraction.target
+    WHERE infraction.infractor = :id;
+}
+
+selectByInfractorInactive {
+    SELECT infraction.*, user.* FROM infraction
+    INNER JOIN user ON user.id = infraction.infractor OR user.id = infraction.target
+    WHERE infraction.infractor = :id;
+}
+
+selectByUser {
+    SELECT infraction.*, user.* FROM infraction
+    INNER JOIN user ON user.id = infraction.infractor OR user.id = infraction.target
+    WHERE infraction.target = :id AND infraction.active = FALSE;
+}
+
+selectByUserActive {
+    SELECT infraction.*, user.* FROM infraction
+    INNER JOIN user ON user.id = infraction.infractor OR user.id = infraction.target
+    WHERE infraction.target = :id AND infraction.active = TRUE;
+}
+
+selectByUserInactive {
+    SELECT infraction.*, user.* FROM infraction
+    INNER JOIN user ON user.id = infraction.infractor OR user.id = infraction.target
+    WHERE infraction.target = :id AND infraction.active = FALSE;
+}
+
+selectAll {
+    SELECT infraction.*, user.* FROM infraction
+    INNER JOIN user ON user.id = infraction.infractor OR user.id = infraction.target;
+}
+
+update {
+    UPDATE infraction
+    SET reason = :reason,
+        infractor = :infractor,
+        target = :target,
+        created = :created,
+        expires = :expires,
+        active = :active,
+        infraction_type = :infraction_type
+    WHERE pk = :pk;
+}
+
+insert {
+    INSERT OR IGNORE INTO infraction(reason, infractor, target, expires, active, infraction_type)
+        VALUES (:reason, :infractor, :target, :expires, :active, :infraction_type);
+}

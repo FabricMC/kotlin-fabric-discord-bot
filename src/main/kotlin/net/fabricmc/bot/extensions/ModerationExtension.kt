@@ -31,9 +31,9 @@ class ModerationExtension(bot: ExtensibleBot) : Extension(bot) {
      * @param channel Channel to set the slowmode interval in.
      **/
     data class SlowmodeArgs(
-        val durationInt: Int? = null,
-        val duration: Duration<IsoUnit>? = null,
-        val channel: Channel? = null
+            val durationInt: Int? = null,
+            val duration: Duration<IsoUnit>? = null,
+            val channel: Channel? = null
     )
 
     override suspend fun setup() {
@@ -46,13 +46,14 @@ class ModerationExtension(bot: ExtensibleBot) : Extension(bot) {
                 
                 By default, this comment will use the current channel - specify one after the duration
                 to target that channel instead.
-
+    
                 Omit the duration or set it to `0s` to disable.
             """.trimIndent()
 
             signature = "[duration] [channel]"
 
-            check(::defaultCheck,
+            check(
+                    ::defaultCheck,
                     topRoleHigherOrEqual(config.getRole(Roles.MODERATOR))
             )
 
@@ -60,7 +61,7 @@ class ModerationExtension(bot: ExtensibleBot) : Extension(bot) {
                 with(parse<SlowmodeArgs>()) {
                     if (this.duration != null && this.durationInt != null) {
                         message.channel.createMessage(
-                            "${message.author!!.mention} Provide an integer or a duration with units, not both."
+                                "${message.author!!.mention} Provide an integer or a duration with units, not both."
                         )
 
                         return@action
@@ -70,7 +71,7 @@ class ModerationExtension(bot: ExtensibleBot) : Extension(bot) {
 
                     if (duration > SLOWMODE_LIMIT) {
                         message.channel.createMessage(
-                            "${message.author!!.mention} Duration should be no longer than 6 hours."
+                                "${message.author!!.mention} Duration should be no longer than 6 hours."
                         )
 
                         return@action

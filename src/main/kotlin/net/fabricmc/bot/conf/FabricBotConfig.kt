@@ -4,11 +4,13 @@ import com.gitlab.kordlib.common.entity.Snowflake
 import com.gitlab.kordlib.core.entity.Guild
 import com.gitlab.kordlib.core.entity.Role
 import com.gitlab.kordlib.core.entity.channel.Channel
+import com.squareup.sqldelight.sqlite.driver.JdbcDriver
 import com.squareup.sqldelight.sqlite.driver.asJdbcDriver
 import com.uchuhimo.konf.Config
 import com.uchuhimo.konf.Feature
 import com.uchuhimo.konf.source.toml
 import com.zaxxer.hikari.HikariConfig
+import com.zaxxer.hikari.HikariDataSource
 import net.fabricmc.bot.MissingChannelException
 import net.fabricmc.bot.MissingGuildException
 import net.fabricmc.bot.MissingRoleException
@@ -17,7 +19,8 @@ import net.fabricmc.bot.conf.spec.BotSpec
 import net.fabricmc.bot.conf.spec.ChannelsSpec
 import net.fabricmc.bot.conf.spec.DBSpec
 import net.fabricmc.bot.conf.spec.RolesSpec
-import net.fabricmc.bot.database.Database
+import net.fabricmc.bot.database.FabricBotDB
+import net.fabricmc.bot.database.infractionTypeAdaptor
 import net.fabricmc.bot.enums.Channels
 import net.fabricmc.bot.enums.Roles
 import java.io.File
@@ -44,8 +47,11 @@ class FabricBotConfig {
 
     private val dbConfig = HikariConfig()
 
+    /** JDBC driver for database. **/
+    lateinit var dbDriver: JdbcDriver
+
     /** SQLDelight Database instance. **/
-    val db by lazy { Database(dbConfig.dataSource.asJdbcDriver()) }
+    val db by lazy { FabricBotDB(dbDriver, infractionTypeAdaptor) }
 
     init {
         if (File("config.toml").exists()) {
@@ -56,6 +62,10 @@ class FabricBotConfig {
 
         dbConfig.username = config[DBSpec.username]
         dbConfig.password = config[DBSpec.password]
+
+        dbConfig.dataSource = HikariDataSource(dbConfig)
+
+        dbDriver = dbConfig.dataSource.asJdbcDriver()
     }
 
     /**

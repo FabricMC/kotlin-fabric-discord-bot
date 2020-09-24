@@ -23,7 +23,7 @@ suspend fun defaultCheck(event: Event): Boolean {
     val message = messageFor(event)?.asMessage()
 
     return when {
-        message == null                                -> {
+        message == null -> {
             logger.debug { "Failing check: Message for event $event is null. This type of event may not be supported." }
             false
         }
@@ -33,22 +33,22 @@ suspend fun defaultCheck(event: Event): Boolean {
             false
         }
 
-        message.author == null                         -> {
+        message.author == null -> {
             logger.debug { "Failing check: Message sent by a webhook or system message" }
             false
         }
 
-        message.author!!.id == bot.kord.getSelf().id   -> {
+        message.author!!.id == bot.kord.getSelf().id -> {
             logger.debug { "Failing check: We sent this message" }
             false
         }
 
-        message.author!!.isBot == true                 -> {
+        message.author!!.isBot == true -> {
             logger.debug { "Failing check: This message was sent by another bot" }
             false
         }
 
-        else                                           -> {
+        else -> {
             logger.debug { "Passing check" }
             true
         }
@@ -66,7 +66,7 @@ suspend fun inBotChannel(event: Event): Boolean {
     val channel = channelFor(event)
 
     return when {
-        channel == null                                           -> {
+        channel == null -> {
             logger.debug { "Failing check: Channel is null" }
             false
         }
@@ -76,7 +76,7 @@ suspend fun inBotChannel(event: Event): Boolean {
             false
         }
 
-        else                                                      -> {
+        else -> {
             logger.debug { "Passing check" }
             true
         }
@@ -103,7 +103,7 @@ suspend fun isNotBot(event: Event): Boolean {
     val user = userFor(event)
 
     return when {
-        user == null                -> {
+        user == null -> {
             logger.debug { "Passing check: User for event $event is null." }
             true
         }
@@ -113,7 +113,7 @@ suspend fun isNotBot(event: Event): Boolean {
             false
         }
 
-        else                        -> {
+        else -> {
             logger.debug { "Passing check." }
             true
         }

@@ -22,8 +22,3 @@ upsert {
     INSERT OR IGNORE INTO user(id, avatarUrl, discriminator, present, username)
         VALUES (:id, :avatarUrl, :discriminator, :present, :username);
 }
-
-delete {
-    DELETE FROM user_role WHERE user = :id;
-    DELETE FROM user WHERE id = :id;
-}
