@@ -9,6 +9,7 @@ import net.fabricmc.bot.conf.buildInfo
 import net.fabricmc.bot.conf.config
 import net.fabricmc.bot.database.Migrator
 import net.fabricmc.bot.extensions.ModerationExtension
+import net.fabricmc.bot.extensions.VersionCheckExtension
 
 /** The current instance of the bot. **/
 val bot = ExtensibleBot(prefix = config.prefix, token = config.token)
@@ -24,5 +25,6 @@ suspend fun main() {
     Migrator.migrate()
 
     bot.addExtension(ModerationExtension::class)
+    bot.addExtension(VersionCheckExtension::class)
     bot.start()
 }

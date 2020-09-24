@@ -286,7 +286,7 @@ formatting:
     active: true
     autoCorrect: false
   NoWildcardImports:
-    active: false
+    active: true
   PackageName:
     active: true
     autoCorrect: false

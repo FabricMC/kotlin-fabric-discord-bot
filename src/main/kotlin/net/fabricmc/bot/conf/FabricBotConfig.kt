@@ -4,6 +4,7 @@ import com.gitlab.kordlib.common.entity.Snowflake
 import com.gitlab.kordlib.core.entity.Guild
 import com.gitlab.kordlib.core.entity.Role
 import com.gitlab.kordlib.core.entity.channel.Channel
+import com.gitlab.kordlib.core.entity.channel.TextChannel
 import com.squareup.sqldelight.sqlite.driver.JdbcDriver
 import com.squareup.sqldelight.sqlite.driver.asJdbcDriver
 import com.uchuhimo.konf.Config
@@ -15,10 +16,7 @@ import net.fabricmc.bot.MissingChannelException
 import net.fabricmc.bot.MissingGuildException
 import net.fabricmc.bot.MissingRoleException
 import net.fabricmc.bot.bot
-import net.fabricmc.bot.conf.spec.BotSpec
-import net.fabricmc.bot.conf.spec.ChannelsSpec
-import net.fabricmc.bot.conf.spec.DBSpec
-import net.fabricmc.bot.conf.spec.RolesSpec
+import net.fabricmc.bot.conf.spec.*
 import net.fabricmc.bot.database.FabricBotDB
 import net.fabricmc.bot.database.infractionTypeAdaptor
 import net.fabricmc.bot.enums.Channels
@@ -40,7 +38,13 @@ import java.io.File
  * The currently-loaded configuration is always available at the [config] property.
  */
 class FabricBotConfig {
-    private var config = Config { addSpec(BotSpec); addSpec(ChannelsSpec); addSpec(DBSpec); addSpec(RolesSpec) }
+    private var config = Config {
+        addSpec(BotSpec)
+        addSpec(ChannelsSpec)
+        addSpec(DBSpec)
+        addSpec(RolesSpec)
+        addSpec(LiveUpdatesSpec)
+    }
             .from.enabled(Feature.FAIL_ON_UNKNOWN_PATH).toml.resource("default.toml")
             .from.env()
             .from.systemProperties()
@@ -140,6 +144,18 @@ class FabricBotConfig {
     @Throws(MissingGuildException::class)
     suspend fun getGuild(): Guild =
             bot.kord.getGuild(guildSnowflake) ?: throw MissingGuildException(guildSnowflake.longValue)
+
+    /**
+     * Get the list of channels Jira updates should be sent to.
+     */
+    suspend fun getJiraUpdateChannels(): List<TextChannel> =
+        config[LiveUpdatesSpec.jiraChannels].mapNotNull { bot.kord.getChannel(Snowflake(it)) as? TextChannel}
+
+    /**
+     * Get the list of channels Minecraft updates should be sent to.
+     */
+    suspend fun getMinecraftUpdateChannels(): List<TextChannel> =
+        config[LiveUpdatesSpec.minecraftChannels].mapNotNull { bot.kord.getChannel(Snowflake(it)) as? TextChannel }
 }
 
 /**
