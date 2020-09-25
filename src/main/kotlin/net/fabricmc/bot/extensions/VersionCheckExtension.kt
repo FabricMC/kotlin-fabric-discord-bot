@@ -17,7 +17,7 @@ import net.fabricmc.bot.conf.config
 import net.fabricmc.bot.defaultCheck
 import net.fabricmc.bot.enums.Roles
 
-private const val UPDATE_CHECK_DELAY = 1000L * 60L * 5L
+private const val UPDATE_CHECK_DELAY = 1000L * 30L  // 30 seconds, consider kotlin.time when it's not experimental
 
 /**
  * Automatic updates on new Minecraft versions, in Jira and launchermeta.
