@@ -56,9 +56,10 @@ later sources overriding earlier ones:
 * ROLES_NO_REQUESTS = The ID of the requests=muted role
 * ROLES_NO_SUPPORT = The ID of the support-muted role
 
+* LIVE_UPDATES_MINECRAFT_CHANNELS = A comma separated list of discord channels to send minecraft version updates to
+* LIVE_UPDATES_JIRA_CHANNELS = A comma separated list of discord channels to send JIRA version updates to
+
 ## Stuff from the old bot
 
 * GITHUB_TOKEN = The github personal access token, with admin:org permission
 * GITHUB_ORG = The target github organisation for the github commands.
-* DISCORD_MINECRAFT_CHANNELS = A comma separated list of discord channels to send minecraft version updates to
-* DISCORD_JIRA_CHANNELS = A comma separated list of discord channels to send JIRA version updates to
