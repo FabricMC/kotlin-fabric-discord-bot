@@ -8,6 +8,7 @@ import mu.KotlinLogging
 import net.fabricmc.bot.conf.buildInfo
 import net.fabricmc.bot.conf.config
 import net.fabricmc.bot.database.Migrator
+import net.fabricmc.bot.extensions.InfractionsExtension
 import net.fabricmc.bot.extensions.ModerationExtension
 import net.fabricmc.bot.extensions.VersionCheckExtension
 
@@ -24,6 +25,7 @@ suspend fun main() {
 
     Migrator.migrate()
 
+    bot.addExtension(InfractionsExtension::class)
     bot.addExtension(ModerationExtension::class)
     bot.addExtension(VersionCheckExtension::class)
     bot.start()

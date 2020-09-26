@@ -22,14 +22,14 @@ upsertUserRole {
         VALUES (:role_id, :user_id);
 }
 
-dropUserRole {
+dropUserRole:
     DELETE FROM user_role WHERE pk = :pk;
-}
 
-dropUserRoleByRole {
+
+dropUserRoleByRole:
     DELETE FROM user_role WHERE role_id = :role_id;
-}
 
-dropUserRoleByUser {
+
+dropUserRoleByUser:
     DELETE FROM user_role WHERE user_id = :user_id;
-}
+

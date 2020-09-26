@@ -7,10 +7,8 @@ import com.gitlab.kordlib.core.entity.Role
 import com.gitlab.kordlib.core.entity.User
 import com.gitlab.kordlib.rest.request.RestRequestException
 import io.ktor.http.HttpStatusCode
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.toList
-import kotlinx.coroutines.launch
 import mu.KotlinLogging
 import net.fabricmc.bot.conf.config
 import net.fabricmc.bot.enums.Roles
@@ -141,3 +139,15 @@ fun Duration<IsoUnit>.toSeconds(): Long {
 
     return seconds
 }
+
+/**
+ * Run a block of code within a coroutine scope, defined by a given dispatcher.
+ *
+ * This is intended for use with code that normally isn't designed to be run within a coroutine, such as
+ * database actions.
+ *
+ * @param dispatcher The dispatcher to use - defaults to [Dispatchers.IO].
+ * @param body The block of code to be run.
+ */
+suspend fun <T> runSuspended(dispatcher: CoroutineDispatcher = Dispatchers.IO, body: suspend CoroutineScope.() -> T) =
+        withContext(dispatcher, body)

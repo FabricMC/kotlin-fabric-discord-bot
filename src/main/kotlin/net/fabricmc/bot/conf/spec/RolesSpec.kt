@@ -16,4 +16,16 @@ object RolesSpec : ConfigSpec() {
 
     /** Configured muted role ID. **/
     val muted by required<Long>()
+
+    /** Configured meta-muted role ID. **/
+    val noMeta by required<Long>()
+
+    /** Configured reactions-muted role ID. **/
+    val noReactions by required<Long>()
+
+    /** Configured requests-muted role ID. **/
+    val noRequests by required<Long>()
+
+    /** Configured support-muted role ID. **/
+    val noSupport by required<Long>()
 }

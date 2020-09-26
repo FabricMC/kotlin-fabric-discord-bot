@@ -1,14 +1,3 @@
--- get:
---     SELECT infraction.*, user.* FROM infraction
---     INNER JOIN user ON user.id = infraction.infractor_id OR user.id = infraction.target_id
---     WHERE infraction.pk = :pk;
-
--- getAll:
---     SELECT infraction.*, user.* FROM infraction
---     INNER JOIN user ON user.id = infraction.infractor_id OR user.id = infraction.target_id;
-
--- I have no idea what the hell is wrong tbh
-
 getInfraction:
     SELECT infraction.*, user.* FROM infraction
     INNER JOIN user ON user.id = infraction.infractor_id OR user.id = infraction.target_id
@@ -18,37 +7,20 @@ getAllInfractions:
     SELECT infraction.*, user.* FROM infraction
     INNER JOIN user ON user.id = infraction.infractor_id OR user.id = infraction.target_id;
 
-getInfractionByInfractor:
+getInfractionsByInfractor:
     SELECT infraction.*, user.* FROM infraction
     INNER JOIN user ON user.id = infraction.infractor_id OR user.id = infraction.target_id
     WHERE infraction.infractor_id = :id;
 
-getInfractionByInfractorActive:
-    SELECT infraction.*, user.* FROM infraction
-    INNER JOIN user ON user.id = infraction.infractor_id OR user.id = infraction.target_id
-    WHERE infraction.infractor_id = :id;
-
-getInfractionByInfractorInactive:
-    SELECT infraction.*, user.* FROM infraction
-    INNER JOIN user ON user.id = infraction.infractor_id OR user.id = infraction.target_id
-    WHERE infraction.infractor_id = :id;
-
-getInfractionByUser:
+getInfractionsByUser:
     SELECT infraction.*, user.* FROM infraction
     INNER JOIN user ON user.id = infraction.infractor_id OR user.id = infraction.target_id
     WHERE infraction.target_id = :id AND infraction.active = FALSE;
 
-getInfractionByUserActive:
-    SELECT infraction.*, user.* FROM infraction
-    INNER JOIN user ON user.id = infraction.infractor_id OR user.id = infraction.target_id
-    WHERE infraction.target_id = :id AND infraction.active = TRUE;
+getLastInfraction:
+    SELECT * FROM infraction ORDER BY created DESC LIMIT 1;
 
-getInfractionByUserInactive:
-    SELECT infraction.*, user.* FROM infraction
-    INNER JOIN user ON user.id = infraction.infractor_id OR user.id = infraction.target_id
-    WHERE infraction.target_id = :id AND infraction.active = FALSE;
-
-updateInfraction {
+updateInfraction:
     UPDATE infraction
     SET reason = :reason,
         infractor_id = :infractor_id,
@@ -58,9 +30,7 @@ updateInfraction {
         active = :active,
         infraction_type = :infraction_type
     WHERE id = :id;
-}
 
-addInfraction {
-    INSERT OR IGNORE INTO infraction(reason, infractor_id, target_id, expires, active, infraction_type)
+addInfraction :
+    INSERT INTO infraction(reason, infractor_id, target_id, expires, active, infraction_type)
         VALUES (:reason, :infractor_id, :target_id, :expires, :active, :infraction_type);
-}

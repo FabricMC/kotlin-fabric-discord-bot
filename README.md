@@ -51,6 +51,11 @@ later sources overriding earlier ones:
 * ROLES_MOD = The ID of the moderator role
 * ROLES_MUTED = The ID of the muted role
 
+* ROLES_NO_META = The ID of the meta-muted role
+* ROLES_NO_REACTIONS = The ID of the reactions-muted role
+* ROLES_NO_REQUESTS = The ID of the requests=muted role
+* ROLES_NO_SUPPORT = The ID of the support-muted role
+
 ## Stuff from the old bot
 
 * GITHUB_TOKEN = The github personal access token, with admin:org permission

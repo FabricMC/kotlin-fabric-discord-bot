@@ -10,4 +10,9 @@ enum class Roles(val value: String) {
     MODERATOR("Moderator"),
 
     MUTED("Muted"),
+
+    NO_META("No Meta"),
+    NO_REACTIONS("No Reactions"),
+    NO_REQUESTS("No Requests"),
+    NO_SUPPORT("No Support"),
 }
