@@ -1,7 +1,9 @@
 package net.fabricmc.bot.commands
 
 import com.gitlab.kordlib.common.entity.Snowflake
+import com.gitlab.kordlib.core.behavior.channel.MessageChannelBehavior
 import com.gitlab.kordlib.core.behavior.channel.createEmbed
+import com.gitlab.kordlib.core.entity.Message
 import com.gitlab.kordlib.core.entity.User
 import com.gitlab.kordlib.core.event.message.MessageCreateEvent
 import com.gitlab.kordlib.rest.request.RestRequestException
@@ -13,6 +15,7 @@ import mu.KotlinLogging
 import net.fabricmc.bot.bot
 import net.fabricmc.bot.conf.config
 import net.fabricmc.bot.constants.Colours
+import net.fabricmc.bot.database.Infraction
 import net.fabricmc.bot.defaultCheck
 import net.fabricmc.bot.enums.InfractionTypes
 import net.fabricmc.bot.enums.Roles
@@ -78,180 +81,146 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
 ) : Command(extension) {
     private val queries = config.db.infractionQueries
 
-    private val commandBody: suspend CommandContext.() -> Unit = body@{
+    private val commandBody: suspend CommandContext.() -> Unit = {
         if (type.expires) {
             val args = parse<ExpiringCommandArgs>()
 
-            if (args.member != null && args.memberLong != null) {
-                message.channel.createMessage(
-                        "${message.author!!.mention} Please specify exactly one user argument, not two."
-                )
-
-                return@body
-            }
-
-            if (args.member == null && args.memberLong == null) {
-                message.channel.createMessage(
-                        "${message.author!!.mention} Please specify a user to apply this infraction to."
-                )
-
-                return@body
-            }
-
-            val memberId = args.member?.id?.longValue ?: args.memberLong!!
-
-            if (type.requirePresent && config.getGuild().getMemberOrNull(Snowflake(memberId)) == null) {
-                message.channel.createMessage(
-                        "${message.author!!.mention} The specified user is not present on the server."
-                )
-
-                return@body
-            }
-
-            val reason = args.reason.joinToString(", ")
-
-            val now = PlainTimestamp.nowInSystemTime()
-            val expires = if (args.duration != Duration.ofZero<IsoUnit>()) {
-                now.plus(args.duration)
-            } else {
-                now.plus(args.duration)
-            }
-
-            val infraction = runSuspended {
-                queries.addInfraction(
-                        reason, message.author!!.id.longValue, memberId, expires?.print(mySqlTimeFormatter),
-                        true, type
-                )
-
-                queries.getLastInfraction().executeAsOne()
-            }
-
-            val messageText = if (expires != null) {
-                "<@!${infraction.target_id}> has been " +
-                        "${type.actionText} until ${formatTimestamp(expires)}.\n\n" +
-                        "Reason: ${infraction.reason}"
-            } else {
-                "<@!${infraction.target_id}> has been permanently" +
-                        "${type.actionText}.\n\n" +
-                        "Reason: ${infraction.reason}"
-            }
-
-            if (type.relay) {
-                try {
-                    val targetObj = bot.kord.getUser(Snowflake(memberId))
-
-                    targetObj?.getDmChannel()?.createEmbed {
-                        color = Colours.NEGATIVE
-                        title = type.actionText.capitalize() + "!"
-
-                        description = if (expires != null) {
-                            "You have been " +
-                                    "${type.actionText} until ${formatTimestamp(expires)}.\n\n" +
-                                    "Reason: ${infraction.reason}"
-                        } else {
-                            "You have been permanently" +
-                                    "${type.actionText}.\n\n" +
-                                    "Reason: ${infraction.reason}"
-                        }
-
-                        footer {
-                            text = "Infraction ID: ${infraction.target_id}"
-                        }
-                    }
-                } catch (e: RestRequestException) {
-                    logger.debug(e) { "Unable to DM user with ID $memberId, they're probably not in the guild." }
-                }
-            }
-
-            infrAction.invoke(this, Snowflake(memberId), reason)
-
-            message.channel.createEmbed {
-                color = Colours.POSITIVE
-                title = "Infraction created: ${infraction.id}"
-
-                description = messageText
-
-                footer {
-                    text = "User ID: ${infraction.target_id}"
-                }
-            }
+            applyInfraction(
+                    args.member,
+                    args.memberLong,
+                    args.duration,
+                    args.reason.joinToString(", "),
+                    message,
+                    this)
         } else {
             val args = parse<NonExpiringCommandArgs>()
 
-            if (args.member != null && args.memberLong != null) {
-                message.channel.createMessage(
-                        "${message.author!!.mention} Please specify exactly one user argument, not two."
-                )
+            applyInfraction(
+                    args.member,
+                    args.memberLong,
+                    null,
+                    args.reason.joinToString(", "),
+                    message,
+                    this
+            )
+        }
+    }
 
-                return@body
+    private fun formatTimestamp(ts: PlainTimestamp): String = ts.print(timeFormatter)
+
+    private fun getMemberId(member: User?, id: Long?) =
+            if (member == null && id == null) {
+                Pair(null, "Please specify a user to apply this infraction to.")
+            } else if (member != null && id != null) {
+                Pair(null, "Please specify exactly one user argument, not two.")
+            } else {
+                Pair(member?.id?.longValue ?: id!!, null)
             }
 
-            if (args.member == null && args.memberLong == null) {
-                message.channel.createMessage(
-                        "${message.author!!.mention} Please specify a user to apply this infraction to."
-                )
-
-                return@body
+    private suspend fun getUserMissingMessage(id: Long) =
+            if (!type.requirePresent) {
+                null
+            } else if (config.getGuild().getMemberOrNull(Snowflake(id)) == null) {
+                "The specified user is not present on the server."
+            } else {
+                null
             }
 
-            val memberId = args.member?.id?.longValue ?: args.memberLong!!
+    private fun getInfractionMessage(public: Boolean, infraction: Infraction, expires: PlainTimestamp?): String {
+        var message = if (public) {
+            "<@!${infraction.target_id}> has been "
+        } else {
+            "You have been "
+        }
 
-            if (type.requirePresent && config.getGuild().getMemberOrNull(Snowflake(memberId)) == null) {
-                message.channel.createMessage(
-                        "${message.author!!.mention} The specified user is not present on the server."
-                )
+        message += if (expires == null) {
+            "${type.actionText}."
+        } else {
+            "${type.actionText} until ${formatTimestamp(expires)}."
+        }
 
-                return@body
-            }
+        message += if (type == InfractionTypes.NOTE) {
+            "Message: ${infraction.reason}"
+        } else {
+            "Reason: ${infraction.reason}"
+        }
 
-            val reason = args.reason.joinToString(", ")
+        return message
+    }
 
-            val infraction = runSuspended {
-                queries.addInfraction(reason, message.author!!.id.longValue, memberId, null, true, type)
-                queries.getLastInfraction().executeAsOne()
-            }
+    private suspend fun relayInfraction(infraction: Infraction, expires: PlainTimestamp?) {
+        if (type.relay) {
+            try {
+                val targetObj = bot.kord.getUser(Snowflake(infraction.target_id))
 
-            val messageText = "<@!${infraction.target_id}> has been." +
-                    "\n\n" +
-                    "Reason: ${infraction.reason}"
+                targetObj?.getDmChannel()?.createEmbed {
+                    color = Colours.NEGATIVE
+                    title = type.actionText.capitalize() + "!"
 
-            if (type.relay) {
-                try {
-                    val targetObj = bot.kord.getUser(Snowflake(memberId))
+                    description = getInfractionMessage(true, infraction, expires)
 
-                    targetObj?.getDmChannel()?.createEmbed {
-                        color = Colours.NEGATIVE
-                        title = type.actionText.capitalize() + "!"
-
-                        description = "You have been " +
-                                "${type.actionText}.\n\n" +
-                                "Reason: ${infraction.reason}"
-
-                        footer {
-                            text = "Infraction ID: ${infraction.target_id}"
-                        }
+                    footer {
+                        text = "Infraction ID: ${infraction.target_id}"
                     }
-                } catch (e: RestRequestException) {
-                    logger.debug(e) { "Unable to DM user with ID $memberId, they're probably not in the guild." }
                 }
-            }
-
-            infrAction.invoke(this, Snowflake(memberId), reason)
-
-            message.channel.createEmbed {
-                color = Colours.POSITIVE
-                title = "Infraction created: ${infraction.id}"
-
-                description = messageText
-
-                footer {
-                    text = "User ID: ${infraction.target_id}"
+            } catch (e: RestRequestException) {
+                logger.debug(e) {
+                    "Unable to DM user with ID ${infraction.target_id}, they're probably not in the guild."
                 }
             }
         }
     }
 
-    private fun formatTimestamp(ts: PlainTimestamp): String = ts.print(timeFormatter)
+    private suspend fun sendInfractionToChannel(channel: MessageChannelBehavior, infraction: Infraction,
+                                                expires: PlainTimestamp?) {
+        channel.createEmbed {
+            color = Colours.POSITIVE
+            title = "Infraction created: ${infraction.id}"
+
+            description = getInfractionMessage(false, infraction, expires)
+
+            footer {
+                text = "User ID: ${infraction.target_id}"
+            }
+        }
+    }
+
+    private suspend fun applyInfraction(memberObj: User?, memberLong: Long?, duration: Duration<IsoUnit>?,
+                                        reason: String, message: Message, context: CommandContext) {
+        val author = message.author!!
+        val (memberId, memberMessage) = getMemberId(memberObj, memberLong)
+
+        if (memberId == null) {
+            message.channel.createMessage("${author.mention} $memberMessage")
+            return
+        }
+
+        val memberMissingMessage = getUserMissingMessage(memberId)
+
+        if (memberMissingMessage != null) {
+            message.channel.createMessage("${author.mention} $memberMissingMessage")
+            return
+        }
+
+        val expires = if (duration != Duration.ofZero<IsoUnit>()) {
+            PlainTimestamp.nowInSystemTime().plus(duration)
+        } else {
+            null
+        }
+
+        val infraction = runSuspended {
+            queries.addInfraction(
+                    reason, author.id.longValue, memberId, expires?.print(mySqlTimeFormatter),  // null for forever
+                    true, type
+            )
+
+            queries.getLastInfraction().executeAsOne()
+        }
+
+        relayInfraction(infraction, expires)
+        infrAction.invoke(context, Snowflake(memberId), reason)
+        sendInfractionToChannel(message.channel, infraction, expires)
+    }
 
     override val checkList: MutableList<suspend (MessageCreateEvent) -> Boolean> = mutableListOf(
             ::defaultCheck,
