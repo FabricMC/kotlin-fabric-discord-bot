@@ -1,15 +1,15 @@
 getRole: SELECT role.* FROM role WHERE role.id = :id;
 getAllRoles: SELECT role.* FROM role;
 
-upsertRole {
+insertRole:
+    INSERT INTO role(id, colour, name)
+        VALUES (:id, :colour, :name);
+
+updateRole:
     UPDATE role
     SET colour = :colour,
         name = :name
     WHERE id = :id;
-
-    INSERT OR IGNORE INTO role(id, colour, name)
-        VALUES (:id, :colour, :name);
-}
 
 dropRole {
     DELETE FROM user_role WHERE role_id = :id;

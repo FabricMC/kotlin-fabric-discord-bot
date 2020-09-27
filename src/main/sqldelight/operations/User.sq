@@ -1,16 +1,17 @@
 getUser:
-    SELECT user.*, role.* FROM user
-    INNER JOIN user_role ON user.id = user_role.user_id
-    INNER JOIN role ON role.id = user_role.role_id
-    WHERE user.id = :id;
+    SELECT * FROM user
+--     SELECT user.*, role.* FROM user
+--     INNER JOIN user_role ON user.id = user_role.user_id
+--     INNER JOIN role ON role.id = user_role.role_id
+    WHERE id = :id;
 
 getAllUsers:
-    SELECT user.*, role.* FROM user
-    INNER JOIN user_role ON user.id = user_role.user_id
-    INNER JOIN role ON role.id = user_role.role_id;
+    SELECT * FROM user;
+--     SELECT user.*, role.* FROM user
+--     INNER JOIN user_role ON user.id = user_role.user_id
+--     INNER JOIN role ON role.id = user_role.role_id;
 
-
-upsertUser {
+updateUser:
     UPDATE user
     SET avatarUrl = :avatarUrl,
         discriminator = :discriminator,
@@ -18,6 +19,6 @@ upsertUser {
         username = :username
     WHERE id = :id;
 
-    INSERT OR IGNORE INTO user(id, avatarUrl, discriminator, present, username)
-        VALUES (:id, :avatarUrl, :discriminator, :present, :username);
-}
+insertUser:
+    INSERT INTO user(id, avatarUrl, discriminator, present, username)
+            VALUES (:id, :avatarUrl, :discriminator, :present, :username);

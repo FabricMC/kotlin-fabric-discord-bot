@@ -1,21 +1,25 @@
 getInfraction:
-    SELECT infraction.*, user.* FROM infraction
-    INNER JOIN user ON user.id = infraction.infractor_id OR user.id = infraction.target_id
-    WHERE infraction.id = :id;
+    SELECT * FROM infraction
+--     SELECT infraction.*, user.* FROM infraction
+--     INNER JOIN user ON user.id = infraction.infractor_id OR user.id = infraction.target_id
+    WHERE id = :id;
 
 getAllInfractions:
-    SELECT infraction.*, user.* FROM infraction
-    INNER JOIN user ON user.id = infraction.infractor_id OR user.id = infraction.target_id;
+    SELECT * FROM infraction;
+--     SELECT infraction.*, user.* FROM infraction;
+--     INNER JOIN user ON user.id = infraction.infractor_id OR user.id = infraction.target_id;
 
 getInfractionsByInfractor:
-    SELECT infraction.*, user.* FROM infraction
-    INNER JOIN user ON user.id = infraction.infractor_id OR user.id = infraction.target_id
-    WHERE infraction.infractor_id = :id;
+    SELECT * FROM infraction
+--     SELECT infraction.*, user.* FROM infraction
+--     INNER JOIN user ON user.id = infraction.infractor_id OR user.id = infraction.target_id
+    WHERE infractor_id = :id;
 
 getInfractionsByUser:
-    SELECT infraction.*, user.* FROM infraction
-    INNER JOIN user ON user.id = infraction.infractor_id OR user.id = infraction.target_id
-    WHERE infraction.target_id = :id AND infraction.active = FALSE;
+    SELECT * FROM infraction
+--     SELECT infraction.*, user.* FROM infraction
+--     INNER JOIN user ON user.id = infraction.infractor_id OR user.id = infraction.target_id
+    WHERE target_id = :id AND active = FALSE;
 
 getLastInfraction:
     SELECT * FROM infraction ORDER BY created DESC LIMIT 1;

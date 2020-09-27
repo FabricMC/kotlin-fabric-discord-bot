@@ -12,24 +12,18 @@ getUserRoleByUser:
 
 getAllUserRoles: SELECT user_role.* FROM user_role;
 
-upsertUserRole {
-    UPDATE user_role
-    SET role_id = :role_id,
-        user_id = :user_id
-    WHERE pk = :pk;
-
-    INSERT OR IGNORE INTO user_role(role_id, user_id)
+insertUserRole:
+    INSERT INTO user_role(role_id, user_id)
         VALUES (:role_id, :user_id);
-}
 
 dropUserRole:
-    DELETE FROM user_role WHERE pk = :pk;
+    DELETE FROM user_role WHERE role_id = :role_id AND user_id = :user_id;
 
+dropUserRolePk:
+    DELETE FROM user_role WHERE pk = :pk;
 
 dropUserRoleByRole:
     DELETE FROM user_role WHERE role_id = :role_id;
 
-
 dropUserRoleByUser:
     DELETE FROM user_role WHERE user_id = :user_id;
-

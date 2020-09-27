@@ -8,10 +8,10 @@ CREATE TABLE user (
     id BIGINT PRIMARY KEY NOT NULL,
 
     avatarUrl TEXT NOT NULL,
-    discriminator INTEGER NOT NULL,
+    discriminator CHAR(4) NOT NULL,
     present BOOLEAN NOT NULL,
     username TEXT NOT NULL
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE utf8mb4_general_ci;
 
 CREATE INDEX user_id ON user(id);
 
@@ -20,7 +20,7 @@ CREATE TABLE role (
 
     colour INTEGER NOT NULL,
     name TEXT NOT NULL
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE utf8mb4_general_ci;
 
 CREATE INDEX role_id ON role(id);
 
@@ -32,7 +32,7 @@ CREATE TABLE user_role(
 
     FOREIGN KEY(role_id) REFERENCES role(id),
     FOREIGN KEY(user_id) REFERENCES user(id)
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE utf8mb4_general_ci;
 
 CREATE TABLE infraction(
     id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
@@ -50,4 +50,4 @@ CREATE TABLE infraction(
 
     FOREIGN KEY(infractor_id) REFERENCES user(id),
     FOREIGN KEY(target_id) REFERENCES user(id)
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE utf8mb4_general_ci;

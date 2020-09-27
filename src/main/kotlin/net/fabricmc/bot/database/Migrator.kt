@@ -21,6 +21,14 @@ object Migrator {
         if (queryList.isEmpty()) {
             logger.info { "Creating database from scratch." }
 
+            val database = config.dbDriver.getConnection().catalog
+
+            config.dbDriver.executeQuery(
+                    null,
+                    "ALTER DATABASE $database CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci;",
+                    0
+            )
+
             FabricBotDB.Schema.create(config.dbDriver)
             queries.setMigrationVersion(FabricBotDB.Schema.version)
 
