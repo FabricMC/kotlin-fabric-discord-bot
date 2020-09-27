@@ -145,12 +145,13 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
     }
 
     private suspend fun memberLeft(user: User) = runSuspended(Dispatchers.IO) {
-        val dbUser = users.getUser(user.id.longValue).executeAsOneOrNull()
+        val userId = user.id.longValue
+        val dbUser = users.getUser(userId).executeAsOneOrNull()
 
-        if (dbUser != null) {
-            users.insertUser(user.id.longValue, user.avatar.url, user.discriminator, false, user.username)
+        if (dbUser == null) {
+            users.insertUser(userId, user.avatar.url, user.discriminator, false, user.username)
         } else {
-            users.updateUser(user.avatar.url, user.discriminator, false, user.username, user.id.longValue)
+            users.updateUser(user.avatar.url, user.discriminator, false, user.username, userId)
         }
     }
 
@@ -158,7 +159,7 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
         val member = config.getGuild().getMemberOrNull(user.id)
         val dbUser = users.getUser(user.id.longValue).executeAsOneOrNull()
 
-        if (dbUser != null) {
+        if (dbUser == null) {
             users.insertUser(user.id.longValue, user.avatar.url, user.discriminator, member != null, user.username)
         } else {
             users.updateUser(user.avatar.url, user.discriminator, member != null, user.username, user.id.longValue)

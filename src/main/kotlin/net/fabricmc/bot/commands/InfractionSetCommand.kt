@@ -5,6 +5,7 @@ import com.gitlab.kordlib.core.behavior.channel.MessageChannelBehavior
 import com.gitlab.kordlib.core.behavior.channel.createEmbed
 import com.gitlab.kordlib.core.entity.Message
 import com.gitlab.kordlib.core.entity.User
+import com.gitlab.kordlib.core.entity.channel.TextChannel
 import com.gitlab.kordlib.core.event.message.MessageCreateEvent
 import com.gitlab.kordlib.rest.request.RestRequestException
 import com.kotlindiscord.kord.extensions.checks.topRoleHigherOrEqual
@@ -17,6 +18,7 @@ import net.fabricmc.bot.conf.config
 import net.fabricmc.bot.constants.Colours
 import net.fabricmc.bot.database.Infraction
 import net.fabricmc.bot.defaultCheck
+import net.fabricmc.bot.enums.Channels
 import net.fabricmc.bot.enums.InfractionTypes
 import net.fabricmc.bot.enums.Roles
 import net.fabricmc.bot.runSuspended
@@ -77,7 +79,7 @@ private val logger = KotlinLogging.logger {}
 class InfractionSetCommand(extension: Extension, private val type: InfractionTypes,
                            private val commandDescription: String,
                            private val commandName: String,
-                           private val infrAction: suspend CommandContext.(targetId: Snowflake, reason: String) -> Unit
+                           private val infrAction: suspend CommandContext.(targetId: Long, reason: String) -> Unit
 ) : Command(extension) {
     private val queries = config.db.infractionQueries
 
@@ -89,7 +91,7 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
                     args.member,
                     args.memberLong,
                     args.duration,
-                    args.reason.joinToString(", "),
+                    args.reason.joinToString(" "),
                     message,
                     this)
         } else {
@@ -99,7 +101,7 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
                     args.member,
                     args.memberLong,
                     null,
-                    args.reason.joinToString(", "),
+                    args.reason.joinToString(" "),
                     message,
                     this
             )
@@ -139,6 +141,8 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
             "${type.actionText} until ${formatTimestamp(expires)}."
         }
 
+        message += "\n\n"
+
         message += if (type == InfractionTypes.NOTE) {
             "Message: ${infraction.reason}"
         } else {
@@ -157,10 +161,10 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
                     color = Colours.NEGATIVE
                     title = type.actionText.capitalize() + "!"
 
-                    description = getInfractionMessage(true, infraction, expires)
+                    description = getInfractionMessage(false, infraction, expires)
 
                     footer {
-                        text = "Infraction ID: ${infraction.target_id}"
+                        text = "Infraction ID: ${infraction.id}"
                     }
                 }
             } catch (e: RestRequestException) {
@@ -175,12 +179,30 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
                                                 expires: PlainTimestamp?) {
         channel.createEmbed {
             color = Colours.POSITIVE
-            title = "Infraction created: ${infraction.id}"
+            title = "Infraction created"
 
-            description = getInfractionMessage(false, infraction, expires)
+            description = getInfractionMessage(true, infraction, expires)
 
             footer {
-                text = "User ID: ${infraction.target_id}"
+                text = "ID: ${infraction.id}"
+            }
+        }
+    }
+
+    private suspend fun sendInfractionToModLog(infraction: Infraction, expires: PlainTimestamp?) {
+        val channel = config.getChannel(Channels.MODERATOR_LOG) as TextChannel
+        var descriptionText = getInfractionMessage(true, infraction, expires)
+
+        descriptionText += "\n\nUser ID: `${infraction.target_id}`"
+
+        channel.createEmbed {
+            color = Colours.NEGATIVE
+            title = "User ${infraction.infraction_type.actionText}"
+
+            description = descriptionText
+
+            footer {
+                text = "ID: ${infraction.id}"
             }
         }
     }
@@ -202,7 +224,7 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
             return
         }
 
-        val expires = if (duration != Duration.ofZero<IsoUnit>()) {
+        val expires = if (duration != Duration.ofZero<IsoUnit>() && duration != null) {
             PlainTimestamp.nowInSystemTime().plus(duration)
         } else {
             null
@@ -218,8 +240,9 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
         }
 
         relayInfraction(infraction, expires)
-        infrAction.invoke(context, Snowflake(memberId), reason)
+        infrAction.invoke(context, memberId, reason)
         sendInfractionToChannel(message.channel, infraction, expires)
+        sendInfractionToModLog(infraction, expires)
     }
 
     override val checkList: MutableList<suspend (MessageCreateEvent) -> Boolean> = mutableListOf(

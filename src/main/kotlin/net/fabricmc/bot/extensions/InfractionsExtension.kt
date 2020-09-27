@@ -1,5 +1,6 @@
 package net.fabricmc.bot.extensions
 
+import com.gitlab.kordlib.common.entity.Snowflake
 import com.gitlab.kordlib.core.behavior.ban
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import com.kotlindiscord.kord.extensions.extensions.Extension
@@ -21,7 +22,7 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                         InfractionTypes.BAN,
                         "Permanently or temporarily ban a user.",
                         "ban"
-                ) { id, reason -> config.getGuild().ban(id) { this.reason = reason } }
+                ) { id, reason -> config.getGuild().ban(Snowflake(id)) { this.reason = reason } }
         )
 
         command(
@@ -30,7 +31,7 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                         InfractionTypes.KICK,
                         "Kick a user from the server.",
                         "kick"
-                ) { id, reason -> config.getGuild().kick(id, reason) }
+                ) { id, reason -> config.getGuild().kick(Snowflake(id), reason) }
         )
 
         command(
@@ -41,7 +42,7 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                         "mute"
                 ) { id, _ -> config
                         .getGuild()
-                        .getMemberOrNull(id)
+                        .getMemberOrNull(Snowflake(id))
                         ?.addRole(config.getRoleSnowflake(Roles.MUTED))
                 }
         )
@@ -54,7 +55,7 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                         "mute-meta"
                 ) { id, _ -> config
                         .getGuild()
-                        .getMemberOrNull(id)
+                        .getMemberOrNull(Snowflake(id))
                         ?.addRole(config.getRoleSnowflake(Roles.NO_META))
                 }
         )
@@ -67,7 +68,7 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                         "mute-reactions"
                 ) { id, _ -> config
                         .getGuild()
-                        .getMemberOrNull(id)
+                        .getMemberOrNull(Snowflake(id))
                         ?.addRole(config.getRoleSnowflake(Roles.NO_REACTIONS))
                 }
         )
@@ -80,7 +81,7 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                         "mute-requests"
                 ) { id, _ -> config
                         .getGuild()
-                        .getMemberOrNull(id)
+                        .getMemberOrNull(Snowflake(id))
                         ?.addRole(config.getRoleSnowflake(Roles.NO_REQUESTS))
                 }
         )
@@ -93,7 +94,7 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                         "mute-support"
                 ) { id, _ -> config
                         .getGuild()
-                        .getMemberOrNull(id)
+                        .getMemberOrNull(Snowflake(id))
                         ?.addRole(config.getRoleSnowflake(Roles.NO_SUPPORT))
                 }
         )
@@ -104,7 +105,7 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                         InfractionTypes.WARN,
                         "Officially warn a user for their actions.",
                         "warn"
-                ) { _, _ -> }  // Nothing
+                ) { id, _ -> }  // Nothing
         )
 
         command(
@@ -113,7 +114,7 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                         InfractionTypes.NOTE,
                         "Add a note for a user.",
                         "note"
-                ) { _, _ -> }  // Nothing
+                ) { id, _ -> }  // Nothing
         )
     }
 }
