@@ -23,8 +23,11 @@ class EvalExtension(bot: ExtensibleBot) : Extension(bot) {
     override suspend fun setup() {
         command {
             name = "eval"
-            description = "Evaluate some Kotlin code. Admins only. **This is unsafe and should" +
-                    "only be used for debugging!**"
+            description = """
+            Evaluate some Kotlin code. Admins only. **This is unsafe and should
+            only be used for debugging!**
+            """.trimIndent().replace("\n", "")
+
             signature = "<code>"
 
             check(
