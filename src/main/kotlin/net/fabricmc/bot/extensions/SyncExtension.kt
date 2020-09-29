@@ -6,7 +6,7 @@ import com.gitlab.kordlib.core.entity.Role
 import com.gitlab.kordlib.core.entity.User
 import com.gitlab.kordlib.core.entity.channel.TextChannel
 import com.gitlab.kordlib.core.event.UserUpdateEvent
-import com.gitlab.kordlib.core.event.gateway.ReadyEvent
+import com.gitlab.kordlib.core.event.guild.GuildCreateEvent
 import com.gitlab.kordlib.core.event.guild.MemberJoinEvent
 import com.gitlab.kordlib.core.event.guild.MemberLeaveEvent
 import com.gitlab.kordlib.core.event.guild.MemberUpdateEvent
@@ -35,7 +35,7 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
     override val name = "sync"
 
     override suspend fun setup() {
-        event<ReadyEvent> { action { initialSync() } }
+        event<GuildCreateEvent> { action { if (it.guild.id == config.guildSnowflake) initialSync() } }
 
         event<RoleCreateEvent> { action { roleUpdated(it.role) } }
         event<RoleUpdateEvent> { action { roleUpdated(it.role) } }
