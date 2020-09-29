@@ -12,6 +12,7 @@ import net.fabricmc.bot.extensions.EvalExtension
 import net.fabricmc.bot.extensions.GitHubExtension
 import net.fabricmc.bot.extensions.InfractionsExtension
 import net.fabricmc.bot.extensions.ModerationExtension
+import net.fabricmc.bot.extensions.SelfRoleExtension
 import net.fabricmc.bot.extensions.SyncExtension
 import net.fabricmc.bot.extensions.VersionCheckExtension
 
@@ -40,5 +41,6 @@ suspend fun main() {
     bot.addExtension(SyncExtension::class)
     bot.addExtension(VersionCheckExtension::class)
     bot.addExtension(GitHubExtension::class)
+    bot.addExtension(SelfRoleExtension::class)
     bot.start()
 }

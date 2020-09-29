@@ -15,4 +15,6 @@ enum class Roles(val value: String) {
     NO_REACTIONS("No Reactions"),
     NO_REQUESTS("No Requests"),
     NO_SUPPORT("No Support"),
+
+    DEV_LIFE("Dev Life"),
 }

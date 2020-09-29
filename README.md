@@ -62,9 +62,12 @@ later sources overriding earlier ones:
   
 * ROLES_NO_META = The ID of the meta-muted role
 * ROLES_NO_REACTIONS = The ID of the reactions-muted role
-* ROLES_NO_REQUESTS = The ID of the requests=muted role
+* ROLES_NO_REQUESTS = The ID of the requests-muted role
 * ROLES_NO_SUPPORT = The ID of the support-muted role
   
+
+* ROLES_DEV_LIFE = The ID of the dev life role
+
 
 * LIVE_UPDATES_MINECRAFT_CHANNELS = A comma separated list of discord channels to send minecraft version updates to
 * LIVE_UPDATES_JIRA_CHANNELS = A comma separated list of discord channels to send JIRA version updates to
