@@ -1,4 +1,4 @@
-package net.fabricmc.bot.commands
+package net.fabricmc.bot.extensions.infractions
 
 import com.gitlab.kordlib.common.entity.Snowflake
 import com.gitlab.kordlib.core.behavior.channel.MessageChannelBehavior
