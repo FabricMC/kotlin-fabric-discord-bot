@@ -44,6 +44,12 @@ dependencies {
     implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8'
     implementation 'org.jetbrains.kotlin:kotlin-reflect'
 
+    // Kotlin scripting
+    implementation 'org.jetbrains.kotlin:kotlin-compiler-embeddable'
+    implementation 'org.jetbrains.kotlin:kotlin-scripting-compiler-embeddable'
+    implementation 'org.jetbrains.kotlin:kotlin-script-runtime'
+    implementation 'org.jetbrains.kotlin:kotlin-script-util'
+
     // Kord Extensions framework
     implementation 'com.kotlindiscord.kord.extensions:kord-extensions:1.2-SNAPSHOT'
 

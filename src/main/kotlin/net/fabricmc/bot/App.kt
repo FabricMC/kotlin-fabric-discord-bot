@@ -8,10 +8,7 @@ import mu.KotlinLogging
 import net.fabricmc.bot.conf.buildInfo
 import net.fabricmc.bot.conf.config
 import net.fabricmc.bot.database.Migrator
-import net.fabricmc.bot.extensions.InfractionsExtension
-import net.fabricmc.bot.extensions.ModerationExtension
-import net.fabricmc.bot.extensions.SyncExtension
-import net.fabricmc.bot.extensions.VersionCheckExtension
+import net.fabricmc.bot.extensions.*
 
 /** The current instance of the bot. **/
 val bot = ExtensibleBot(prefix = config.prefix, token = config.token)
@@ -24,7 +21,14 @@ suspend fun main() {
 
     logger.info { "Starting Fabric Discord Bot, version ${buildInfo.version}." }
 
+    val environment = System.getenv().getOrDefault("ENVIRONMENT", "production")
+
     Migrator.migrate()
+
+    if (environment != "production") {
+        // Don't really want this loaded in prod for obvious reasons
+        bot.addExtension(EvalExtension::class)
+    }
 
     bot.addExtension(InfractionsExtension::class)
     bot.addExtension(ModerationExtension::class)
