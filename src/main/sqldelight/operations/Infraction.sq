@@ -9,6 +9,10 @@ getAllInfractions:
 --     SELECT infraction.*, user.* FROM infraction;
 --     INNER JOIN user ON user.id = infraction.infractor_id OR user.id = infraction.target_id;
 
+getActiveExpirableInfractions:
+    SELECT * FROM infraction
+    WHERE active = TRUE AND expires != NULL;
+
 getInfractionsByInfractor:
     SELECT * FROM infraction
 --     SELECT infraction.*, user.* FROM infraction
@@ -23,6 +27,11 @@ getInfractionsByUser:
 
 getLastInfraction:
     SELECT * FROM infraction ORDER BY created DESC LIMIT 1;
+
+setInfractionActive:
+    UPDATE infraction
+    SET active = :active
+    WHERE id = :id;
 
 updateInfraction:
     UPDATE infraction

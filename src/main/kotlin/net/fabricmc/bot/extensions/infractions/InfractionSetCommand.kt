@@ -22,11 +22,10 @@ import net.fabricmc.bot.enums.Channels
 import net.fabricmc.bot.enums.InfractionTypes
 import net.fabricmc.bot.enums.Roles
 import net.fabricmc.bot.runSuspended
-import net.time4j.Duration
-import net.time4j.IsoUnit
-import net.time4j.PlainTimestamp
-import net.time4j.format.expert.ChronoFormatter
-import net.time4j.format.expert.PatternType
+import java.time.Duration
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import java.util.*
 
 /** Data class representing the arguments for an infraction type that doesn't expire.
@@ -51,17 +50,12 @@ data class NonExpiringCommandArgs(
 data class ExpiringCommandArgs(
         val member: User? = null,
         val memberLong: Long? = null,
-        val duration: Duration<IsoUnit> = Duration.ofZero(),
+        val duration: Duration = Duration.ZERO,
         val reason: List<String>
 )
 
-private val timeFormatter = ChronoFormatter.ofTimestampPattern(
-        "dd/MM/yyyy 'at' HH:mm", PatternType.CLDR_24, Locale.ENGLISH
-)
-
-private val mySqlTimeFormatter = ChronoFormatter.ofTimestampPattern(
-        "yyyy-MM-dd HH:mm:ss", PatternType.CLDR_24, Locale.ENGLISH
-)
+private val timeFormatter = DateTimeFormatter.ofPattern("dd/MM/uuuu 'at' HH:mm", Locale.ENGLISH)
+private val mySqlTimeFormatter = DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm:ss", Locale.ENGLISH)
 
 private val logger = KotlinLogging.logger {}
 
@@ -79,7 +73,10 @@ private val logger = KotlinLogging.logger {}
 class InfractionSetCommand(extension: Extension, private val type: InfractionTypes,
                            private val commandDescription: String,
                            private val commandName: String,
-                           private val infrAction: suspend CommandContext.(targetId: Long, reason: String) -> Unit
+                           private val infrAction: suspend CommandContext.(
+                                   targetId: Long, reason: String,
+                                   expires: Instant?, infraction: Infraction
+                           ) -> Unit
 ) : Command(extension) {
     private val queries = config.db.infractionQueries
 
@@ -108,7 +105,7 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
         }
     }
 
-    private fun formatTimestamp(ts: PlainTimestamp): String = ts.print(timeFormatter)
+    private fun formatTimestamp(ts: Instant): String = timeFormatter.format(ts.atZone(ZoneId.of("UTC")))
 
     private fun getMemberId(member: User?, id: Long?) =
             if (member == null && id == null) {
@@ -128,7 +125,7 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
                 null
             }
 
-    private fun getInfractionMessage(public: Boolean, infraction: Infraction, expires: PlainTimestamp?): String {
+    private fun getInfractionMessage(public: Boolean, infraction: Infraction, expires: Instant?): String {
         var message = if (public) {
             "<@!${infraction.target_id}> has been "
         } else {
@@ -152,7 +149,7 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
         return message
     }
 
-    private suspend fun relayInfraction(infraction: Infraction, expires: PlainTimestamp?) {
+    private suspend fun relayInfraction(infraction: Infraction, expires: Instant?) {
         if (type.relay) {
             try {
                 val targetObj = bot.kord.getUser(Snowflake(infraction.target_id))
@@ -176,7 +173,7 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
     }
 
     private suspend fun sendInfractionToChannel(channel: MessageChannelBehavior, infraction: Infraction,
-                                                expires: PlainTimestamp?) {
+                                                expires: Instant?) {
         channel.createEmbed {
             color = Colours.POSITIVE
             title = "Infraction created"
@@ -189,7 +186,7 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
         }
     }
 
-    private suspend fun sendInfractionToModLog(infraction: Infraction, expires: PlainTimestamp?) {
+    private suspend fun sendInfractionToModLog(infraction: Infraction, expires: Instant?) {
         val channel = config.getChannel(Channels.MODERATOR_LOG) as TextChannel
         var descriptionText = getInfractionMessage(true, infraction, expires)
 
@@ -207,7 +204,7 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
         }
     }
 
-    private suspend fun applyInfraction(memberObj: User?, memberLong: Long?, duration: Duration<IsoUnit>?,
+    private suspend fun applyInfraction(memberObj: User?, memberLong: Long?, duration: Duration?,
                                         reason: String, message: Message, context: CommandContext) {
         val author = message.author!!
         val (memberId, memberMessage) = getMemberId(memberObj, memberLong)
@@ -224,23 +221,36 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
             return
         }
 
-        val expires = if (duration != Duration.ofZero<IsoUnit>() && duration != null) {
-            PlainTimestamp.nowInSystemTime().plus(duration)
+        val expires = if (duration != Duration.ZERO && duration != null) {
+            Instant.now().plus(duration)
         } else {
             null
         }
 
         val infraction = runSuspended {
-            queries.addInfraction(
-                    reason, author.id.longValue, memberId, expires?.print(mySqlTimeFormatter),  // null for forever
-                    true, type
-            )
+            if (expires != null) {
+                queries.addInfraction(
+                        reason,
+                        author.id.longValue,
+                        memberId,
+                        mySqlTimeFormatter.format(expires.atZone(
+                                ZoneId.of("UTC")
+                        )),
+                        true,
+                        type
+                )
+            } else {
+                queries.addInfraction(
+                        reason, author.id.longValue, memberId, null,  // null for forever
+                        true, type
+                )
+            }
 
             queries.getLastInfraction().executeAsOne()
         }
 
         relayInfraction(infraction, expires)
-        infrAction.invoke(context, memberId, reason)
+        infrAction.invoke(context, memberId, reason, expires, infraction)
         sendInfractionToChannel(message.channel, infraction, expires)
         sendInfractionToModLog(infraction, expires)
     }
