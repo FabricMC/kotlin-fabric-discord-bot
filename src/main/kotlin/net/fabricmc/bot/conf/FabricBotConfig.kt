@@ -44,6 +44,7 @@ class FabricBotConfig {
         addSpec(DBSpec)
         addSpec(RolesSpec)
         addSpec(LiveUpdatesSpec)
+        addSpec(GitHubSpec)
     }
             .from.enabled(Feature.FAIL_ON_UNKNOWN_PATH).toml.resource("default.toml")
             .from.env()
@@ -161,6 +162,16 @@ class FabricBotConfig {
      */
     suspend fun getMinecraftUpdateChannels(): List<TextChannel> =
         config[LiveUpdatesSpec.minecraftChannels].mapNotNull { bot.kord.getChannel(Snowflake(it)) as? TextChannel }
+
+    /**
+     * The name of the GitHub organization.
+     */
+    val githubOrganization = config[GitHubSpec.organization]
+
+    /**
+     * Token for the GitHub organization, with admin:org scope.
+     */
+    val githubToken = config[GitHubSpec.token]
 }
 
 /**

@@ -33,7 +33,8 @@ later sources overriding earlier ones:
 
 * BOT_TOKEN = The discord bot token
 * GITHUB_OAUTH = GitHub OAuth token (if we end up using that functionality)
-
+  
+  
 * DB_URL = MySQL URL, eg `mysql://host:port/database`
 * DB_USERNAME = Database username to auth with
 * DB_PASSWORD = Database password to auth with
@@ -42,24 +43,28 @@ later sources overriding earlier ones:
 
 * BOT_GUILD = The ID of the discord guild this bot should operate on
 * BOT_PREFIX = The prefix required for commands
-
+  
+  
+* GITHUB_ORG = The target github organisation for the github commands.
+* GITHUB_TOKEN = The github personal access token, with admin:org permission
+    * Only optional if you are not using the github commands
+  
+  
 * CHANNELS_BOT_COMMANDS = The ID of the bot commands channel
 * CHANNELS_ACTION_LOG = The ID of the action log channel
 * CHANNELS_MODERATOR_LOG = The ID of the moderator log channel
-
+  
+  
 * ROLES_ADMIN = The ID of the admin role
 * ROLES_MOD = The ID of the moderator role
 * ROLES_MUTED = The ID of the muted role
-
+  
+  
 * ROLES_NO_META = The ID of the meta-muted role
 * ROLES_NO_REACTIONS = The ID of the reactions-muted role
 * ROLES_NO_REQUESTS = The ID of the requests=muted role
 * ROLES_NO_SUPPORT = The ID of the support-muted role
+  
 
 * LIVE_UPDATES_MINECRAFT_CHANNELS = A comma separated list of discord channels to send minecraft version updates to
 * LIVE_UPDATES_JIRA_CHANNELS = A comma separated list of discord channels to send JIRA version updates to
-
-## Stuff from the old bot
-
-* GITHUB_TOKEN = The github personal access token, with admin:org permission
-* GITHUB_ORG = The target github organisation for the github commands.
