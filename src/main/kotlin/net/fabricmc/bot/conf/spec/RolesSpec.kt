@@ -28,4 +28,7 @@ object RolesSpec : ConfigSpec() {
 
     /** Configured support-muted role ID. **/
     val noSupport by required<Long>()
+
+    /** Configured dev life role ID. **/
+    val devLife by required<Long>()
 }
