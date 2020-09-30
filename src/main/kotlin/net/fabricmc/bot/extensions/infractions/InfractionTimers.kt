@@ -8,6 +8,7 @@ import net.fabricmc.bot.conf.config
 import net.fabricmc.bot.constants.Colours
 import net.fabricmc.bot.database.Infraction
 import net.fabricmc.bot.enums.Channels
+import net.fabricmc.bot.enums.InfractionTypes
 import net.fabricmc.bot.enums.Roles
 import net.fabricmc.bot.runSuspended
 import java.time.Duration
@@ -18,6 +19,26 @@ private val jobs: MutableMap<UUID, UUID> = mutableMapOf()
 private var scheduler = Scheduler()
 
 private val queries = config.db.infractionQueries
+
+/**
+ * Schedule the end of an infraction.
+ *
+ * @param id The ID of the user that was infracted.
+ * @param infraction The infraction object from the database.
+ * @param time An [Instant] representing the expiry time of the infraction.
+ */
+suspend fun scheduleUndoInfraction(id: Long, infraction: Infraction, time: Instant) {
+    when (infraction.infraction_type) {
+        InfractionTypes.BAN -> unbanAt(id, infraction, time)
+        InfractionTypes.META_MUTE -> unMetaMuteAt(id, infraction, time)
+        InfractionTypes.MUTE -> unMuteAt(id, infraction, time)
+        InfractionTypes.REACTION_MUTE -> unReactionMuteAt(id, infraction, time)
+        InfractionTypes.REQUESTS_MUTE -> unRequestsMuteAt(id, infraction, time)
+        InfractionTypes.SUPPORT_MUTE -> unSupportMuteAtAt(id, infraction, time)
+
+        else -> null  // Do nothing
+    }
+}
 
 /**
  * Automatically unban a user (by ID) at a given [Instant].
@@ -120,6 +141,7 @@ fun clearJobs() {
  */
 fun cancelJobForInfraction(infraction: UUID) {
     scheduler.cancelJob(jobs[infraction] ?: return)
+    jobs.remove(infraction)
 }
 
 private fun schedule(delay: Long, infraction: Infraction, callback: suspend (Nothing?) -> Unit) {
@@ -151,7 +173,14 @@ private fun schedule(delay: Long, infraction: Infraction, callback: suspend (Not
     }
 }
 
-private fun getDelayFromNow(time: Instant): Long {
+/**
+ * Returns the number of milliseconds until the given time, from the current time.
+ *
+ * Returns 0 if the time given is in the past.
+ *
+ * @param time Time to compare to now.
+ */
+fun getDelayFromNow(time: Instant): Long {
     if (time <= Instant.now()) {
         return 0L
     }

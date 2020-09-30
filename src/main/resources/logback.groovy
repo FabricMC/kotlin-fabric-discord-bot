@@ -9,6 +9,7 @@ if (environment == "production") {
 } else {
     // Silence warning about missing native PRNG
     logger("io.ktor.util.random", ERROR)
+    logger("com.zaxxer.hikari.pool.HikariPool", INFO)
 }
 
 appender("CONSOLE", ConsoleAppender) {

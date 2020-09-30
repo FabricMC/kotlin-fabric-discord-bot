@@ -1,5 +1,6 @@
 package net.fabricmc.bot.extensions
 
+import com.gitlab.kordlib.common.entity.Snowflake
 import com.gitlab.kordlib.core.behavior.channel.createEmbed
 import com.gitlab.kordlib.core.entity.Member
 import com.gitlab.kordlib.core.entity.Role
@@ -16,17 +17,27 @@ import com.gitlab.kordlib.core.event.role.RoleUpdateEvent
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import com.kotlindiscord.kord.extensions.checks.topRoleHigherOrEqual
 import com.kotlindiscord.kord.extensions.extensions.Extension
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.toList
 import net.fabricmc.bot.conf.config
 import net.fabricmc.bot.defaultCheck
 import net.fabricmc.bot.enums.Channels
 import net.fabricmc.bot.enums.Roles
+import net.fabricmc.bot.extensions.infractions.applyInfraction
+import net.fabricmc.bot.extensions.infractions.getDelayFromNow
+import net.fabricmc.bot.extensions.infractions.scheduleUndoInfraction
 import net.fabricmc.bot.runSuspended
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatterBuilder
 
 private val roles = config.db.roleQueries
 private val users = config.db.userQueries
 private val junction = config.db.userRoleQueries
+
+private val mySqlTimeFormatter = DateTimeFormatterBuilder()
+        .appendPattern("uuuu-MM-dd HH:mm:ss'.'n")
+        .toFormatter()
+        .withZone(ZoneId.of("UTC"))
 
 /**
  * Sync extension, in charge of keeping the database in sync with Discord.
@@ -41,9 +52,9 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
         event<RoleUpdateEvent> { action { roleUpdated(it.role) } }
         event<RoleDeleteEvent> { action { roleDeleted(it.roleId.longValue) } }
 
-        event<MemberJoinEvent> { action { memberUpdated(it.member) } }
+        event<MemberJoinEvent> { action { memberJoined(it.member) } }
         event<MemberUpdateEvent> { action { memberUpdated(it.getMember()) } }
-        event<MemberLeaveEvent> { action { memberLeft(it.user) } }
+        event<MemberLeaveEvent> { action { memberLeft(it.user.id.longValue) } }
         event<UserUpdateEvent> { action { userUpdated(it.user) } }
 
         command {
@@ -57,6 +68,7 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
             action {
                 val (rolesUpdated, rolesRemoved) = updateRoles()
                 val (usersUpdated, usersAbsent) = updateUsers()
+                val (allInfractions, expiredInfractions) = infractionSync()
 
                 message.channel.createEmbed {
                     title = "Sync statistics"
@@ -74,6 +86,13 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
                         name = "Users"
                         value = "**Updated:** $usersUpdated | **Absent:** $usersAbsent"
                     }
+
+                    field {
+                        inline = false
+
+                        name = "Infractions"
+                        value = "**All:** $allInfractions | **Expired now:** $expiredInfractions"
+                    }
                 }
             }
         }
@@ -82,6 +101,7 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
     private suspend fun initialSync() {
         val (rolesUpdated, rolesRemoved) = updateRoles()
         val (usersUpdated, usersAbsent) = updateUsers()
+        val (allInfractions, expiredInfractions) = infractionSync()
 
         (config.getChannel(Channels.MODERATOR_LOG) as TextChannel)
                 .createEmbed {
@@ -100,10 +120,43 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
                         name = "Users"
                         value = "**Updated:** $usersUpdated | **Absent:** $usersAbsent"
                     }
+
+                    field {
+                        inline = false
+
+                        name = "Infractions"
+                        value = "**All:** $allInfractions | **Expired now:** $expiredInfractions"
+                    }
                 }
     }
 
-    private suspend fun roleUpdated(role: Role) = runSuspended(Dispatchers.IO) {
+    private suspend fun infractionSync() = runSuspended {
+        val infractions = config.db.infractionQueries.getActiveExpirableInfractions().executeAsList()
+        val allInfractions = config.db.infractionQueries.getInfractionCount().executeAsOne()
+        var expiredInfractions = 0
+
+        infractions.forEach {
+            val memberId = it.target_id.toLong()
+            val member = config.getGuild().getMemberOrNull(Snowflake(memberId))
+            val expires = mySqlTimeFormatter.parse(it.expires) { accessor -> Instant.from(accessor) }
+            val delay = getDelayFromNow(expires)
+
+            if (delay > 0) {
+                if (member != null) {
+                    applyInfraction(it, memberId, expires)
+                }
+            } else {
+                scheduleUndoInfraction(memberId, it, expires)
+
+                config.db.infractionQueries.setInfractionActive(false, it.id)
+                expiredInfractions += 1
+            }
+        }
+
+        Pair(allInfractions, expiredInfractions)
+    }
+
+    private suspend fun roleUpdated(role: Role) = runSuspended {
         val dbRole = roles.getRole(role.id.longValue).executeAsOneOrNull()
 
         if (dbRole == null) {
@@ -113,13 +166,24 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
         }
     }
 
-
-    private suspend fun roleDeleted(roleId: Long) = runSuspended(Dispatchers.IO) {
+    private suspend fun roleDeleted(roleId: Long) = runSuspended {
         junction.dropUserRoleByRole(roleId)
         roles.dropRole(roleId)
     }
 
-    private suspend fun memberUpdated(member: Member) = runSuspended(Dispatchers.IO) {
+    private suspend fun memberJoined(member: Member) = runSuspended {
+        memberUpdated(member)
+
+        val infractions = config.db.infractionQueries
+                .getActiveExpirableInfractionsByUser(member.id.longValue)
+                .executeAsList()
+
+        infractions.forEach {
+            applyInfraction(it, member.id.longValue, null)  // Expiry already scheduled at this point
+        }
+    }
+
+    private suspend fun memberUpdated(member: Member) = runSuspended {
         val memberId = member.id.longValue
         val dbUser = users.getUser(memberId).executeAsOneOrNull()
 
@@ -144,18 +208,20 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
         }
     }
 
-    private suspend fun memberLeft(user: User) = runSuspended(Dispatchers.IO) {
-        val userId = user.id.longValue
+    private suspend fun memberLeft(userId: Long) = runSuspended {
+        val user = bot.kord.getUser(Snowflake(userId))
         val dbUser = users.getUser(userId).executeAsOneOrNull()
 
         if (dbUser == null) {
-            users.insertUser(userId, user.avatar.url, user.discriminator, false, user.username)
+            if (user != null) {
+                users.insertUser(userId, user.avatar.url, user.discriminator, false, user.username)
+            }
         } else {
-            users.updateUser(user.avatar.url, user.discriminator, false, user.username, userId)
+            users.updateUser(dbUser.avatarUrl, dbUser.discriminator, false, dbUser.username, dbUser.id)
         }
     }
 
-    private suspend fun userUpdated(user: User) = runSuspended(Dispatchers.IO) {
+    private suspend fun userUpdated(user: User) = runSuspended {
         val member = config.getGuild().getMemberOrNull(user.id)
         val dbUser = users.getUser(user.id.longValue).executeAsOneOrNull()
 
@@ -198,23 +264,21 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
         val discordUsers = config.getGuild().members.toList().map { it.id.longValue to it }.toMap()
 
         val usersToAdd = discordUsers.keys.filter { it !in dbUsers }
-        val usersToRemove = dbUsers.keys.filter { it !in discordUsers }
+        val usersToRemove = dbUsers.keys.filter { it !in discordUsers && (dbUsers[it] ?: error("???")).present }
         val usersToUpdate = dbUsers.keys.filter { it in discordUsers }
 
         usersToAdd.forEach {
-            val member = discordUsers[it] ?: error("User suddenly disappeared from the list.")
+            val member = discordUsers[it] ?: error("User suddenly disappeared from the list: $it.")
 
             memberUpdated(member)
         }
 
         usersToRemove.forEach {
-            val member = discordUsers[it] ?: error("User suddenly disappeared from the list.")
-
-            memberLeft(member)
+            memberLeft(it)  // User isn't in discordUsers at all so we have no object
         }
 
         usersToUpdate.forEach {
-            val member = discordUsers[it] ?: error("User suddenly disappeared from the list.")
+            val member = discordUsers[it] ?: error("User suddenly disappeared from the list: $it.")
 
             memberUpdated(member)
         }

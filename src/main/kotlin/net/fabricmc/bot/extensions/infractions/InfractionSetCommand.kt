@@ -226,6 +226,8 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
             null
         }
 
+        val active = expires != null
+
         val infraction = runSuspended {
             if (expires != null) {
                 queries.addInfraction(
@@ -235,13 +237,13 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
                         mySqlTimeFormatter.format(expires.atZone(
                                 ZoneId.of("UTC")
                         )),
-                        true,
+                        active,
                         type
                 )
             } else {
                 queries.addInfraction(
                         reason, author.id.longValue, memberId, null,  // null for forever
-                        true, type
+                        active, type
                 )
             }
 

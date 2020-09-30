@@ -126,7 +126,6 @@ suspend fun requestsMute(infraction: Infraction, id: Long, expires: Instant?) {
     unRequestsMuteAt(id, infraction, expires ?: return)
 }
 
-
 /**
  * Apply a support-mute infraction on the Discord server.
  *
@@ -144,7 +143,6 @@ suspend fun supportMute(infraction: Infraction, id: Long, expires: Instant?) {
     unSupportMuteAtAt(id, infraction, expires ?: return)
 }
 
-
 /**
  * Apply a kick infraction on the Discord server.
  *
@@ -157,7 +155,6 @@ suspend fun supportMute(infraction: Infraction, id: Long, expires: Instant?) {
 suspend fun kick(infraction: Infraction, id: Long, expires: Instant?) {
     config.getGuild().kick(Snowflake(id), infraction.reason)
 }
-
 
 /**
  * Do nothing. This is for infractions that require no action to be taken on the server.

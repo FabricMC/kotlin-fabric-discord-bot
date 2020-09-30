@@ -4,6 +4,9 @@ getInfraction:
 --     INNER JOIN user ON user.id = infraction.infractor_id OR user.id = infraction.target_id
     WHERE id = :id;
 
+getInfractionCount:
+    SELECT COUNT(*) FROM infraction;
+
 getAllInfractions:
     SELECT * FROM infraction;
 --     SELECT infraction.*, user.* FROM infraction;
@@ -11,7 +14,7 @@ getAllInfractions:
 
 getActiveExpirableInfractions:
     SELECT * FROM infraction
-    WHERE active = TRUE AND expires != NULL;
+    WHERE active = TRUE AND expires IS NOT NULL;
 
 getInfractionsByInfractor:
     SELECT * FROM infraction
@@ -23,7 +26,13 @@ getInfractionsByUser:
     SELECT * FROM infraction
 --     SELECT infraction.*, user.* FROM infraction
 --     INNER JOIN user ON user.id = infraction.infractor_id OR user.id = infraction.target_id
-    WHERE target_id = :id AND active = FALSE;
+    WHERE target_id = :id;
+
+getActiveExpirableInfractionsByUser:
+    SELECT * FROM infraction
+--     SELECT infraction.*, user.* FROM infraction
+--     INNER JOIN user ON user.id = infraction.infractor_id OR user.id = infraction.target_id
+    WHERE target_id = :id AND active = TRUE AND expires IS NOT NULL;
 
 getLastInfraction:
     SELECT * FROM infraction ORDER BY created DESC LIMIT 1;
