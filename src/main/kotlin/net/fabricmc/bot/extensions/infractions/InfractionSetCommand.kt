@@ -73,9 +73,9 @@ private val logger = KotlinLogging.logger {}
 class InfractionSetCommand(extension: Extension, private val type: InfractionTypes,
                            private val commandDescription: String,
                            private val commandName: String,
-                           private val infrAction: suspend CommandContext.(
-                                   targetId: Long, reason: String,
-                                   expires: Instant?, infraction: Infraction
+                           // This can't be suspending, see comment in InfractionActions.applyInfraction
+                           private val infrAction: Infraction.(
+                                   targetId: Long, expires: Instant?
                            ) -> Unit
 ) : Command(extension) {
     private val queries = config.db.infractionQueries
@@ -89,8 +89,8 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
                     args.memberLong,
                     args.duration,
                     args.reason.joinToString(" "),
-                    message,
-                    this)
+                    message
+            )
         } else {
             val args = parse<NonExpiringCommandArgs>()
 
@@ -99,8 +99,7 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
                     args.memberLong,
                     null,
                     args.reason.joinToString(" "),
-                    message,
-                    this
+                    message
             )
         }
     }
@@ -205,7 +204,7 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
     }
 
     private suspend fun applyInfraction(memberObj: User?, memberLong: Long?, duration: Duration?,
-                                        reason: String, message: Message, context: CommandContext) {
+                                        reason: String, message: Message) {
         val author = message.author!!
         val (memberId, memberMessage) = getMemberId(memberObj, memberLong)
 
@@ -250,7 +249,9 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
         }
 
         relayInfraction(infraction, expires)
-        infrAction.invoke(context, memberId, reason, expires, infraction)
+
+        infrAction.invoke(infraction, memberId, expires)
+
         sendInfractionToChannel(message.channel, infraction, expires)
         sendInfractionToModLog(infraction, expires)
     }

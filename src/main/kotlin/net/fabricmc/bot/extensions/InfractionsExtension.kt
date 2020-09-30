@@ -1,12 +1,8 @@
 package net.fabricmc.bot.extensions
 
-import com.gitlab.kordlib.common.entity.Snowflake
-import com.gitlab.kordlib.core.behavior.ban
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import com.kotlindiscord.kord.extensions.extensions.Extension
-import net.fabricmc.bot.conf.config
 import net.fabricmc.bot.enums.InfractionTypes
-import net.fabricmc.bot.enums.Roles
 import net.fabricmc.bot.extensions.infractions.*
 
 /**
@@ -21,12 +17,9 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                         this,
                         InfractionTypes.BAN,
                         "Permanently or temporarily ban a user.",
-                        "ban"
-                ) { id, reason, expires, infraction ->
-                    config.getGuild().ban(Snowflake(id)) { this.reason = reason }
-
-                    unbanAt(id, infraction, expires ?: return@InfractionSetCommand)
-                }
+                        "ban",
+                        ::applyInfraction
+                )
         )
 
         command(
@@ -34,8 +27,9 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                         this,
                         InfractionTypes.KICK,
                         "Kick a user from the server.",
-                        "kick"
-                ) { id, reason, expires, infraction -> config.getGuild().kick(Snowflake(id), reason) }
+                        "kick",
+                        ::applyInfraction
+                )
         )
 
         command(
@@ -43,14 +37,9 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                         this,
                         InfractionTypes.MUTE,
                         "Permanently or temporarily mute a user, server-wide.",
-                        "mute"
-                ) { id, reason, expires, infraction -> config
-                        .getGuild()
-                        .getMemberOrNull(Snowflake(id))
-                        ?.addRole(config.getRoleSnowflake(Roles.MUTED))
-
-                    unMuteAt(id, infraction, expires ?: return@InfractionSetCommand)
-                }
+                        "mute",
+                        ::applyInfraction
+                )
         )
 
         command(
@@ -58,14 +47,9 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                         this,
                         InfractionTypes.META_MUTE,
                         "Permanently or temporarily mute a user, from the meta channel only.",
-                        "mute-meta"
-                ) { id, reason, expires, infraction -> config
-                        .getGuild()
-                        .getMemberOrNull(Snowflake(id))
-                        ?.addRole(config.getRoleSnowflake(Roles.NO_META))
-
-                    unMetaMuteAt(id, infraction, expires ?: return@InfractionSetCommand)
-                }
+                        "mute-meta",
+                        ::applyInfraction
+                )
         )
 
         command(
@@ -73,14 +57,9 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                         this,
                         InfractionTypes.REACTION_MUTE,
                         "Permanently or temporarily prevent a user from adding reactions to messages.",
-                        "mute-reactions"
-                ) { id, reason, expires, infraction -> config
-                        .getGuild()
-                        .getMemberOrNull(Snowflake(id))
-                        ?.addRole(config.getRoleSnowflake(Roles.NO_REACTIONS))
-
-                    unReactionMuteAt(id, infraction, expires ?: return@InfractionSetCommand)
-                }
+                        "mute-reactions",
+                        ::applyInfraction
+                )
         )
 
         command(
@@ -88,14 +67,9 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                         this,
                         InfractionTypes.REQUESTS_MUTE,
                         "Permanently or temporarily mute a user, from the requests channel only.",
-                        "mute-requests"
-                ) { id, reason, expires, infraction -> config
-                        .getGuild()
-                        .getMemberOrNull(Snowflake(id))
-                        ?.addRole(config.getRoleSnowflake(Roles.NO_REQUESTS))
-
-                    unRequestsMuteAt(id, infraction, expires ?: return@InfractionSetCommand)
-                }
+                        "mute-requests",
+                        ::applyInfraction
+                )
         )
 
         command(
@@ -103,14 +77,9 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                         this,
                         InfractionTypes.SUPPORT_MUTE,
                         "Permanently or temporarily mute a user, from the player-support channel only.",
-                        "mute-support"
-                ) { id, reason, expires, infraction -> config
-                        .getGuild()
-                        .getMemberOrNull(Snowflake(id))
-                        ?.addRole(config.getRoleSnowflake(Roles.NO_SUPPORT))
-
-                    unSupportMuteAtAt(id, infraction, expires ?: return@InfractionSetCommand)
-                }
+                        "mute-support",
+                        ::applyInfraction
+                )
         )
 
         command(
@@ -118,8 +87,9 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                         this,
                         InfractionTypes.WARN,
                         "Officially warn a user for their actions.",
-                        "warn"
-                ) { id, reason, expires, infraction -> }  // Nothing
+                        "warn",
+                        ::applyInfraction
+                )
         )
 
         command(
@@ -127,8 +97,9 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                         this,
                         InfractionTypes.NOTE,
                         "Add a note for a user.",
-                        "note"
-                ) { id, reason, expires, infraction -> }  // Nothing
+                        "note",
+                        ::applyInfraction
+                )
         )
     }
 }

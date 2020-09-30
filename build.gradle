@@ -120,6 +120,10 @@ compileKotlin.configure {
     dependsOn "generateMainFabricBotDBMigrations"
 }
 
+compileKotlin {
+    kotlinOptions.freeCompilerArgs = ["-XXLanguage:+NewInference"]
+}
+
 processResources {
     dependsOn "generateBuildInfo"
 
