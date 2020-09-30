@@ -240,26 +240,30 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
         val rolesToRemove = dbRoles.keys.filter { it !in discordRoles }
         val rolesToUpdate = dbRoles.keys.filter { it in discordRoles }
 
-        rolesToAdd.forEach {
-            val role = discordRoles[it] ?: error("Role suddenly disappeared from the list.")
+        var rolesUpdated = 0
 
-            roleUpdated(role)
+        (rolesToAdd + rolesToUpdate).forEach {
+            val role = discordRoles[it] ?: error("Role suddenly disappeared from the list: $it.")
+            val dbRole = dbRoles[it]
+
+            if (
+                    dbRole == null
+                    || dbRole.colour != role.color.rgb
+                    || dbRole.name != role.name
+            ) {
+                roleUpdated(role)
+                rolesUpdated += 1
+            }
         }
 
         rolesToRemove.forEach {
             roleDeleted(it)
         }
 
-        rolesToUpdate.forEach {
-            val role = discordRoles[it] ?: error("Role suddenly disappeared from the list.")
-
-            roleUpdated(role)
-        }
-
-        return Pair(rolesToAdd.size + rolesToUpdate.size, rolesToRemove.size)
+        return Pair(rolesUpdated, rolesToRemove.size)
     }
 
-    private suspend fun updateUsers(): Pair<Int, Int> {
+    private suspend fun updateUsers(): Pair<Int, Int> = runSuspended {
         val dbUsers = users.getAllUsers().executeAsList().map { it.id to it }.toMap()
         val discordUsers = config.getGuild().members.toList().map { it.id.longValue to it }.toMap()
 
@@ -267,22 +271,36 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
         val usersToRemove = dbUsers.keys.filter { it !in discordUsers && (dbUsers[it] ?: error("???")).present }
         val usersToUpdate = dbUsers.keys.filter { it in discordUsers }
 
-        usersToAdd.forEach {
-            val member = discordUsers[it] ?: error("User suddenly disappeared from the list: $it.")
+        var usersUpdated = 0
 
-            memberUpdated(member)
+        (usersToAdd + usersToUpdate).forEach {
+            val member = discordUsers[it] ?: error("User suddenly disappeared from the list: $it.")
+            val dbUser = dbUsers[it]
+
+            val dbUserRoles = junction.getUserRoleByUser(it).executeAsList().map { role -> role.role_id }
+            val discordUserRoles = member.roles.toList().map { role -> role.id.longValue }
+
+            val rolesUpToDate = dbUserRoles.containsAll(discordUserRoles)
+
+            if (
+                    dbUser == null
+
+                    || dbUser.avatarUrl != member.avatar.url
+                    || dbUser.discriminator != member.discriminator
+                    || dbUser.username != member.username
+
+                    || !dbUser.present
+                    || !rolesUpToDate
+            ) {
+                memberUpdated(member)
+                usersUpdated += 1
+            }
         }
 
         usersToRemove.forEach {
             memberLeft(it)  // User isn't in discordUsers at all so we have no object
         }
 
-        usersToUpdate.forEach {
-            val member = discordUsers[it] ?: error("User suddenly disappeared from the list: $it.")
-
-            memberUpdated(member)
-        }
-
-        return Pair(usersToAdd.size + usersToUpdate.size, usersToRemove.size)
+        Pair(usersUpdated, usersToRemove.size)
     }
 }
