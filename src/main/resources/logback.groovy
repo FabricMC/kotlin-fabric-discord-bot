@@ -9,6 +9,9 @@ if (environment == "production") {
 } else {
     // Silence warning about missing native PRNG
     logger("io.ktor.util.random", ERROR)
+
+    // Hikari is quite loud in debug mode
+    logger("com.zaxxer.hikari.HikariConfig", INFO)
     logger("com.zaxxer.hikari.pool.HikariPool", INFO)
 }
 

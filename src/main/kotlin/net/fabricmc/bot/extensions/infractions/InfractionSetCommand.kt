@@ -24,9 +24,6 @@ import net.fabricmc.bot.enums.Roles
 import net.fabricmc.bot.runSuspended
 import java.time.Duration
 import java.time.Instant
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import java.util.*
 
 /** Data class representing the arguments for an infraction type that doesn't expire.
  *
@@ -34,7 +31,7 @@ import java.util.*
  * @param memberLong The ID of the member to infract, if they're not on the server.
  * @param reason The reason for the infraction.
  */
-data class NonExpiringCommandArgs(
+data class InfractionSetNonExpiringCommandArgs(
         val member: User? = null,
         val memberLong: Long? = null,
         val reason: List<String>
@@ -47,15 +44,12 @@ data class NonExpiringCommandArgs(
  * @param duration How long to infract the user for.
  * @param reason The reason for the infraction.
  */
-data class ExpiringCommandArgs(
+data class InfractionSetExpiringCommandArgs(
         val member: User? = null,
         val memberLong: Long? = null,
         val duration: Duration = Duration.ZERO,
         val reason: List<String>
 )
-
-private val timeFormatter = DateTimeFormatter.ofPattern("dd/MM/uuuu 'at' HH:mm", Locale.ENGLISH)
-private val mySqlTimeFormatter = DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm:ss", Locale.ENGLISH)
 
 private val logger = KotlinLogging.logger {}
 
@@ -82,7 +76,7 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
 
     private val commandBody: suspend CommandContext.() -> Unit = {
         if (type.expires) {
-            val args = parse<ExpiringCommandArgs>()
+            val args = parse<InfractionSetExpiringCommandArgs>()
 
             applyInfraction(
                     args.member,
@@ -92,7 +86,7 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
                     message
             )
         } else {
-            val args = parse<NonExpiringCommandArgs>()
+            val args = parse<InfractionSetNonExpiringCommandArgs>()
 
             applyInfraction(
                     args.member,
@@ -103,8 +97,6 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
             )
         }
     }
-
-    private fun formatTimestamp(ts: Instant): String = timeFormatter.format(ts.atZone(ZoneId.of("UTC")))
 
     private fun getMemberId(member: User?, id: Long?) =
             if (member == null && id == null) {
@@ -134,15 +126,15 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
         message += if (expires == null) {
             "${type.actionText}."
         } else {
-            "${type.actionText} until ${formatTimestamp(expires)}."
+            "${type.actionText} until ${instantToDisplay(expires)}."
         }
 
         message += "\n\n"
 
         message += if (type == InfractionTypes.NOTE) {
-            "Message: ${infraction.reason}"
+            "**Note:** ${infraction.reason}"
         } else {
-            "Reason: ${infraction.reason}"
+            "**Infraction Reason:** ${infraction.reason}"
         }
 
         return message
@@ -162,6 +154,8 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
                     footer {
                         text = "Infraction ID: ${infraction.id}"
                     }
+
+                    timestamp = Instant.now()
                 }
             } catch (e: RestRequestException) {
                 logger.debug(e) {
@@ -182,14 +176,17 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
             footer {
                 text = "ID: ${infraction.id}"
             }
+
+            timestamp = Instant.now()
         }
     }
 
-    private suspend fun sendInfractionToModLog(infraction: Infraction, expires: Instant?) {
+    private suspend fun sendInfractionToModLog(infraction: Infraction, expires: Instant?, actor: User) {
         val channel = config.getChannel(Channels.MODERATOR_LOG) as TextChannel
         var descriptionText = getInfractionMessage(true, infraction, expires)
 
-        descriptionText += "\n\nUser ID: `${infraction.target_id}`"
+        descriptionText += "\n\n**User ID:** `${infraction.target_id}`"
+        descriptionText += "\n**Moderator:** ${actor.mention} (`${actor.id.longValue}`)"
 
         channel.createEmbed {
             color = Colours.NEGATIVE
@@ -200,6 +197,8 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
             footer {
                 text = "ID: ${infraction.id}"
             }
+
+            timestamp = Instant.now()
         }
     }
 
@@ -234,9 +233,7 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
                         reason,
                         author.id.longValue,
                         memberId,
-                        mySqlTimeFormatter.format(expires.atZone(
-                                ZoneId.of("UTC")
-                        )),
+                        instantToMysql(expires),
                         active,
                         type
                 )
@@ -255,7 +252,7 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
         infrAction.invoke(infraction, memberId, expires)
 
         sendInfractionToChannel(message.channel, infraction, expires)
-        sendInfractionToModLog(infraction, expires)
+        sendInfractionToModLog(infraction, expires, message.author!!)
     }
 
     override val checkList: MutableList<suspend (MessageCreateEvent) -> Boolean> = mutableListOf(

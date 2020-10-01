@@ -27,14 +27,14 @@ private val queries = config.db.infractionQueries
  * @param infraction The infraction object from the database.
  * @param time An [Instant] representing the expiry time of the infraction.
  */
-suspend fun scheduleUndoInfraction(id: Long, infraction: Infraction, time: Instant) {
+suspend fun scheduleUndoInfraction(id: Long, infraction: Infraction, time: Instant?, manual: Boolean = false) {
     when (infraction.infraction_type) {
-        InfractionTypes.BAN -> unbanAt(id, infraction, time)
-        InfractionTypes.META_MUTE -> unMetaMuteAt(id, infraction, time)
-        InfractionTypes.MUTE -> unMuteAt(id, infraction, time)
-        InfractionTypes.REACTION_MUTE -> unReactionMuteAt(id, infraction, time)
-        InfractionTypes.REQUESTS_MUTE -> unRequestsMuteAt(id, infraction, time)
-        InfractionTypes.SUPPORT_MUTE -> unSupportMuteAtAt(id, infraction, time)
+        InfractionTypes.BAN -> unbanAt(id, infraction, time, manual)
+        InfractionTypes.META_MUTE -> unMetaMuteAt(id, infraction, time, manual)
+        InfractionTypes.MUTE -> unMuteAt(id, infraction, time, manual)
+        InfractionTypes.REACTION_MUTE -> unReactionMuteAt(id, infraction, time, manual)
+        InfractionTypes.REQUESTS_MUTE -> unRequestsMuteAt(id, infraction, time, manual)
+        InfractionTypes.SUPPORT_MUTE -> unSupportMuteAtAt(id, infraction, time, manual)
 
         else -> null  // Do nothing
     }
@@ -46,8 +46,8 @@ suspend fun scheduleUndoInfraction(id: Long, infraction: Infraction, time: Insta
  * @param id The ID of the user to unban.
  * @param time The [Instant] representing the time to remove the ban.
  */
-suspend fun unbanAt(id: Long, infraction: Infraction, time: Instant) {
-    schedule(getDelayFromNow(time), infraction) {
+suspend fun unbanAt(id: Long, infraction: Infraction, time: Instant?, manual: Boolean) {
+    schedule(getDelayFromNow(time), infraction, manual) {
         config.getGuild().unban(Snowflake(id))
     }
 }
@@ -58,8 +58,8 @@ suspend fun unbanAt(id: Long, infraction: Infraction, time: Instant) {
  * @param id The ID of the user to unban.
  * @param time The [Instant] representing the time to remove the mute.
  */
-suspend fun unMuteAt(id: Long, infraction: Infraction, time: Instant) {
-    schedule(getDelayFromNow(time), infraction) {
+suspend fun unMuteAt(id: Long, infraction: Infraction, time: Instant?, manual: Boolean) {
+    schedule(getDelayFromNow(time), infraction, manual) {
         val member = config.getGuild().getMemberOrNull(Snowflake(id)) ?: return@schedule
 
         member.removeRole(config.getRoleSnowflake(Roles.MUTED), "Expiring temporary mute")
@@ -72,8 +72,8 @@ suspend fun unMuteAt(id: Long, infraction: Infraction, time: Instant) {
  * @param id The ID of the user to unban.
  * @param time The [Instant] representing the time to remove the mute.
  */
-suspend fun unMetaMuteAt(id: Long, infraction: Infraction, time: Instant) {
-    schedule(getDelayFromNow(time), infraction) {
+suspend fun unMetaMuteAt(id: Long, infraction: Infraction, time: Instant?, manual: Boolean) {
+    schedule(getDelayFromNow(time), infraction, manual) {
         val member = config.getGuild().getMemberOrNull(Snowflake(id)) ?: return@schedule
 
         member.removeRole(config.getRoleSnowflake(Roles.NO_META), "Expiring temporary meta-mute")
@@ -86,8 +86,8 @@ suspend fun unMetaMuteAt(id: Long, infraction: Infraction, time: Instant) {
  * @param id The ID of the user to unban.
  * @param time The [Instant] representing the time to remove the mute.
  */
-suspend fun unReactionMuteAt(id: Long, infraction: Infraction, time: Instant) {
-    schedule(getDelayFromNow(time), infraction) {
+suspend fun unReactionMuteAt(id: Long, infraction: Infraction, time: Instant?, manual: Boolean) {
+    schedule(getDelayFromNow(time), infraction, manual) {
         val member = config.getGuild().getMemberOrNull(Snowflake(id)) ?: return@schedule
 
         member.removeRole(config.getRoleSnowflake(Roles.NO_REACTIONS), "Expiring temporary reaction-mute")
@@ -100,8 +100,8 @@ suspend fun unReactionMuteAt(id: Long, infraction: Infraction, time: Instant) {
  * @param id The ID of the user to unban.
  * @param time The [Instant] representing the time to remove the mute.
  */
-suspend fun unRequestsMuteAt(id: Long, infraction: Infraction, time: Instant) {
-    schedule(getDelayFromNow(time), infraction) {
+suspend fun unRequestsMuteAt(id: Long, infraction: Infraction, time: Instant?, manual: Boolean) {
+    schedule(getDelayFromNow(time), infraction, manual) {
         val member = config.getGuild().getMemberOrNull(Snowflake(id)) ?: return@schedule
 
         member.removeRole(config.getRoleSnowflake(Roles.NO_REQUESTS), "Expiring temporary requests mute")
@@ -114,8 +114,8 @@ suspend fun unRequestsMuteAt(id: Long, infraction: Infraction, time: Instant) {
  * @param id The ID of the user to unban.
  * @param time The [Instant] representing the time to remove the mute.
  */
-suspend fun unSupportMuteAtAt(id: Long, infraction: Infraction, time: Instant) {
-    schedule(getDelayFromNow(time), infraction) {
+suspend fun unSupportMuteAtAt(id: Long, infraction: Infraction, time: Instant?, manual: Boolean) {
+    schedule(getDelayFromNow(time), infraction, manual) {
         val member = config.getGuild().getMemberOrNull(Snowflake(id)) ?: return@schedule
 
         member.removeRole(config.getRoleSnowflake(Roles.NO_SUPPORT), "Expiring temporary support mute")
@@ -144,8 +144,10 @@ fun cancelJobForInfraction(infraction: UUID) {
     jobs.remove(infraction)
 }
 
-private fun schedule(delay: Long, infraction: Infraction, callback: suspend (Nothing?) -> Unit) {
-    jobs[UUID.fromString(infraction.id)] = scheduler.schedule(delay, null) {
+private fun schedule(delay: Long, infraction: Infraction, manual: Boolean, callback: suspend (Nothing?) -> Unit) {
+    val uuid = UUID.fromString(infraction.id)
+
+    jobs[uuid] = scheduler.schedule(delay, null) {
         callback.invoke(it)
 
         runSuspended {
@@ -159,17 +161,23 @@ private fun schedule(delay: Long, infraction: Infraction, callback: suspend (Not
 
         val modLog = config.getChannel(Channels.MODERATOR_LOG) as TextChannel
 
-        modLog.createEmbed {
-            title = "Infraction Expired"
-            color = Colours.BLURPLE
+        if (!manual) {
+            modLog.createEmbed {
+                title = "Infraction Expired"
+                color = Colours.BLURPLE
 
-            description = "<@${infraction.target_id}> (`${infraction.target_id}`) is no longer " +
-                    "${infraction.infraction_type.actionText}."
+                description = "<@${infraction.target_id}> (`${infraction.target_id}`) is no longer " +
+                        "${infraction.infraction_type.actionText}."
 
-            footer {
-                text = "ID: ${infraction.id}"
+                footer {
+                    text = "ID: ${infraction.id}"
+                }
+
+                timestamp = Instant.now()
             }
         }
+
+        jobs.remove(uuid)
     }
 }
 
@@ -180,7 +188,9 @@ private fun schedule(delay: Long, infraction: Infraction, callback: suspend (Not
  *
  * @param time Time to compare to now.
  */
-fun getDelayFromNow(time: Instant): Long {
+fun getDelayFromNow(time: Instant?): Long {
+    time ?: return 0L
+
     if (time <= Instant.now()) {
         return 0L
     }

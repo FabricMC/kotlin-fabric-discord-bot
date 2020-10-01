@@ -24,20 +24,14 @@ import net.fabricmc.bot.enums.Channels
 import net.fabricmc.bot.enums.Roles
 import net.fabricmc.bot.extensions.infractions.applyInfraction
 import net.fabricmc.bot.extensions.infractions.getDelayFromNow
+import net.fabricmc.bot.extensions.infractions.mysqlToInstant
 import net.fabricmc.bot.extensions.infractions.scheduleUndoInfraction
 import net.fabricmc.bot.runSuspended
 import java.time.Instant
-import java.time.ZoneId
-import java.time.format.DateTimeFormatterBuilder
 
 private val roles = config.db.roleQueries
 private val users = config.db.userQueries
 private val junction = config.db.userRoleQueries
-
-private val mySqlTimeFormatter = DateTimeFormatterBuilder()
-        .appendPattern("uuuu-MM-dd HH:mm:ss'.'n")
-        .toFormatter()
-        .withZone(ZoneId.of("UTC"))
 
 /**
  * Sync extension, in charge of keeping the database in sync with Discord.
@@ -93,6 +87,8 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
                         name = "Infractions"
                         value = "**All:** $allInfractions | **Expired now:** $expiredInfractions"
                     }
+
+                    timestamp = Instant.now()
                 }
             }
         }
@@ -127,6 +123,8 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
                         name = "Infractions"
                         value = "**All:** $allInfractions | **Expired now:** $expiredInfractions"
                     }
+
+                    timestamp = Instant.now()
                 }
     }
 
@@ -138,7 +136,7 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
         infractions.forEach {
             val memberId = it.target_id.toLong()
             val member = config.getGuild().getMemberOrNull(Snowflake(memberId))
-            val expires = mySqlTimeFormatter.parse(it.expires) { accessor -> Instant.from(accessor) }
+            val expires = mysqlToInstant(it.expires)
             val delay = getDelayFromNow(expires)
 
             if (delay > 0) {
@@ -146,7 +144,7 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
                     applyInfraction(it, memberId, expires)
                 }
             } else {
-                scheduleUndoInfraction(memberId, it, expires)
+                scheduleUndoInfraction(memberId, it, null)  // Explicitly have no delay
 
                 config.db.infractionQueries.setInfractionActive(false, it.id)
                 expiredInfractions += 1

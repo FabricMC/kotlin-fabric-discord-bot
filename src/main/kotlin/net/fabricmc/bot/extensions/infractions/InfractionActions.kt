@@ -16,12 +16,11 @@ import java.time.Instant
  * This will do whatever is needed to ensure the infraction is correctly applied on the server.
  *
  * @param id The ID of the user this infraction applies to.
- * @param reason The reason given for this infraction.
  * @param expires An [Instant] representing when this infraction should expire, if it does. Null otherwise.
  * @param infraction The [Infraction] object from the database.
  */
 fun applyInfraction(infraction: Infraction, id: Long,
-                    expires: Instant?) = bot.kord.launch {
+                    expires: Instant?, manual: Boolean = false) = bot.kord.launch {
 
 //    So, there a problem in the Kotlin compiler. If we make this suspending (and
 //    thus make InfractionSetCommand.infrAction suspending), we run into a compiler bug that results
@@ -31,16 +30,31 @@ fun applyInfraction(infraction: Infraction, id: Long,
 //    compiler rewrite.
 
     when (infraction.infraction_type) {
-        InfractionTypes.BAN -> kick(infraction, id, expires)
-        InfractionTypes.KICK -> kick(infraction, id, expires)
-        InfractionTypes.META_MUTE -> metaMute(infraction, id, expires)
-        InfractionTypes.MUTE -> mute(infraction, id, expires)
-        InfractionTypes.NOTE -> doNothing(infraction, id, expires)
-        InfractionTypes.REACTION_MUTE -> reactionMute(infraction, id, expires)
-        InfractionTypes.REQUESTS_MUTE -> requestsMute(infraction, id, expires)
-        InfractionTypes.SUPPORT_MUTE -> supportMute(infraction, id, expires)
-        InfractionTypes.WARN -> doNothing(infraction, id, expires)
+        InfractionTypes.BAN -> kick(infraction, id, expires, manual)
+        InfractionTypes.KICK -> kick(infraction, id, expires, manual)
+        InfractionTypes.META_MUTE -> metaMute(infraction, id, expires, manual)
+        InfractionTypes.MUTE -> mute(infraction, id, expires, manual)
+        InfractionTypes.NOTE -> doNothing(infraction, id, expires, manual)
+        InfractionTypes.REACTION_MUTE -> reactionMute(infraction, id, expires, manual)
+        InfractionTypes.REQUESTS_MUTE -> requestsMute(infraction, id, expires, manual)
+        InfractionTypes.SUPPORT_MUTE -> supportMute(infraction, id, expires, manual)
+        InfractionTypes.WARN -> doNothing(infraction, id, expires, manual)
     }
+}
+
+/**
+ * Pardon an infraction based on the type of infraction passed to the function.
+ *
+ * This will do whatever is needed to ensure the infraction is correctly applied on the server.
+ *
+ * @param id The ID of the user this infraction applies to.
+ * @param expires An [Instant] representing when this infraction should expire, if it does. Null otherwise.
+ * @param infraction The [Infraction] object from the database.
+ */
+@Suppress("UnusedPrivateMember")
+fun pardonInfraction(infraction: Infraction, id: Long,
+                     expires: Instant?, manual: Boolean = true) = bot.kord.launch {
+    scheduleUndoInfraction(id, infraction, null, manual)
 }
 
 /**
@@ -52,10 +66,10 @@ fun applyInfraction(infraction: Infraction, id: Long,
  * @param infraction The [Infraction] object from the database.
  */
 @Suppress("UnusedPrivateMember")
-suspend fun ban(infraction: Infraction, id: Long, expires: Instant?) {
+suspend fun ban(infraction: Infraction, id: Long, expires: Instant?, manual: Boolean = false) {
     config.getGuild().ban(Snowflake(id)) { this.reason = infraction.reason }
 
-    unbanAt(id, infraction, expires ?: return)
+    unbanAt(id, infraction, expires ?: return, manual)
 }
 
 /**
@@ -67,12 +81,12 @@ suspend fun ban(infraction: Infraction, id: Long, expires: Instant?) {
  * @param infraction The [Infraction] object from the database.
  */
 @Suppress("UnusedPrivateMember")
-suspend fun mute(infraction: Infraction, id: Long, expires: Instant?) {
+suspend fun mute(infraction: Infraction, id: Long, expires: Instant?, manual: Boolean = false) {
     config.getGuild()
             .getMemberOrNull(Snowflake(id))
             ?.addRole(config.getRoleSnowflake(Roles.MUTED))
 
-    unMuteAt(id, infraction, expires ?: return)
+    unMuteAt(id, infraction, expires ?: return, manual)
 }
 
 /**
@@ -84,12 +98,12 @@ suspend fun mute(infraction: Infraction, id: Long, expires: Instant?) {
  * @param infraction The [Infraction] object from the database.
  */
 @Suppress("UnusedPrivateMember")
-suspend fun metaMute(infraction: Infraction, id: Long, expires: Instant?) {
+suspend fun metaMute(infraction: Infraction, id: Long, expires: Instant?, manual: Boolean = false) {
     config.getGuild()
             .getMemberOrNull(Snowflake(id))
             ?.addRole(config.getRoleSnowflake(Roles.NO_META))
 
-    unMetaMuteAt(id, infraction, expires ?: return)
+    unMetaMuteAt(id, infraction, expires ?: return, manual)
 }
 
 /**
@@ -101,12 +115,12 @@ suspend fun metaMute(infraction: Infraction, id: Long, expires: Instant?) {
  * @param infraction The [Infraction] object from the database.
  */
 @Suppress("UnusedPrivateMember")
-suspend fun reactionMute(infraction: Infraction, id: Long, expires: Instant?) {
+suspend fun reactionMute(infraction: Infraction, id: Long, expires: Instant?, manual: Boolean = false) {
     config.getGuild()
             .getMemberOrNull(Snowflake(id))
             ?.addRole(config.getRoleSnowflake(Roles.NO_REACTIONS))
 
-    unReactionMuteAt(id, infraction, expires ?: return)
+    unReactionMuteAt(id, infraction, expires ?: return, manual)
 }
 
 /**
@@ -118,12 +132,12 @@ suspend fun reactionMute(infraction: Infraction, id: Long, expires: Instant?) {
  * @param infraction The [Infraction] object from the database.
  */
 @Suppress("UnusedPrivateMember")
-suspend fun requestsMute(infraction: Infraction, id: Long, expires: Instant?) {
+suspend fun requestsMute(infraction: Infraction, id: Long, expires: Instant?, manual: Boolean = false) {
     config.getGuild()
             .getMemberOrNull(Snowflake(id))
             ?.addRole(config.getRoleSnowflake(Roles.NO_REQUESTS))
 
-    unRequestsMuteAt(id, infraction, expires ?: return)
+    unRequestsMuteAt(id, infraction, expires ?: return, manual)
 }
 
 /**
@@ -135,12 +149,12 @@ suspend fun requestsMute(infraction: Infraction, id: Long, expires: Instant?) {
  * @param infraction The [Infraction] object from the database.
  */
 @Suppress("UnusedPrivateMember")
-suspend fun supportMute(infraction: Infraction, id: Long, expires: Instant?) {
+suspend fun supportMute(infraction: Infraction, id: Long, expires: Instant?, manual: Boolean = false) {
     config.getGuild()
             .getMemberOrNull(Snowflake(id))
             ?.addRole(config.getRoleSnowflake(Roles.NO_SUPPORT))
 
-    unSupportMuteAtAt(id, infraction, expires ?: return)
+    unSupportMuteAtAt(id, infraction, expires ?: return, manual)
 }
 
 /**
@@ -152,7 +166,7 @@ suspend fun supportMute(infraction: Infraction, id: Long, expires: Instant?) {
  * @param infraction The [Infraction] object from the database.
  */
 @Suppress("UnusedPrivateMember")
-suspend fun kick(infraction: Infraction, id: Long, expires: Instant?) {
+suspend fun kick(infraction: Infraction, id: Long, expires: Instant?, manual: Boolean = false) {
     config.getGuild().kick(Snowflake(id), infraction.reason)
 }
 
@@ -164,6 +178,6 @@ suspend fun kick(infraction: Infraction, id: Long, expires: Instant?) {
  * @param infraction The [Infraction] object from the database.
  */
 @Suppress("UnusedPrivateMember")
-fun doNothing(infraction: Infraction, id: Long, expires: Instant?) {
+fun doNothing(infraction: Infraction, id: Long, expires: Instant?, manual: Boolean = false) {
     // Literally do nothing. Not every infraction requires an action on Discord.
 }
