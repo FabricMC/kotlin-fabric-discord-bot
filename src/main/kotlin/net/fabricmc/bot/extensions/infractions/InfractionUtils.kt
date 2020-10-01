@@ -22,7 +22,11 @@ private val mySqlTimeParser = DateTimeFormatterBuilder()
  * @param ts [Instant] to format.
  * @return String representation of the given [Instant].
  */
-fun instantToDisplay(ts: Instant): String = timeFormatter.format(ts.atZone(ZoneId.of("UTC")))
+fun instantToDisplay(ts: Instant?): String? {
+    ts ?: return null
+
+    return timeFormatter.format(ts.atZone(ZoneId.of("UTC")))
+}
 
 /**
  * Given a MySQL-formatted datetime string, return an Instant.
