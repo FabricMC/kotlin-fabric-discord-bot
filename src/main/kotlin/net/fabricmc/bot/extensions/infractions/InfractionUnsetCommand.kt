@@ -51,7 +51,7 @@ class InfractionUnsetCommand(extension: Extension, private val type: InfractionT
                              private val commandDescription: String,
                              private val commandName: String,
                              private val aliasList: Array<String> = arrayOf(),
-                             // This can't be suspending, see comment in InfractionActions.applyInfraction
+        // This can't be suspending, see comment in InfractionActions.applyInfraction
                              private val infrAction: Infraction.(
                                      targetId: Long, expires: Instant?
                              ) -> Unit
@@ -67,15 +67,6 @@ class InfractionUnsetCommand(extension: Extension, private val type: InfractionT
                 message
         )
     }
-
-    private fun getMemberId(member: User?, id: Long?) =
-            if (member == null && id == null) {
-                Pair(null, "Please specify a user to pardon.")
-            } else if (member != null && id != null) {
-                Pair(null, "Please specify exactly one user argument, not two.")
-            } else {
-                Pair(member?.id?.longValue ?: id!!, null)
-            }
 
     private fun getInfractionMessage(public: Boolean, infraction: Infraction, showReason: Boolean = false): String {
         var message = if (public) {

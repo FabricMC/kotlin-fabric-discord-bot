@@ -1,7 +1,7 @@
 getInfraction:
     SELECT * FROM infraction
 --     SELECT infraction.*, user.* FROM infraction
---     INNER JOIN user ON user.id = infraction.infractor_id OR user.id = infraction.target_id
+--     INNER JOIN user ON user.id = infraction.moderator_id OR user.id = infraction.target_id
     WHERE id = :id;
 
 getInfractionCount:
@@ -10,28 +10,28 @@ getInfractionCount:
 getAllInfractions:
     SELECT * FROM infraction;
 --     SELECT infraction.*, user.* FROM infraction;
---     INNER JOIN user ON user.id = infraction.infractor_id OR user.id = infraction.target_id;
+--     INNER JOIN user ON user.id = infraction.moderator_id OR user.id = infraction.target_id;
 
 getActiveExpirableInfractions:
     SELECT * FROM infraction
     WHERE active = TRUE AND expires IS NOT NULL;
 
-getInfractionsByInfractor:
+getInfractionsByModerator:
     SELECT * FROM infraction
 --     SELECT infraction.*, user.* FROM infraction
---     INNER JOIN user ON user.id = infraction.infractor_id OR user.id = infraction.target_id
-    WHERE infractor_id = :id;
+--     INNER JOIN user ON user.id = infraction.moderator_id OR user.id = infraction.target_id
+    WHERE moderator_id = :id;
 
 getInfractionsByUser:
     SELECT * FROM infraction
 --     SELECT infraction.*, user.* FROM infraction
---     INNER JOIN user ON user.id = infraction.infractor_id OR user.id = infraction.target_id
+--     INNER JOIN user ON user.id = infraction.moderator_id OR user.id = infraction.target_id
     WHERE target_id = :id;
 
 getActiveExpirableInfractionsByUser:
     SELECT * FROM infraction
 --     SELECT infraction.*, user.* FROM infraction
---     INNER JOIN user ON user.id = infraction.infractor_id OR user.id = infraction.target_id
+--     INNER JOIN user ON user.id = infraction.moderator_id OR user.id = infraction.target_id
     WHERE target_id = :id AND active = TRUE AND expires IS NOT NULL;
 
 getLastInfraction:
@@ -45,7 +45,7 @@ setInfractionActive:
 updateInfraction:
     UPDATE infraction
     SET reason = :reason,
-        infractor_id = :infractor_id,
+        moderator_id = :moderator_id,
         target_id = :target_id,
         created = :created,
         expires = :expires,
@@ -54,5 +54,5 @@ updateInfraction:
     WHERE id = :id;
 
 addInfraction :
-    INSERT INTO infraction(reason, infractor_id, target_id, expires, active, infraction_type)
-        VALUES (:reason, :infractor_id, :target_id, :expires, :active, :infraction_type);
+    INSERT INTO infraction(reason, moderator_id, target_id, expires, active, infraction_type)
+        VALUES (:reason, :moderator_id, :target_id, :expires, :active, :infraction_type);

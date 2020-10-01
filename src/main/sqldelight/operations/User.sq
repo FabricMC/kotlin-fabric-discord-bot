@@ -11,6 +11,10 @@ getAllUsers:
 --     INNER JOIN user_role ON user.id = user_role.user_id
 --     INNER JOIN role ON role.id = user_role.role_id;
 
+findByUsernameContains:
+    SELECT * FROM user
+    WHERE username LIKE :username;
+
 updateUser:
     UPDATE user
     SET avatarUrl = :avatarUrl,

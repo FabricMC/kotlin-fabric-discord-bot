@@ -99,15 +99,6 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
         }
     }
 
-    private fun getMemberId(member: User?, id: Long?) =
-            if (member == null && id == null) {
-                Pair(null, "Please specify a user to apply this infraction to.")
-            } else if (member != null && id != null) {
-                Pair(null, "Please specify exactly one user argument, not two.")
-            } else {
-                Pair(member?.id?.longValue ?: id!!, null)
-            }
-
     private suspend fun getUserMissingMessage(id: Long) =
             if (!type.requirePresent) {
                 null

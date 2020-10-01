@@ -4,20 +4,23 @@ import com.gitlab.kordlib.core.behavior.channel.createMessage
 import com.gitlab.kordlib.core.entity.User
 import com.gitlab.kordlib.rest.builder.message.EmbedBuilder
 import com.kotlindiscord.kord.extensions.ExtensibleBot
+import com.kotlindiscord.kord.extensions.Paginator
 import com.kotlindiscord.kord.extensions.checks.topRoleHigherOrEqual
 import com.kotlindiscord.kord.extensions.extensions.Extension
-import net.fabricmc.bot.bot
 import net.fabricmc.bot.conf.config
 import net.fabricmc.bot.constants.Colours
 import net.fabricmc.bot.database.Infraction
 import net.fabricmc.bot.defaultCheck
 import net.fabricmc.bot.enums.InfractionTypes
 import net.fabricmc.bot.enums.Roles
+import net.fabricmc.bot.enums.getInfractionType
 import net.fabricmc.bot.extensions.infractions.*
 import net.fabricmc.bot.runSuspended
 import java.time.Instant
 
-private const val UNITS = "**__Durations__**\n\n" +
+private const val PAGINATOR_TIMEOUT = 120 * 1000L
+
+private const val UNITS = "**__Durations__**\n" +
         "Durations are specified in pairs of amounts and units - for example, `12d` would be 12 days. " +
         "Compound durations are supported - for example, `2d12h` would be 2 days and 12 hours.\n\n" +
         "The following units are supported:\n\n" +
@@ -30,45 +33,51 @@ private const val UNITS = "**__Durations__**\n\n" +
         "**Months:** `mo`, `month`, `months`\n" +
         "**Years:** `y`, `year`, `years`"
 
-@Suppress("UnusedPrivateMember")  // TODO: Gotta AFK
-private const val FILTERS = "**__Filters__**\n\n" +
-        "Filters are specified as key-value pairs, split by an equals sign - For example," +
-        "`targetId=109040264529608704` would match infractions that target gdude. Multiple" +
+private const val FILTERS = "**__Filters__**\n" +
+        "Filters are specified as key-value pairs, split by a colon - For example," +
+        "`targetId:109040264529608704` would match infractions that target gdude. Multiple " +
         "filters are supported, but there are some restrictions.\n\n" +
 
-        "**__Matching users**__\n\n" +
-        "**Target:** Either `target` or `targetId`, but not both. The former matches mentions, " +
-        "but only works if the user is on the server.\n" +
-        "**Infractor:** Either `infractor` or `infractorId`, but not both, with the same restrictions" +
-        "as the target filter.\n\n" +
+        "**__Matching users__**\n" +
 
-        "**__Other filters__**\n\n" +
+        "**Target:** One of `target`, `targetName` or `targetId`.\n" +
+        "**»** `target` Matches a mention, assuming the user is on the server.\n" +
+        "**»** `targetId` Matches a user ID, whether or not they're on the server.\n" +
+        "**»** `targetName` Searches the database for users with usernames that contain the given value, and uses " +
+        "those for the match.\n\n" +
 
-        "**Infraction ID:** `id`\n" +
+        "**Moderator:** One of `moderator` or `moderatorId`.\n" +
+        "**»** `moderator` Matches a mention, assuming the user is on the server.\n" +
+        "**»** `moderatorId` Matches a user ID, whether or not they're on the server.\n\n" +
+
+        "**__Other filters__**\n" +
+
         "**Infraction Type:** `type`, matched against the start of the following types: `banned`, `kicked`, `muted`, " +
-        "`meta-muted`, `reaction-muted`, `requests-muted`, `support-muted`, `warned`, `noted`." +
+        "`meta-muted`, `reaction-muted`, `requests-muted`, `support-muted`, `warned`, `noted`.\n\n" +
+
         "**Active:** `active`, either `true` or `false`."
 
 /**
  * Arguments for the infraction search command.
  */
-@Suppress("UndocumentedPublicProperty")  // TODO: Gotta AFK
+@Suppress("UndocumentedPublicProperty")
 data class InfractionSearchCommandArgs(
         val target: User? = null,
         val targetId: Long? = null,
 
-        val infractor: User? = null,
-        val infractorId: Long? = null,
+        val moderator: User? = null,
+        val moderatorId: Long? = null,
 
-        val id: String? = null,
         val type: String? = null,
-        val active: Boolean? = null
+        val active: Boolean? = null,
+
+        val targetName: String? = null
 )
 
 /**
  * Arguments for infraction commands that only take an ID.
  */
-@Suppress("UndocumentedPublicProperty")  // TODO: Gotta AFK
+@Suppress("UndocumentedPublicProperty")
 data class InfractionIDCommandArgs(
         val id: String
 )
@@ -78,29 +87,32 @@ data class InfractionIDCommandArgs(
  */
 class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
     override val name = "infractions"
-    private val q = config.db.infractionQueries
+    private val infQ = config.db.infractionQueries
+    private val userQ = config.db.userQueries
 
-    @Suppress("UnusedPrivateMember")  // TODO: Gotta AFK
+    @Suppress("UnusedPrivateMember")
     private fun validateSearchArgs(args: InfractionSearchCommandArgs): String? {
         val atLeastOneFilter = args.target != null
-                && args.targetId != null
-                && args.infractor != null
-                && args.infractorId != null
-                && args.id != null
-                && args.type != null
-                && args.active != null
+                || args.targetId != null
+                || args.moderator != null
+                || args.moderatorId != null
+                || args.type != null
+                || args.active != null
+                || args.targetName != null
 
         if (!atLeastOneFilter) {
-            return "Please provide at least one filter. Try `${net.fabricmc.bot.bot.prefix}help inf search` for " +
+            return "Please provide at least one filter. Try `${bot.prefix}help inf search` for " +
                     "more information."
         }
 
-        if (args.target != null && args.targetId != null) {
-            return "Please provide either the `target` or `targetId` filter, not both."
+        val targetNulls = arrayOf(args.target, args.targetId, args.targetName).count { it == null }
+
+        if (targetNulls < 2) {
+            return "Please provide only one of the `target`, `targetId` or `targetName` filters."
         }
 
-        if (args.infractor != null && args.infractorId != null) {
-            return "Please provide either the `infractor` or `infractorId` filter, not both."
+        if (args.moderator != null && args.moderatorId != null) {
+            return "Please provide either the `moderator` or `moderatorId` filter, not both."
         }
 
         return null
@@ -112,19 +124,19 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
         }
 
         val verb = inf.infraction_type.verb.capitalize()
-        val infractor = inf.infractor_id
+        val moderator = inf.moderator_id
         val target = inf.target_id
 
         val created = instantToDisplay(mysqlToInstant(inf.created))
         val expired = instantToDisplay(mysqlToInstant(inf.expires)) ?: "Never"
 
-        val active = if (inf.active) "Active" else "Inactive"
+        val active = if (inf.active) "Yes" else "No"
 
         return "**__Details__**\n" +
                 "**ID:** ${inf.id}\n" +
                 "**Type:** $verb\n\n" +
 
-                "**Moderator:** <@$infractor> (`$infractor`)\n" +
+                "**Moderator:** <@$moderator> (`$moderator`)\n" +
                 "**User:** <@$target> (`$target`)\n\n" +
 
                 "**Created:** $created\n" +
@@ -175,7 +187,7 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                 action {
                     runSuspended {
                         with(parse<InfractionIDCommandArgs>()) {
-                            val inf = q.getInfraction(id).executeAsOneOrNull()
+                            val inf = infQ.getInfraction(id).executeAsOneOrNull()
                             val embedBuilder = infractionToEmbed(inf)
 
                             if (embedBuilder == null) {
@@ -187,6 +199,65 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                             }
 
                             message.channel.createMessage { embed = embedBuilder }
+                        }
+                    }
+                }
+            }
+
+            command {
+                name = "search"
+                aliases = arrayOf("s", "find", "f")
+
+                description = "Search for infractions using a set of filters.\n\n$FILTERS"
+
+                signature = "<filter> [filter...]"
+
+                action {
+                    runSuspended {
+                        with(parse<InfractionSearchCommandArgs>()) {
+                            val author = message.author!!
+                            val validateMessage = validateSearchArgs(this)
+
+                            if (validateMessage != null) {
+                                message.channel.createMessage(
+                                        "${author.mention} $validateMessage"
+                                )
+
+                                return@with
+                            }
+
+                            var infractions = infQ.getAllInfractions().executeAsList()
+
+                            val userId = getMemberId(target, targetId)
+                            val moderatorId = getMemberId(moderator, moderatorId)
+
+                            if (targetName != null) {
+                                // Yup, SQLDelight doesn't understand the wildcards.
+                                val users = userQ.findByUsernameContains("%$targetName%").executeAsList()
+
+                                users.forEach { user ->
+                                    infractions = infractions.filter { it.target_id == user.id }
+                                }
+                            }
+
+                            if (userId != null) infractions = infractions.filter { it.target_id == userId }
+                            if (moderatorId != null) infractions = infractions.filter { it.moderator_id == moderatorId }
+                            if (active != null) infractions = infractions.filter { it.active == active }
+
+                            if (type != null) {
+                                infractions = infractions.filter {
+                                    it.infraction_type == getInfractionType(type)
+                                }
+                            }
+
+                            val pages = infractions.map { infractionToString(it) }.filterNotNull()
+
+                            val paginator = Paginator(
+                                    bot, message.channel, "Infractions",
+                                    pages, author, PAGINATOR_TIMEOUT, true
+                            )
+
+                            paginator.send()
                         }
                     }
                 }
@@ -392,4 +463,13 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
         )
         // endregion
     }
+
+    private fun getMemberId(member: User?, id: Long?) =
+            if (member == null && id == null) {
+                null
+            } else if (member != null && id != null) {
+                null
+            } else {
+                member?.id?.longValue ?: id!!
+            }
 }

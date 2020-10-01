@@ -38,5 +38,4 @@ enum class InfractionTypes(
  */
 fun getInfractionType(string: String) =
         InfractionTypes.values()
-                .map { it.actionText }
-                .firstOrNull { it.startsWith(string.toLowerCase()) }
+                .firstOrNull { it.actionText.startsWith(string.toLowerCase()) }

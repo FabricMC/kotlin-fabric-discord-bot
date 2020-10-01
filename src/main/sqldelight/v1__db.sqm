@@ -39,7 +39,7 @@ CREATE TABLE infraction(
 
     reason VARCHAR(1000) NOT NULL,
 
-    infractor_id BIGINT NOT NULL,
+    moderator_id BIGINT NOT NULL,
     target_id BIGINT NOT NULL,
 
     created DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -48,6 +48,6 @@ CREATE TABLE infraction(
 
     infraction_type VARCHAR(50) as InfractionTypes NOT NULL,
 
-    FOREIGN KEY(infractor_id) REFERENCES user(id),
+    FOREIGN KEY(moderator_id) REFERENCES user(id),
     FOREIGN KEY(target_id) REFERENCES user(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE utf8mb4_general_ci;
