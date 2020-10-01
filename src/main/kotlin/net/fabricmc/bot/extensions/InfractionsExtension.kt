@@ -32,6 +32,7 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                         InfractionTypes.BAN,
                         "Permanently or temporarily ban a user.\n\n$UNITS",
                         "ban",
+                        arrayOf("b"),
                         ::applyInfraction
                 )
         )
@@ -42,6 +43,7 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                         InfractionTypes.KICK,
                         "Kick a user from the server.",
                         "kick",
+                        arrayOf("k"),
                         ::applyInfraction
                 )
         )
@@ -53,6 +55,7 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                         "Permanently or temporarily mute a user, server-wide." +
                                 "\n\n$UNITS",
                         "mute",
+                        arrayOf("m"),
                         ::applyInfraction
                 )
         )
@@ -64,6 +67,7 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                         "Permanently or temporarily mute a user, from the meta channel only." +
                                 "\n\n$UNITS",
                         "mute-meta",
+                        arrayOf("meta-mute", "mutemeta", "metamute"),
                         ::applyInfraction
                 )
         )
@@ -75,6 +79,9 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                         "Permanently or temporarily prevent a user from adding reactions to " +
                                 "messages.\n\n$UNITS",
                         "mute-reactions",
+                        arrayOf(
+                                "mute-reaction", "reactions-mute", "reaction-mute",
+                                "mutereactions", "mutereaction", "reactionsmute", "reactionmute"),
                         ::applyInfraction
                 )
         )
@@ -86,6 +93,10 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                         "Permanently or temporarily mute a user, from the requests channel only." +
                                 "\n\n$UNITS",
                         "mute-requests",
+                        arrayOf(
+                                "mute-request", "requests-mute", "request-mute",
+                                "muterequests", "muterequest", "requestsmute", "requestmute"
+                        ),
                         ::applyInfraction
                 )
         )
@@ -97,6 +108,7 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                         "Permanently or temporarily mute a user, from the player-support channel " +
                                 "only.\n\n$UNITS",
                         "mute-support",
+                        arrayOf("support-mute", "mutesupport", "supportmute"),
                         ::applyInfraction
                 )
         )
@@ -107,6 +119,7 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                         InfractionTypes.WARN,
                         "Officially warn a user for their actions.",
                         "warn",
+                        arrayOf("w"),
                         ::applyInfraction
                 )
         )
@@ -117,6 +130,7 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                         InfractionTypes.NOTE,
                         "Add a note for a user.",
                         "note",
+                        arrayOf("n"),
                         ::applyInfraction
                 )
         )
@@ -129,6 +143,7 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                         InfractionTypes.BAN,
                         "Pardon all permanent or temporary bans for a user.",
                         "unban",
+                        arrayOf("ub", "un-ban"),
                         ::pardonInfraction
                 )
         )
@@ -139,6 +154,7 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                         InfractionTypes.MUTE,
                         "Pardon all permanent or temporary server-wide mutes for a user.",
                         "unmute",
+                        arrayOf("um", "un-mute"),
                         ::pardonInfraction
                 )
         )
@@ -149,6 +165,10 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                         InfractionTypes.META_MUTE,
                         "Pardon all permanent or temporary meta channel mutes for a user.",
                         "unmute-meta",
+                        arrayOf(
+                                "un-mute-meta", "meta-unmute", "meta-un-mute", "un-meta-mute", "unmeta-mute",
+                                "unmutemeta", "metaunmute", "unmetamute"
+                        ),
                         ::pardonInfraction
                 )
         )
@@ -159,6 +179,15 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                         InfractionTypes.REACTION_MUTE,
                         "Pardon all permanent or temporary reaction mutes for a user.",
                         "unmute-reactions",
+                        arrayOf(
+                                "un-mute-reactions", "reactions-unmute", "reactions-un-mute",
+                                "unmutereactions", "reactionsunmute",
+                                "un-mute-reaction", "reaction-unmute", "reaction-un-mute",
+                                "unmutereaction", "reactionunmute",
+                                "un-reactions-mute", "un-reaction-mute",
+                                "un-reactionsmute", "un-reactionmute",
+                                "unreactionsmute", "unreactionmute"
+                        ),
                         ::pardonInfraction
                 )
         )
@@ -169,6 +198,11 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                         InfractionTypes.REQUESTS_MUTE,
                         "Pardon all permanent or temporary requests channel mutes for a user.",
                         "unmute-requests",
+                        arrayOf(
+                                "un-mute-requests", "unmuterequests",
+                                "requests-un-mute", "requests-unmute", "requestsunmute",
+                                "un-requests-mute", "un-requestsmute", "unrequestsmute"
+                        ),
                         ::pardonInfraction
                 )
         )
@@ -179,6 +213,11 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                         InfractionTypes.SUPPORT_MUTE,
                         "Pardon all permanent or temporary support channel mutes for a user.",
                         "unmute-support",
+                        arrayOf(
+                                "un-mute-support", "unmutesupport",
+                                "support-un-mute", "support-unmute", "supportunmute",
+                                "un-support-mute", "un-supportmute", "unsupportmute"
+                        ),
                         ::pardonInfraction
                 )
         )

@@ -67,7 +67,8 @@ private val logger = KotlinLogging.logger {}
 class InfractionSetCommand(extension: Extension, private val type: InfractionTypes,
                            private val commandDescription: String,
                            private val commandName: String,
-                           // This can't be suspending, see comment in InfractionActions.applyInfraction
+                           private val aliasList: Array<String> = arrayOf(),
+        // This can't be suspending, see comment in InfractionActions.applyInfraction
                            private val infrAction: Infraction.(
                                    targetId: Long, expires: Instant?
                            ) -> Unit
@@ -261,6 +262,7 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
     )
 
     init {
+        this.aliases = aliasList
         this.name = commandName
         this.description = commandDescription
 
