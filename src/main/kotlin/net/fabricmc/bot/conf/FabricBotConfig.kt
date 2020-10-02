@@ -88,6 +88,9 @@ class FabricBotConfig {
      */
     val guildSnowflake: Snowflake get() = Snowflake(config[BotSpec.guild])
 
+    /** Channels that should be ignored by the logging extension. **/
+    val ignoredChannels: List<Long> get() = config[ChannelsSpec.ignoredChannels]
+
     /**
      * Given a [Channels] enum value, attempt to retrieve the corresponding Discord [Channel]
      * object.

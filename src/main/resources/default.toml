@@ -7,6 +7,14 @@ actionLog = 746875064200462416
 botCommands = 523633816078647296
 moderatorLog = 722561981990699129
 
+ignoredChannels = [
+    565822936712347658,  # Moderators
+    722561981990699129,  # Moderation Log
+    722698715697119243,  # Botland
+    618964111132327937,  # Taintedland
+    746875064200462416   # System Messages (Action log?)
+]
+
 [roles]
 admin = 507304850250268672
 mod = 521758400980320278

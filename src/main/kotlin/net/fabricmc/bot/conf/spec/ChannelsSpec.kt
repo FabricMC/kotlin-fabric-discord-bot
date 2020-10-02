@@ -16,4 +16,7 @@ object ChannelsSpec : ConfigSpec() {
 
     /** Configured moderator-log channel ID. **/
     val moderatorLog by required<Long>()
+
+    /** Channels that should be ignored by the logging extension. **/
+    val ignoredChannels by required<List<Long>>()
 }

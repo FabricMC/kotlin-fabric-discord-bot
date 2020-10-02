@@ -1,16 +1,18 @@
 package net.fabricmc.bot
 
+import com.gitlab.kordlib.core.behavior.channel.createWebhook
 import com.gitlab.kordlib.core.cache.data.MessageData
-import com.gitlab.kordlib.core.entity.Member
-import com.gitlab.kordlib.core.entity.Message
-import com.gitlab.kordlib.core.entity.Role
-import com.gitlab.kordlib.core.entity.User
+import com.gitlab.kordlib.core.entity.*
+import com.gitlab.kordlib.core.entity.channel.TextChannel
+import com.gitlab.kordlib.core.firstOrNull
+import com.gitlab.kordlib.rest.Image
 import com.gitlab.kordlib.rest.request.RestRequestException
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.toList
 import mu.KotlinLogging
 import net.fabricmc.bot.conf.config
+import net.fabricmc.bot.enums.Channels
 import net.fabricmc.bot.enums.Roles
 import net.time4j.Duration
 import net.time4j.IsoUnit
@@ -18,6 +20,7 @@ import java.time.Instant
 import java.time.temporal.ChronoUnit
 
 private const val NEW_DAYS = 3L
+private val logger = KotlinLogging.logger {}
 
 /**
  * Convenience function to convert a [Role] object to a [Roles] enum value.
@@ -151,3 +154,27 @@ fun Duration<IsoUnit>.toSeconds(): Long {
  */
 suspend fun <T> runSuspended(dispatcher: CoroutineDispatcher = Dispatchers.IO, body: suspend CoroutineScope.() -> T) =
         withContext(dispatcher, body)
+
+/**
+ * Ensure a webhook is created for the bot in a given channel, and return it.
+ *
+ * This will not create a new webhook if one named "Fabric Bot" already exists.
+ *
+ * @param channel Configured channel to ensure a webhook exists for.
+ * @return Webhook object for the newly created webhook, or the existing one if it's already there.
+ */
+suspend fun ensureWebhook(channel: Channels): Webhook {
+    val channelObj = config.getChannel(channel) as TextChannel
+    val webhook = channelObj.webhooks.firstOrNull { it.name == "Fabric Bot" }
+
+    if (webhook != null) {
+        return webhook
+    }
+
+    logger.info { "Creating webhook for channel: #${channelObj.name}" }
+
+    return channelObj.createWebhook {
+        name = "Fabric Bot"
+        avatar = Image.raw(::ensureWebhook::class.java.getResource("/logo.png").readBytes(), Image.Format.PNG)
+    }
+}

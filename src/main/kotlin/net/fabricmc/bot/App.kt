@@ -8,13 +8,7 @@ import mu.KotlinLogging
 import net.fabricmc.bot.conf.buildInfo
 import net.fabricmc.bot.conf.config
 import net.fabricmc.bot.database.Migrator
-import net.fabricmc.bot.extensions.EvalExtension
-import net.fabricmc.bot.extensions.GitHubExtension
-import net.fabricmc.bot.extensions.InfractionsExtension
-import net.fabricmc.bot.extensions.ModerationExtension
-import net.fabricmc.bot.extensions.SelfRoleExtension
-import net.fabricmc.bot.extensions.SyncExtension
-import net.fabricmc.bot.extensions.VersionCheckExtension
+import net.fabricmc.bot.extensions.*
 
 /** The current instance of the bot. **/
 val bot = ExtensibleBot(prefix = config.prefix, token = config.token)
@@ -36,11 +30,12 @@ suspend fun main() {
         bot.addExtension(EvalExtension::class)
     }
 
+    bot.addExtension(GitHubExtension::class)
     bot.addExtension(InfractionsExtension::class)
+    bot.addExtension(LoggingExtension::class)
     bot.addExtension(ModerationExtension::class)
+    bot.addExtension(SelfRoleExtension::class)
     bot.addExtension(SyncExtension::class)
     bot.addExtension(VersionCheckExtension::class)
-    bot.addExtension(GitHubExtension::class)
-    bot.addExtension(SelfRoleExtension::class)
     bot.start()
 }
