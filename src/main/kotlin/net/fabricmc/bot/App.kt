@@ -30,6 +30,7 @@ suspend fun main() {
         bot.addExtension(EvalExtension::class)
     }
 
+    bot.addExtension(CleanExtension::class)
     bot.addExtension(GitHubExtension::class)
     bot.addExtension(InfractionsExtension::class)
     bot.addExtension(LoggingExtension::class)
