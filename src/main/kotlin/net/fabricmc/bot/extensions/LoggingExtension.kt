@@ -517,7 +517,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                     is StoreChannelUpdateEvent -> logger.debug { "Ignoring event: $it" }
                     is TextChannelUpdateEvent -> logger.debug { "Ignoring event: $it" }
                     is TypingStartEvent -> logger.debug { "Ignoring event: $it" }
-                    is UserUpdateEvent -> logger.debug { "Ignoring event: $it" }
+                    is UserUpdateEvent -> { /* We have more specific handling for this event below. */ }
                     is VoiceChannelUpdateEvent -> logger.debug { "Ignoring event: $it" }
                     is VoiceServerUpdateEvent -> logger.debug { "Ignoring event: $it" }
                     is VoiceStateUpdateEvent -> logger.debug { "Ignoring event: $it" }

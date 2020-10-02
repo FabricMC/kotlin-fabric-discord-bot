@@ -2,21 +2,22 @@ package net.fabricmc.bot.extensions
 
 import com.gitlab.kordlib.cache.api.query
 import com.gitlab.kordlib.common.entity.Snowflake
+import com.gitlab.kordlib.core.behavior.channel.createEmbed
 import com.gitlab.kordlib.core.cache.data.MessageData
 import com.gitlab.kordlib.core.entity.Message
 import com.gitlab.kordlib.core.entity.User
 import com.gitlab.kordlib.core.entity.channel.Channel
 import com.gitlab.kordlib.core.entity.channel.GuildMessageChannel
+import com.gitlab.kordlib.core.entity.channel.TextChannel
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import com.kotlindiscord.kord.extensions.checks.topRoleHigherOrEqual
 import com.kotlindiscord.kord.extensions.extensions.Extension
 import mu.KotlinLogging
-import net.fabricmc.bot.authorId
-import net.fabricmc.bot.authorIsBot
+import net.fabricmc.bot.*
 import net.fabricmc.bot.conf.config
-import net.fabricmc.bot.defaultCheck
+import net.fabricmc.bot.constants.Colours
+import net.fabricmc.bot.enums.Channels
 import net.fabricmc.bot.enums.Roles
-import net.fabricmc.bot.hasRole
 import java.time.Instant
 
 /** Maximum number of deleted messages allowed without the force flag. **/
@@ -54,13 +55,34 @@ private const val HELP =
                 "The following filters may only be specified once.\n\n" +
 
                 "**Bot Only:** `botOnly`, specify `true` to match only messages sent by bots.\n" +
-                "**Count:** `count`, the maximum number of messages to clean. Omit for no limit.\n" +
+
+                "**Count:** `count`, the maximum number of messages to clean. Omit for no limit. If multiple " +
+                "channels are specified using the `in` filter, this limit is per-channel.\n" +
+
                 "**Since:** `since`, specify the earliest message to clean up, messages between this and the latest " +
                 "matched one will be removed.\n\n" +
 
                 "**__Additional options__**\n" +
+                "**Dry-run:** `dryRun`, specify `true` to get a total count of messages that would be deleted, " +
+                "instead of actually deleting them.\n" +
                 "**Force:** `force`, specify `true` to override the $MAX_DELETION_SIZE messages soft limit. Only " +
                 "available to admins."
+
+
+/**
+ * Arguments for the clean command.
+ */
+@Suppress("ConstructorParameterNaming", "UndocumentedPublicProperty")
+data class CleanArguments(
+        val user: List<User>? = null,
+        val regex: List<Regex>? = null,
+        val `in`: List<Channel>? = null,
+        val since: Message? = null,
+        val botOnly: Boolean = false,
+        val count: Int = -1,
+        val force: Boolean = false,
+        val dryRun: Boolean = false
+)
 
 /**
  * Extension providing a bulk message deletion command for mods+.
@@ -72,16 +94,6 @@ class CleanExtension(bot: ExtensibleBot) : Extension(bot) {
     override val name = "clean"
 
     override suspend fun setup() {
-        @Suppress("ConstructorParameterNaming")
-        data class CleanArguments(
-                val user: List<User>? = null,
-                val regex: List<Regex>? = null,
-                val `in`: List<Channel>? = null,
-                val since: Message? = null,
-                val botOnly: Boolean = false,
-                val count: Int = -1,
-                val force: Boolean = false
-        )
 
         command {
             name = "clean"
@@ -91,7 +103,7 @@ class CleanExtension(bot: ExtensibleBot) : Extension(bot) {
 
             check(::defaultCheck)
             check(topRoleHigherOrEqual(config.getRole(Roles.MODERATOR)))
-            signature = "<filter> [filter...] [force:false]"
+            signature = "<filter> [filter...] [dryRun:false] [force:false]"
 
             hidden = true
 
@@ -130,6 +142,8 @@ class CleanExtension(bot: ExtensibleBot) : Extension(bot) {
                     val sinceTimestamp = since?.timestamp?.minusMillis(SINCE_OFFSET)
 
                     logger.debug { cleanNotice }
+
+                    var removalCount = 0
 
                     for (channelId in channels) {
                         var query = bot.kord.cache.query<MessageData> {
@@ -170,10 +184,8 @@ class CleanExtension(bot: ExtensibleBot) : Extension(bot) {
                             query = query.sortedBy { Instant.parse(it.timestamp) }.reversed().slice(0..count)
                         }
 
-                        if (query.size > MAX_DELETION_SIZE) {
-                            if (
-                                    message.getAuthorAsMember()?.hasRole(config.getRole(Roles.ADMIN)) == false
-                            ) {
+                        if (query.size > MAX_DELETION_SIZE && !dryRun) {
+                            if (message.getAuthorAsMember()?.hasRole(config.getRole(Roles.ADMIN)) == false) {
                                 message.channel.createMessage(
                                         ":x: Cannot delete more than $MAX_DELETION_SIZE, " +
                                                 "please ask an admin to run this command with the `force:true` flag."
@@ -198,11 +210,115 @@ class CleanExtension(bot: ExtensibleBot) : Extension(bot) {
                         val channel = bot.kord.getChannel(Snowflake(channelId))
 
                         if (channel is GuildMessageChannel) {
-                            channel.bulkDelete(query.map { Snowflake(it.id) })
+                            if (!dryRun) {
+                                channel.bulkDelete(query.map { Snowflake(it.id) })
+                            }
+
+                            removalCount += query.size
                         } else {
                             logger.warn { "Error retrieving channel $channelId : $channel" }
                         }
                     }
+
+                    if (dryRun) {
+                        message.channel.createMessage(
+                                "${message.author!!.mention} **Dry-run:** $removalCount messages would have " +
+                                        "been cleaned."
+                        )
+                    } else {
+                        sendToModLog(this, message, removalCount)
+                    }
+                }
+            }
+        }
+    }
+
+    private suspend fun sendToModLog(args: CleanArguments, message: Message, total: Int) {
+        val author = message.author!!
+        val channel = message.channel
+
+        val modLog = config.getChannel(Channels.MODERATOR_LOG) as TextChannel
+
+        modLog.createEmbed {
+            color = Colours.BLURPLE
+            title = "Clean command summary"
+
+            description = "Clean command executed by ${author.mention} in ${channel.mention}."
+            timestamp = Instant.now()
+
+            field {
+                name = "Bot-only"
+                inline = true
+
+                value = if (args.botOnly) {
+                    "Yes"
+                } else {
+                    "No"
+                }
+            }
+
+            if (args.`in` != null && args.`in`.isNotEmpty()) {
+                field {
+                    name = "Channels"
+                    inline = true
+
+                    value = args.`in`.joinToString(", ") { "${it.mention} (${it.id.longValue})" }
+                }
+            }
+
+            field {
+                name = "Count"
+                inline = true
+
+                value = if (args.count >= 0) {
+                    args.count.toString()
+                } else {
+                    "No limit"
+                }
+            }
+
+            field {
+                name = "Force"
+                inline = true
+
+                value = if (args.force) {
+                    "Yes"
+                } else {
+                    "No"
+                }
+            }
+
+            if (args.regex != null && args.regex.isNotEmpty()) {
+                field {
+                    name = "Regex"
+                    inline = true
+
+                    value = args.regex.joinToString(", ") { "`$it`" }
+                }
+            }
+
+            if (args.since != null) {
+                field {
+                    name = "Since"
+                    inline = true
+
+                    value = args.since.getUrl()
+                }
+            }
+
+            field {
+                name = "Total Removed"
+                inline = true
+
+                value = total.toString()
+            }
+
+            if (args.user != null && args.user.isNotEmpty()) {
+                field {
+                    name = "Users"
+                    inline = true
+
+                    value = args.user.joinToString(", ") { "${it.mention} (${it.id.longValue})" }
                 }
             }
         }
