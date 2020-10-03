@@ -1,5 +1,6 @@
 package net.fabricmc.bot.extensions
 
+import com.gitlab.kordlib.common.entity.ChannelType
 import com.gitlab.kordlib.core.event.gateway.ReadyEvent
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import com.kotlindiscord.kord.extensions.checks.topRoleHigherOrEqual
@@ -42,9 +43,11 @@ class VersionCheckExtension(bot: ExtensibleBot) : Extension(bot) {
             action {
                 minecraftVersions = minecraftVersions()
                 jiraVersions = jiraVersions()
+
                 if (minecraftVersions.isEmpty() && jiraVersions.isEmpty()) {
                     return@action // No point if we don't have anywhere to post.
                 }
+
                 checkJob = bot.kord.launch {
                     while (true) {
                         delay(UPDATE_CHECK_DELAY)
@@ -60,9 +63,10 @@ class VersionCheckExtension(bot: ExtensibleBot) : Extension(bot) {
             """.trimIndent()
 
             check(
-                ::defaultCheck,
-                topRoleHigherOrEqual(config.getRole(Roles.ADMIN))
+                    ::defaultCheck,
+                    topRoleHigherOrEqual(config.getRole(Roles.ADMIN))
             )
+
             action {
                 updateCheck()
             }
@@ -76,12 +80,17 @@ class VersionCheckExtension(bot: ExtensibleBot) : Extension(bot) {
     private suspend fun updateCheck() {
         checkForMinecraftUpdates()?.run {
             config.getMinecraftUpdateChannels().forEach {
-                it.createMessage(this@run.toString())
+                val message = it.createMessage(this@run.toString())
+
+                if (it.type == ChannelType.GuildNews) message.publish()
             }
         }
+
         checkForJiraUpdates()?.run {
             config.getJiraUpdateChannels().forEach {
-                it.createMessage(this@run.toString())
+                val message = it.createMessage(this@run.toString())
+
+                if (it.type == ChannelType.GuildNews) message.publish()
             }
         }
 
@@ -90,42 +99,46 @@ class VersionCheckExtension(bot: ExtensibleBot) : Extension(bot) {
     private suspend fun checkForMinecraftUpdates(): MinecraftVersion? {
         val versions = minecraftVersions()
         val new = versions.find { it !in minecraftVersions }
+
         minecraftVersions = versions
+
         return new
     }
 
     private suspend fun checkForJiraUpdates(): JiraVersion? {
         val versions = jiraVersions()
         val new = versions.find { it !in jiraVersions && "Future Version" !in it.name }
+
         jiraVersions = versions
+
         return new
     }
 
     private suspend fun jiraVersions(): List<JiraVersion> =
-        client.get("https://bugs.mojang.com/rest/api/latest/project/MC/versions")
+            client.get("https://bugs.mojang.com/rest/api/latest/project/MC/versions")
 
     private suspend fun minecraftVersions(): List<MinecraftVersion> =
-        client.get<LauncherMetaResponse>("https://launchermeta.mojang.com/mc/game/version_manifest.json").versions
+            client.get<LauncherMetaResponse>("https://launchermeta.mojang.com/mc/game/version_manifest.json").versions
 
 }
 
 @Serializable
 private data class MinecraftVersion(
-    val id: String,
-    val type: String,
+        val id: String,
+        val type: String,
 ) {
     override fun toString(): String = "A new $type version of Minecraft was just released! : $id"
 }
 
 @Serializable
 private data class LauncherMetaResponse(
-    val versions: List<MinecraftVersion>,
+        val versions: List<MinecraftVersion>,
 )
 
 @Serializable
 private data class JiraVersion(
-    val id: String,
-    val name: String,
+        val id: String,
+        val name: String,
 ) {
     override fun toString(): String = "A new version ($name) has been added to the Minecraft issue tracker!"
 }
