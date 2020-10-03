@@ -8,6 +8,9 @@ import com.uchuhimo.konf.ConfigSpec
  * This is used by Konf, and will not need to be accessed externally.
  */
 object ChannelsSpec : ConfigSpec() {
+    /** Configured alerts channel ID. **/
+    val alerts by required<Long>()
+
     /** Configured bot-commands channel ID. **/
     val botCommands by required<Long>()
 

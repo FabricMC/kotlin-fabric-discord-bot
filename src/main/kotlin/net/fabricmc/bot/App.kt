@@ -31,6 +31,7 @@ suspend fun main() {
     }
 
     bot.addExtension(CleanExtension::class)
+    bot.addExtension(FilterExtension::class)
     bot.addExtension(GitHubExtension::class)
     bot.addExtension(InfractionsExtension::class)
     bot.addExtension(LoggingExtension::class)
@@ -38,5 +39,6 @@ suspend fun main() {
     bot.addExtension(SelfRoleExtension::class)
     bot.addExtension(SyncExtension::class)
     bot.addExtension(VersionCheckExtension::class)
+
     bot.start()
 }

@@ -1,0 +1,38 @@
+(?ix)
+# The below regular expressions are inspired by or taken from the excellent filter system maintained by
+# the folks at Python Discord. You can find their bot code here: https://github.com/python-discord/bot.
+# Of course, we've made some changes to the list as well. Please note that each non-empty line that
+# doesn't start with a # is a separate regex, aside from the first one - which exists to aid with IDE support.
+# Comments at the end of a line are not supported.
+
+# Regexes that match whole words rather than parts of words
+\b(?:ra+)r+(?:d+|t+)ed\b
+\b(?:re+)tar+(?:d+|t+)(?:ed)?\b
+\bbeaner+s?\b
+\bchi*n+k+s*\b
+\bcoo+ns*\b
+\bcunts*\b
+\bgook+ks*\b
+\bjew+s*\b
+\bki+ke+s*\b
+\bkill* +(?:yo)?urself+\b
+\bky+s+\b
+\bnig+lets*\b
+\brape\b
+\bshemale\b
+\bslant-eyes*\b
+\bspick*s*\b
+\bsuicide\b
+\bta+r+d+\b
+\btow?l-?head+s*\b
+\btrann*y\b
+\bsimp(?:ing)?\b
+\b(?:wo)?mansplain(?:ing)?\b
+
+# Regexes that may be present within words
+ch+u+d+s*
+cuck(?!oo+)
+fa+g+s*
+fa+g+o+t+s*
+nigg+(?:e*r+|a+h*?|u+h+)s?
+卐|卍

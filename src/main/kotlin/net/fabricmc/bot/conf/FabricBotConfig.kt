@@ -102,6 +102,7 @@ class FabricBotConfig {
     @Throws(MissingChannelException::class)
     suspend fun getChannel(channel: Channels): Channel {
         val snowflake = when (channel) {
+            Channels.ALERTS -> Snowflake(config[ChannelsSpec.alerts])
             Channels.ACTION_LOG -> Snowflake(config[ChannelsSpec.actionLog])
             Channels.BOT_COMMANDS -> Snowflake(config[ChannelsSpec.botCommands])
             Channels.MODERATOR_LOG -> Snowflake(config[ChannelsSpec.moderatorLog])

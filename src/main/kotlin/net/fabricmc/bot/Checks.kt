@@ -127,19 +127,19 @@ suspend fun isNotBot(event: Event): Boolean {
  */
 suspend fun isNotIgnoredChannel(event: Event): Boolean {
     val logger = KotlinLogging.logger {}
-    val channel = channelFor(event)
+    val channelId = channelIdFor(event)
 
-    if (channel == null) {
+    if (channelId == null) {
         logger.debug { "Passing check: Event is not channel-relevant." }
         return true
     }
 
-    return if (channel.id.longValue !in config.ignoredChannels) {
+    return if (channelId !in config.ignoredChannels) {
         logger.debug { "Passing check: Event is not in an ignored channel." }
 
         true
     } else {
-        logger.debug { "Passing check: Event is in an ignored channel." }
+        logger.debug { "Failing check: Event is in an ignored channel." }
 
         false
     }

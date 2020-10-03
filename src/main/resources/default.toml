@@ -3,6 +3,7 @@ guild = 507304429255393322
 prefix = "!"
 
 [channels]
+alerts = 722561981990699129  # TODO: Should be its own channel
 actionLog = 746875064200462416
 botCommands = 523633816078647296
 moderatorLog = 722561981990699129

@@ -6,6 +6,9 @@ package net.fabricmc.bot.enums
  * @param value A human-readable representation of the given channel.
  */
 enum class Channels(val value: String) {
+    /** The channel used for staff alerts (eg by filters). **/
+    ALERTS("alerts"),
+
     /** The channel intended for running bot commands within. **/
     BOT_COMMANDS("bot-commands"),
 
