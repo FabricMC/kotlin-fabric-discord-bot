@@ -3,8 +3,8 @@ guild = 507304429255393322
 prefix = "!"
 
 [channels]
-alerts = 722561981990699129  # TODO: Should be its own channel
 actionLog = 746875064200462416
+alerts = 762016277572747275
 botCommands = 523633816078647296
 moderatorLog = 722561981990699129
 
@@ -13,7 +13,8 @@ ignoredChannels = [
     722561981990699129,  # Moderation Log
     722698715697119243,  # Botland
     618964111132327937,  # Taintedland
-    746875064200462416   # System Messages (Action log?)
+    762016277572747275,  # Alerts
+    746875064200462416   # Action Log
 ]
 
 [roles]
