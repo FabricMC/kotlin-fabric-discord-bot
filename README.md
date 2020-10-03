@@ -32,7 +32,7 @@ later sources overriding earlier ones:
 ### Required Environment Variables 
 
 * BOT_TOKEN = The discord bot token
-* GITHUB_OAUTH = GitHub OAuth token (if we end up using that functionality)
+* GITHUB_OAUTH = GitHub OAuth token
   
   
 * DB_URL = MySQL URL, eg `mysql://host:port/database`
@@ -50,9 +50,13 @@ later sources overriding earlier ones:
     * Only optional if you are not using the github commands
   
   
-* CHANNELS_BOT_COMMANDS = The ID of the bot commands channel
 * CHANNELS_ACTION_LOG = The ID of the action log channel
+* CHANNELS_ALERTS = The ID of the alerts channel
+* CHANNELS_BOT_COMMANDS = The ID of the bot commands channel
 * CHANNELS_MODERATOR_LOG = The ID of the moderator log channel
+  
+  
+* CHANNELS_IGNORED_CHANNELS = A list of channels to ignore for the purposes of filtering and logging
   
   
 * ROLES_ADMIN = The ID of the admin role
