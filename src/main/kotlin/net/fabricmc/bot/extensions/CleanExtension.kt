@@ -103,7 +103,7 @@ class CleanExtension(bot: ExtensibleBot) : Extension(bot) {
 
             check(::defaultCheck)
             check(topRoleHigherOrEqual(config.getRole(Roles.MODERATOR)))
-            signature = "<filter> [filter...] [dryRun:false] [force:false]"
+            signature = "<filter> [filter ...] [dryRun:false] [force:false]"
 
             hidden = true
 

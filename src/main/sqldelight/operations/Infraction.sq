@@ -42,6 +42,11 @@ setInfractionActive:
     SET active = :active
     WHERE id = :id;
 
+setInfractionReason:
+    UPDATE infraction
+    SET reason = :reason
+    WHERE id = :id;
+
 updateInfraction:
     UPDATE infraction
     SET reason = :reason,

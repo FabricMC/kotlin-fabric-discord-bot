@@ -75,6 +75,15 @@ data class InfractionSearchCommandArgs(
 )
 
 /**
+ * Arguments for the infraction reason command.
+ */
+@Suppress("UndocumentedPublicProperty")
+data class InfractionReasonCommandArgs(
+        val id: String,
+        val reason: List<String> = listOf()
+)
+
+/**
  * Arguments for infraction commands that only take an ID.
  */
 @Suppress("UndocumentedPublicProperty")
@@ -205,12 +214,55 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
             }
 
             command {
+                name = "reason"
+                aliases = arrayOf("r")
+
+                description = "Get or update the reason for a specific infraction."
+
+                signature<InfractionReasonCommandArgs>()
+
+                action {
+                    runSuspended {
+                        with(parse<InfractionReasonCommandArgs>()) {
+                            val inf = infQ.getInfraction(id).executeAsOneOrNull()
+
+                            if (inf == null) {
+                                message.channel.createMessage(
+                                        "${message.author!!.mention} No such infraction: `$id`"
+                                )
+
+                                return@with
+                            }
+
+                            if (reason.isEmpty()) {
+                                message.channel.createMessage(
+                                        "${message.author!!.mention} Reason for infraction `$id` is:\n" +
+                                                ">>> ${inf.reason}"
+                                )
+
+                                return@with
+                            }
+
+                            val joinedReason = reason.joinToString(" ")
+
+                            infQ.setInfractionReason(joinedReason, id)
+
+                            message.channel.createMessage(
+                                    "${message.author!!.mention} Reason for infraction `$id` updated to:\n" +
+                                            ">>> ${inf.reason}"
+                            )
+                        }
+                    }
+                }
+            }
+
+            command {
                 name = "search"
                 aliases = arrayOf("s", "find", "f")
 
                 description = "Search for infractions using a set of filters.\n\n$FILTERS"
 
-                signature = "<filter> [filter...]"
+                signature = "<filter> [filter ...]"
 
                 action {
                     runSuspended {

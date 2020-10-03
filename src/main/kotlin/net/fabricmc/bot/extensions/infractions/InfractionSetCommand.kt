@@ -258,9 +258,9 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
         this.description = commandDescription
 
         signature = if (type.expires) {
-            "<user/id> <duration> <reason...>"
+            "<user/id> <duration> <reason ...>"
         } else {
-            "<user/id> <reason...>"
+            "<user/id> <reason ...>"
         }
 
         action(commandBody)
