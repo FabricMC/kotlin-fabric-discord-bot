@@ -16,6 +16,6 @@ jobs:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.CR_PAT }}
-      - run: docker build -t ghcr.io/${{ github.repository_owner }}/fabric-discord-bot:latest -t ghcr.io/${{ github.repository_owner }}/fabric-discord-bot:${GITHUB_SHA} .
-      - run: docker push ghcr.io/${{ github.repository_owner }}/fabric-discord-bot:latest
-      - run: docker push ghcr.io/${{ github.repository_owner }}/fabric-discord-bot:${GITHUB_SHA}
+      - run: docker build -t ghcr.io/fabricmc/fabric-discord-bot:latest -t ghcr.io/fabricmc/fabric-discord-bot:${GITHUB_SHA} .
+      - run: docker push ghcr.io/fabricmc/fabric-discord-bot:latest
+      - run: docker push ghcr.io/fabricmc/fabric-discord-bot:${GITHUB_SHA}
