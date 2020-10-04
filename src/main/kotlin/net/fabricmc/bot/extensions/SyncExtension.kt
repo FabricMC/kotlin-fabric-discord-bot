@@ -17,7 +17,9 @@ import com.gitlab.kordlib.core.event.role.RoleUpdateEvent
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import com.kotlindiscord.kord.extensions.checks.topRoleHigherOrEqual
 import com.kotlindiscord.kord.extensions.extensions.Extension
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.toList
+import mu.KotlinLogging
 import net.fabricmc.bot.conf.config
 import net.fabricmc.bot.defaultCheck
 import net.fabricmc.bot.enums.Channels
@@ -33,6 +35,10 @@ private val roles = config.db.roleQueries
 private val users = config.db.userQueries
 private val junction = config.db.userRoleQueries
 
+private val logger = KotlinLogging.logger {}
+
+private const val READY_DELAY = 10_000L
+
 /**
  * Sync extension, in charge of keeping the database in sync with Discord.
  */
@@ -40,7 +46,12 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
     override val name = "sync"
 
     override suspend fun setup() {
-        event<ReadyEvent> { action { initialSync() } }
+        event<ReadyEvent> { action {
+            logger.debug { "Delaying sync for 10 seconds." }
+            delay(READY_DELAY)  // To ensure things are ready
+
+            initialSync()
+        } }
 
         event<RoleCreateEvent> { action { roleUpdated(it.role) } }
         event<RoleUpdateEvent> { action { roleUpdated(it.role) } }
@@ -60,10 +71,12 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
             )
 
             action {
+                logger.debug { "Starting manual sync..." }
                 val (rolesUpdated, rolesRemoved) = updateRoles()
                 val (usersUpdated, usersAbsent) = updateUsers()
                 val (allInfractions, expiredInfractions) = infractionSync()
 
+                logger.debug { "Manual sync done." }
                 message.channel.createEmbed {
                     title = "Sync statistics"
 
@@ -95,10 +108,13 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
     }
 
     private suspend fun initialSync() = runSuspended {
+        logger.debug { "Starting initial sync..." }
+
         val (rolesUpdated, rolesRemoved) = updateRoles()
         val (usersUpdated, usersAbsent) = updateUsers()
         val (allInfractions, expiredInfractions) = infractionSync()
 
+        logger.debug { "Initial sync done." }
         (config.getChannel(Channels.ACTION_LOG) as TextChannel)
                 .createEmbed {
                     title = "Sync statistics"
@@ -129,7 +145,10 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
     }
 
     private suspend fun infractionSync() = runSuspended {
+        logger.debug { "Updating infractions: Getting active expirable infractions from DB" }
         val infractions = config.db.infractionQueries.getActiveExpirableInfractions().executeAsList()
+
+        logger.debug { "Updating infractions: Getting all infractions from DB" }
         val allInfractions = config.db.infractionQueries.getInfractionCount().executeAsOne()
         var expiredInfractions = 0
 
@@ -141,9 +160,13 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
 
             if (delay > 0) {
                 if (member != null) {
+                    logger.debug { "Reapplying infraction: ${it.id}" }
+
                     applyInfraction(it, memberId, expires)
                 }
             } else {
+                logger.debug { "Scheduling infraction expiry: ${it.id}" }
+
                 scheduleUndoInfraction(memberId, it, null)  // Explicitly have no delay
 
                 config.db.infractionQueries.setInfractionActive(false, it.id)
@@ -155,6 +178,8 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
     }
 
     private suspend fun roleUpdated(role: Role) = runSuspended {
+        logger.debug { "Role updated: ${role.name} (${role.id})" }
+
         val dbRole = roles.getRole(role.id.longValue).executeAsOneOrNull()
 
         if (dbRole == null) {
@@ -165,11 +190,15 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
     }
 
     private suspend fun roleDeleted(roleId: Long) = runSuspended {
+        logger.debug { "Role deleted: ${roleId}" }
+
         junction.dropUserRoleByRole(roleId)
         roles.dropRole(roleId)
     }
 
     private suspend fun memberJoined(member: Member) = runSuspended {
+        logger.debug { "Member Joined: ${member.username}#${member.discriminator} (${member.id.longValue})" }
+
         memberUpdated(member)
 
         val infractions = config.db.infractionQueries
@@ -182,6 +211,8 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
     }
 
     private suspend fun memberUpdated(member: Member) = runSuspended {
+        logger.debug { "Member updated: ${member.username}#${member.discriminator} (${member.id.longValue})" }
+
         val memberId = member.id.longValue
         val dbUser = users.getUser(memberId).executeAsOneOrNull()
 
@@ -207,6 +238,8 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
     }
 
     private suspend fun memberLeft(userId: Long) = runSuspended {
+        logger.debug { "User left: $userId" }
+
         val user = bot.kord.getUser(Snowflake(userId))
         val dbUser = users.getUser(userId).executeAsOneOrNull()
 
@@ -220,6 +253,8 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
     }
 
     private suspend fun userUpdated(user: User) = runSuspended {
+        logger.debug { "User updated: ${user.username}#${user.discriminator} (${user.id.longValue})" }
+
         val member = config.getGuild().getMemberOrNull(user.id)
         val dbUser = users.getUser(user.id.longValue).executeAsOneOrNull()
 
@@ -231,7 +266,10 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
     }
 
     private suspend fun updateRoles(): Pair<Int, Int> = runSuspended {
+        logger.debug { "Updating roles: Getting roles from DB" }
         val dbRoles = roles.getAllRoles().executeAsList().map { it.id to it }.toMap()
+
+        logger.debug { "Updating roles: Getting roles from Discord" }
         val discordRoles = config.getGuild().roles.toList().map { it.id.longValue to it }.toMap()
 
         val rolesToAdd = discordRoles.keys.filter { it !in dbRoles }
@@ -244,6 +282,8 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
             val role = discordRoles[it] ?: error("Role suddenly disappeared from the list: $it.")
             val dbRole = dbRoles[it]
 
+            logger.debug { "Updating role: ${role.name} ($it)" }
+
             if (
                     dbRole == null
                     || dbRole.colour != role.color.rgb
@@ -255,6 +295,8 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
         }
 
         rolesToRemove.forEach {
+            logger.debug { "Removing role with ID: $it" }
+
             roleDeleted(it)
         }
 
@@ -262,7 +304,10 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
     }
 
     private suspend fun updateUsers(): Pair<Int, Int> = runSuspended {
+        logger.debug { "Updating users: Getting users from DB" }
         val dbUsers = users.getAllUsers().executeAsList().map { it.id to it }.toMap()
+
+        logger.debug { "Updating users: Getting users from Discord" }
         val discordUsers = config.getGuild().members.toList().map { it.id.longValue to it }.toMap()
 
         val usersToAdd = discordUsers.keys.filter { it !in dbUsers }
@@ -274,6 +319,8 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
         (usersToAdd + usersToUpdate).forEach {
             val member = discordUsers[it] ?: error("User suddenly disappeared from the list: $it.")
             val dbUser = dbUsers[it]
+
+            logger.debug { "Updating user: ${member.username}#${member.discriminator} ($it)" }
 
             val dbUserRoles = junction.getUserRoleByUser(it).executeAsList().map { role -> role.role_id }
             val discordUserRoles = member.roles.toList().map { role -> role.id.longValue }
@@ -296,6 +343,8 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
         }
 
         usersToRemove.forEach {
+            logger.debug { "Marking user with ID as not present: ($it)" }
+
             memberLeft(it)  // User isn't in discordUsers at all so we have no object
         }
 
