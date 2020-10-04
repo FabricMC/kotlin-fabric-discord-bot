@@ -241,17 +241,12 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
         }
     }
 
-    private suspend inline fun memberLeft(userId: Long) {
+    private inline fun memberLeft(userId: Long) {
         logger.debug { "User left: $userId" }
 
-        val user = bot.kord.getUser(Snowflake(userId))
         val dbUser = users.getUser(userId).executeAsOneOrNull()
 
-        if (dbUser == null) {
-            if (user != null) {
-                users.insertUser(userId, user.avatar.url, user.discriminator, false, user.username)
-            }
-        } else {
+        if (dbUser != null) {
             users.updateUser(dbUser.avatarUrl, dbUser.discriminator, false, dbUser.username, dbUser.id)
         }
     }
