@@ -46,21 +46,25 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
     override val name = "sync"
 
     override suspend fun setup() {
-        event<ReadyEvent> { action {
-            logger.debug { "Delaying sync for 10 seconds." }
-            delay(READY_DELAY)  // To ensure things are ready
+        event<ReadyEvent> {
+            action {
+                logger.debug { "Delaying sync for 10 seconds." }
+                delay(READY_DELAY)  // To ensure things are ready
 
-            initialSync()
-        } }
+                runSuspended {
+                    initialSync()
+                }
+            }
+        }
 
-        event<RoleCreateEvent> { action { roleUpdated(it.role) } }
-        event<RoleUpdateEvent> { action { roleUpdated(it.role) } }
-        event<RoleDeleteEvent> { action { roleDeleted(it.roleId.longValue) } }
+        event<RoleCreateEvent> { action { runSuspended { roleUpdated(it.role) } } }
+        event<RoleUpdateEvent> { action { runSuspended { roleUpdated(it.role) } } }
+        event<RoleDeleteEvent> { action { runSuspended { roleDeleted(it.roleId.longValue) } } }
 
-        event<MemberJoinEvent> { action { memberJoined(it.member) } }
-        event<MemberUpdateEvent> { action { memberUpdated(it.getMember()) } }
-        event<MemberLeaveEvent> { action { memberLeft(it.user.id.longValue) } }
-        event<UserUpdateEvent> { action { userUpdated(it.user) } }
+        event<MemberJoinEvent> { action { runSuspended { memberJoined(it.member) } } }
+        event<MemberUpdateEvent> { action { runSuspended { memberUpdated(it.getMember()) } } }
+        event<MemberLeaveEvent> { action { runSuspended { memberLeft(it.user.id.longValue) } } }
+        event<UserUpdateEvent> { action { runSuspended { userUpdated(it.user) } } }
 
         command {
             name = "sync"
@@ -107,7 +111,7 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
         }
     }
 
-    private suspend fun initialSync() = runSuspended {
+    private suspend inline fun initialSync() {
         logger.debug { "Starting initial sync..." }
 
         val (rolesUpdated, rolesRemoved) = updateRoles()
@@ -144,7 +148,7 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
                 }
     }
 
-    private suspend fun infractionSync() = runSuspended {
+    private suspend inline fun infractionSync(): Pair<Long, Int> {
         logger.debug { "Updating infractions: Getting active expirable infractions from DB" }
         val infractions = config.db.infractionQueries.getActiveExpirableInfractions().executeAsList()
 
@@ -174,10 +178,10 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
             }
         }
 
-        Pair(allInfractions, expiredInfractions)
+        return Pair(allInfractions, expiredInfractions)
     }
 
-    private suspend fun roleUpdated(role: Role) = runSuspended {
+    private inline fun roleUpdated(role: Role) {
         logger.debug { "Role updated: ${role.name} (${role.id})" }
 
         val dbRole = roles.getRole(role.id.longValue).executeAsOneOrNull()
@@ -189,14 +193,14 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
         }
     }
 
-    private suspend fun roleDeleted(roleId: Long) = runSuspended {
-        logger.debug { "Role deleted: ${roleId}" }
+    private inline fun roleDeleted(roleId: Long) {
+        logger.debug { "Role deleted: $roleId" }
 
         junction.dropUserRoleByRole(roleId)
         roles.dropRole(roleId)
     }
 
-    private suspend fun memberJoined(member: Member) = runSuspended {
+    private suspend inline fun memberJoined(member: Member) {
         logger.debug { "Member Joined: ${member.username}#${member.discriminator} (${member.id.longValue})" }
 
         memberUpdated(member)
@@ -210,7 +214,7 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
         }
     }
 
-    private suspend fun memberUpdated(member: Member) = runSuspended {
+    private suspend inline fun memberUpdated(member: Member) {
         logger.debug { "Member updated: ${member.username}#${member.discriminator} (${member.id.longValue})" }
 
         val memberId = member.id.longValue
@@ -237,7 +241,7 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
         }
     }
 
-    private suspend fun memberLeft(userId: Long) = runSuspended {
+    private suspend inline fun memberLeft(userId: Long) {
         logger.debug { "User left: $userId" }
 
         val user = bot.kord.getUser(Snowflake(userId))
@@ -252,7 +256,7 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
         }
     }
 
-    private suspend fun userUpdated(user: User) = runSuspended {
+    private suspend inline fun userUpdated(user: User) {
         logger.debug { "User updated: ${user.username}#${user.discriminator} (${user.id.longValue})" }
 
         val member = config.getGuild().getMemberOrNull(user.id)
@@ -265,7 +269,7 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
         }
     }
 
-    private suspend fun updateRoles(): Pair<Int, Int> = runSuspended {
+    private suspend inline fun updateRoles(): Pair<Int, Int> {
         logger.debug { "Updating roles: Getting roles from DB" }
         val dbRoles = roles.getAllRoles().executeAsList().map { it.id to it }.toMap()
 
@@ -300,10 +304,10 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
             roleDeleted(it)
         }
 
-        Pair(rolesUpdated, rolesToRemove.size)
+        return Pair(rolesUpdated, rolesToRemove.size)
     }
 
-    private suspend fun updateUsers(): Pair<Int, Int> = runSuspended {
+    private suspend inline fun updateUsers(): Pair<Int, Int> {
         logger.debug { "Updating users: Getting users from DB" }
         val dbUsers = users.getAllUsers().executeAsList().map { it.id to it }.toMap()
 
@@ -348,6 +352,6 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
             memberLeft(it)  // User isn't in discordUsers at all so we have no object
         }
 
-        Pair(usersUpdated, usersToRemove.size)
+        return Pair(usersUpdated, usersToRemove.size)
     }
 }
