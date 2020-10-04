@@ -194,6 +194,24 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
         }
     }
 
+    private suspend fun ensureUser(member: User?, memberId: Long) = runSuspended {
+        val dbUser = config.db.userQueries.getUser(memberId).executeAsOneOrNull()
+
+        if (dbUser == null) {
+            if (member != null) {
+                config.db.userQueries.insertUser(
+                        memberId, member.avatar.url, member.discriminator,
+                        true, member.username
+                )
+            } else {
+                config.db.userQueries.insertUser(
+                        memberId, "", "0000",
+                        false, "Absent User"
+                )
+            }
+        }
+    }
+
     private suspend fun applyInfraction(memberObj: User?, memberLong: Long?, duration: Duration?,
                                         reason: String, message: Message) {
         val author = message.author!!
@@ -210,6 +228,8 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
             message.channel.createMessage("${author.mention} $memberMissingMessage")
             return
         }
+
+        ensureUser(memberObj, memberId)
 
         val expires = if (duration != Duration.ZERO && duration != null) {
             Instant.now().plus(duration)
