@@ -3,16 +3,14 @@ name: Publish
 on:
   push:
     branches:
-      - master
-
-# TODO: Rewrite this
+      - rewrite
 
 jobs:
   build:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v1
-      - run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login --username ${{ secrets.DOCKER_USERNAME }} --password-stdin
-      - run: docker build -t ${{ secrets.DOCKER_REPO }}/${{ secrets.DOCKER_IMAGE }}:latest -t ${{ secrets.DOCKER_REPO }}/${{ secrets.DOCKER_IMAGE }}:${GITHUB_SHA} .
-      - run: docker push ${{ secrets.DOCKER_REPO }}/${{ secrets.DOCKER_IMAGE }}:latest
-      - run: docker push ${{ secrets.DOCKER_REPO }}/${{ secrets.DOCKER_IMAGE }}:${GITHUB_SHA}
+      - run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io --username ${{ github.actor }} --password-stdin
+      - run: docker build -t ghcr.io/${{ github.repository_owner }}/fabric-discord-bot:latest -t ghcr.io/${{ github.repository_owner }}/fabric-discord-bot:${GITHUB_SHA} .
+      - run: docker push ghcr.io/${{ github.repository_owner }}/fabric-discord-bot:latest
+      - run: docker push ghcr.io/${{ github.repository_owner }}/fabric-discord-bot:${GITHUB_SHA}

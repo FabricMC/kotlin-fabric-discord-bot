@@ -20,6 +20,7 @@
 
 # Docker
 !Dockerfile
+!.dockerignore
 
 # Source code
 !/src

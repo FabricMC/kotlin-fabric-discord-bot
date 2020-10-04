@@ -1,15 +1,7 @@
-FROM golang:1.14-buster as build
-
-WORKDIR /go/src/app
-ADD go.mod go.sum ./
-
-RUN go mod download -x
-
+FROM gradle:6.6.1-jdk14 as BUILD
 COPY . .
+RUN gradle build
 
-ENV GOOS=linux
-RUN go build -tags 'osusergo netgo' -o /go/bin/app 
-
-FROM gcr.io/distroless/static-debian10
-COPY --from=build /go/bin/app /
-ENTRYPOINT ["/app"]
+FROM openjdk:15-jdk-slim
+COPY --from=BUILD /home/gradle/build/libs/discord-bot-*-all.jar /usr/local/lib/discord-bot.jar
+ENTRYPOINT ["java", "-jar", "/usr/local/lib/discord-bot.jar"]
