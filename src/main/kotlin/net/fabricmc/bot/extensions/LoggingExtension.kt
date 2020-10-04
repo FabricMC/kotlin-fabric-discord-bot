@@ -93,7 +93,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                         footer { text = it.channel.id.value }
                     }
 
-                    is InviteCreateEvent -> sendEmbed(Channels.MODERATOR_LOG) {
+                    is InviteCreateEvent -> sendEmbed(Channels.ACTION_LOG) {
                         color = Colours.POSITIVE
                         title = "Invite created"
 
