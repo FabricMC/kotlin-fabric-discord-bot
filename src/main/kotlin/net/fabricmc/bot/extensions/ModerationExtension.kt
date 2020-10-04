@@ -17,6 +17,19 @@ import net.time4j.IsoUnit
 
 private const val SLOWMODE_LIMIT = 60 * 60 * 6  // Six hours
 
+private const val UNITS = "**__Durations__**\n" +
+        "Durations are specified in pairs of amounts and units - for example, `12d` would be 12 days. " +
+        "Compound durations are supported - for example, `2d12h` would be 2 days and 12 hours.\n\n" +
+        "The following units are supported:\n\n" +
+
+        "**Seconds:** `s`, `sec`, `second`, `seconds`\n" +
+        "**Minutes:** `m`, `mi`, `min`, `minute`, `minutes`\n" +
+        "**Hours:** `h`, `hour`, `hours`\n" +
+        "**Days:** `d`, `day`, `days`\n" +
+        "**Weeks:** `w`, `week`, `weeks`\n" +
+        "**Months:** `mo`, `month`, `months`\n" +
+        "**Years:** `y`, `year`, `years`"
+
 /**
  * Moderation extension, containing non-infraction commands for server management.
  */
@@ -46,7 +59,9 @@ class ModerationExtension(bot: ExtensibleBot) : Extension(bot) {
                     "By default, this comment will use the current channel - specify one after the duration" +
                     "to target that channel instead.\n\n" +
 
-                    "Omit the duration or set it to `0s` to disable."
+                    "Omit the duration or set it to `0s` to disable.\n\n" +
+
+                    UNITS
 
             signature = "[duration] [channel]"
 

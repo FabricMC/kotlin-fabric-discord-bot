@@ -59,7 +59,7 @@ class VersionCheckExtension(bot: ExtensibleBot) : Extension(bot) {
         command {
             name = "versioncheck"
             description = """
-                Force running a version check for Jira and Minecraft, for when you can't wait 5 minutes.
+                Force running a version check for Jira and Minecraft, for when you can't wait 30 seconds.
             """.trimIndent()
 
             check(

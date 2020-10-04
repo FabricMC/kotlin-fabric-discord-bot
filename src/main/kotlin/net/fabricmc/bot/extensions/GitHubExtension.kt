@@ -40,6 +40,8 @@ class GitHubExtension(bot: ExtensibleBot) : Extension(bot) {
     override suspend fun setup() {
         group {
             name = "github"
+            description = "Commands for working with GitHub."
+
             check(
                 ::defaultCheck,
                 topRoleHigherOrEqual(config.getRole(Roles.MODERATOR))
@@ -48,9 +50,9 @@ class GitHubExtension(bot: ExtensibleBot) : Extension(bot) {
             command {
                 name = "block"
                 aliases = arrayOf("ban")
-                description = """
-                    Block a user from the ${config.githubOrganization} organization.
-                """.trimIndent()
+                description = "Block a user from the ${config.githubOrganization} GitHub organization."
+                signature<BlockArgs>()
+
                 action {
                     with(parse<BlockArgs>()) {
                         if (isBlocked(user)) {
@@ -70,14 +72,14 @@ class GitHubExtension(bot: ExtensibleBot) : Extension(bot) {
                         }
                     }
                 }
-
             }
+
             command {
                 name = "unblock"
                 aliases = arrayOf("unban")
-                description = """
-                    Unblock a user from the ${config.githubOrganization} organization.
-                """.trimIndent()
+                description = "Unblock a user from the ${config.githubOrganization} GitHub organization."
+                signature<BlockArgs>()
+
                 action {
                     with(parse<BlockArgs>()) {
                         if (!isBlocked(user)) {

@@ -37,8 +37,8 @@ private const val UNITS = "**__Durations__**\n" +
         "**Years:** `y`, `year`, `years`"
 
 private const val FILTERS = "**__Filters__**\n" +
-        "Filters are specified as key-value pairs, split by a colon - For example," +
-        "`targetId:109040264529608704` would match infractions that target gdude. Multiple " +
+        "Filters are specified as key-value pairs, split by an equals sign - For example," +
+        "`targetId=109040264529608704` would match infractions that target gdude. Multiple " +
         "filters are supported, but there are some restrictions.\n\n" +
 
         "**__Matching users__**\n" +

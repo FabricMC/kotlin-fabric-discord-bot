@@ -18,8 +18,8 @@ class SelfRoleExtension(bot: ExtensibleBot) : Extension(bot) {
     override suspend fun setup() {
         command {
             name = "devlife"
-
             description = "Toggle hiding community channels, leaving only ones about development."
+
             action {
                 val member = message.getAuthorAsMember() ?: return@action
                 val devLife = config.getRole(Roles.DEV_LIFE)
@@ -31,14 +31,14 @@ class SelfRoleExtension(bot: ExtensibleBot) : Extension(bot) {
                     member.addRole(devLife.id, "Requested via !devlife");
                     {
                         color = Colours.POSITIVE
-                        title = "Living the dev life."
+                        title = "Living the dev life!"
                         description = "You will no longer see community channels. Run the command again to toggle back."
                     }
                 } else {
                     member.removeRole(devLife.id, "Requested via !devlife");
                     {
                         color = Colours.POSITIVE
-                        title = "Not living the dev life"
+                        title = "No longer living the dev life."
                         description =
                             "You will once again see community channels. Run the command again to toggle back."
                     }

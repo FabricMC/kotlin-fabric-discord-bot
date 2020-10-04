@@ -37,8 +37,8 @@ private const val HELP =
                 "only operates on messages that are in the bot's message cache.\n\n" +
 
                 "__**Filters**__\n" +
-                "Filters may be combined in any order, and are specified as `key:value` pairs. For example, " +
-                "`count:25` will apply a limit of 25 deleted messages.\n\n" +
+                "Filters may be combined in any order, and are specified as `key=value` pairs. For example, " +
+                "`count=25` will apply a limit of 25 deleted messages.\n\n" +
 
                 "**Note:** The `in` and `since` filters are exclusive, and may not be combined.\n\n" +
 
@@ -103,7 +103,7 @@ class CleanExtension(bot: ExtensibleBot) : Extension(bot) {
 
             check(::defaultCheck)
             check(topRoleHigherOrEqual(config.getRole(Roles.MODERATOR)))
-            signature = "<filter> [filter ...] [dryRun:false] [force:false]"
+            signature = "<filter> [filter ...] [dryRun=false] [force=false]"
 
             hidden = true
 
