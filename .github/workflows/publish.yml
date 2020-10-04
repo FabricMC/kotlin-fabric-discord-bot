@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v1
-      - run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io --username ${{ github.actor }} --password-stdin
+      - run: echo "${{ secrets.CR_PAT }}" | docker login ghcr.io --username ${{ github.repository_owner }} --password-stdin
       - run: docker build -t ghcr.io/${{ github.repository_owner }}/fabric-discord-bot:latest -t ghcr.io/${{ github.repository_owner }}/fabric-discord-bot:${GITHUB_SHA} .
       - run: docker push ghcr.io/${{ github.repository_owner }}/fabric-discord-bot:latest
       - run: docker push ghcr.io/${{ github.repository_owner }}/fabric-discord-bot:${GITHUB_SHA}
