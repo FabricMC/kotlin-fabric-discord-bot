@@ -6,8 +6,12 @@ import com.kotlindiscord.kord.extensions.ExtensibleBot
 import com.kotlindiscord.kord.extensions.extensions.Extension
 import net.fabricmc.bot.conf.config
 import net.fabricmc.bot.constants.Colours
+import net.fabricmc.bot.deleteWithDelay
+import net.fabricmc.bot.enums.Channels
 import net.fabricmc.bot.enums.Roles
 import net.fabricmc.bot.hasRole
+
+private const val DELETE_DELAY = 10_000L  // 10 seconds
 
 /**
  * Extension to allow users to apply roles to themselves.
@@ -21,10 +25,19 @@ class SelfRoleExtension(bot: ExtensibleBot) : Extension(bot) {
             description = "Toggle hiding community channels, leaving only ones about development."
 
             action {
+                val botCommands = config.getChannel(Channels.BOT_COMMANDS)
+
+                if (message.channel.id.longValue != botCommands.id.longValue) {
+                    message.channel.createMessage(
+                            "${message.author!!.mention} Please use ${botCommands.mention} for this command."
+                    ).deleteWithDelay(DELETE_DELAY)
+
+                    return@action
+                }
+
                 val member = message.getAuthorAsMember() ?: return@action
                 val devLife = config.getRole(Roles.DEV_LIFE)
                 val alreadyLivingTheDevLife = member.hasRole(devLife)
-
                 val confirmation: EmbedBuilder.() -> Unit
 
                 confirmation = if (!alreadyLivingTheDevLife) {
