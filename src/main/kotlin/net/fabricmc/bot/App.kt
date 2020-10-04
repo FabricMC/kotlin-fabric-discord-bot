@@ -3,7 +3,6 @@
  */
 package net.fabricmc.bot
 
-import com.gitlab.kordlib.gateway.Intent
 import com.gitlab.kordlib.gateway.Intents
 import com.gitlab.kordlib.gateway.PrivilegedIntent
 import com.kotlindiscord.kord.extensions.ExtensibleBot
@@ -44,17 +43,7 @@ suspend fun main() {
     bot.addExtension(SyncExtension::class)
     bot.addExtension(VersionCheckExtension::class)
 
-    // Leaving this here until Apple enables intents on the dev bot
-//    val intents: (Intents.IntentsBuilder.() -> Unit)? = if (environment != "production"){
-//        null
-//    } else {
-//        { +Intents.all }
-//    }
-//
-//    bot.start(intents=intents)
-
-    bot.start(intents={
+    bot.start(intents = {
         +Intents.all
-        -Intent.GuildPresences
     })
 }
