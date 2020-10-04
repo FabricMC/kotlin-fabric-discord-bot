@@ -3,6 +3,7 @@
  */
 package net.fabricmc.bot
 
+import com.gitlab.kordlib.gateway.Intent
 import com.gitlab.kordlib.gateway.Intents
 import com.gitlab.kordlib.gateway.PrivilegedIntent
 import com.kotlindiscord.kord.extensions.ExtensibleBot
@@ -52,5 +53,8 @@ suspend fun main() {
 //
 //    bot.start(intents=intents)
 
-    bot.start(intents={ +Intents.all })
+    bot.start(intents={
+        +Intents.all
+        -Intent.GuildPresences
+    })
 }
