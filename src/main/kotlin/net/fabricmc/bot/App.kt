@@ -43,7 +43,13 @@ suspend fun main() {
     bot.addExtension(SyncExtension::class)
     bot.addExtension(VersionCheckExtension::class)
 
-    bot.start(intents = {
-        +Intents.all
-    })
+    bot.start(
+            presenceBuilder = {
+                playing("${config.prefix}help for command help")
+            },
+
+            intents = {
+                +Intents.all
+            }
+    )
 }
