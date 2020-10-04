@@ -108,6 +108,13 @@ class CleanExtension(bot: ExtensibleBot) : Extension(bot) {
             hidden = true
 
             action {
+                if (args.isEmpty()) {
+                    message.channel.createMessage(
+                            ":x: Please provide at least one filter"
+                    )
+
+                    return@action
+                }
                 with(parse<CleanArguments>()) {
                     val cleanNotice = """
                         Cleaning with :

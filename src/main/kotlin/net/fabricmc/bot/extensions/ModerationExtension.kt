@@ -41,14 +41,12 @@ class ModerationExtension(bot: ExtensibleBot) : Extension(bot) {
             name = "slowmode"
             aliases = arrayOf("slow", "sm")
 
-            description = """
-                Enable slowmode for a channel, with the given message interval.
-                
-                By default, this comment will use the current channel - specify one after the duration
-                to target that channel instead.
-    
-                Omit the duration or set it to `0s` to disable.
-            """.trimIndent()
+            description = "Enable slowmode for a channel, with the given message interval.\n\n" +
+
+                    "By default, this comment will use the current channel - specify one after the duration" +
+                    "to target that channel instead.\n\n" +
+
+                    "Omit the duration or set it to `0s` to disable."
 
             signature = "[duration] [channel]"
 

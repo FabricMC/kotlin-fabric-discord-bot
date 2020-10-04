@@ -1,7 +1,9 @@
 package net.fabricmc.bot.extensions
 
+import com.gitlab.kordlib.core.behavior.channel.createEmbed
 import com.gitlab.kordlib.core.behavior.channel.createMessage
 import com.gitlab.kordlib.core.entity.User
+import com.gitlab.kordlib.core.entity.channel.TextChannel
 import com.gitlab.kordlib.rest.builder.message.EmbedBuilder
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import com.kotlindiscord.kord.extensions.Paginator
@@ -11,6 +13,7 @@ import net.fabricmc.bot.conf.config
 import net.fabricmc.bot.constants.Colours
 import net.fabricmc.bot.database.Infraction
 import net.fabricmc.bot.defaultCheck
+import net.fabricmc.bot.enums.Channels
 import net.fabricmc.bot.enums.InfractionTypes
 import net.fabricmc.bot.enums.Roles
 import net.fabricmc.bot.enums.getInfractionType
@@ -214,6 +217,58 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
             }
 
             command {
+                name = "expire"
+                aliases = arrayOf("e")
+
+                description = "Manually expire an infraction by ID."
+
+                signature<InfractionIDCommandArgs>()
+
+                action {
+                    runSuspended {
+                        with(parse<InfractionIDCommandArgs>()) {
+                            val inf = infQ.getInfraction(id).executeAsOneOrNull()
+                            val modLog = config.getChannel(Channels.MODERATOR_LOG) as TextChannel
+
+                            if (inf == null) {
+                                message.channel.createMessage(
+                                        "${message.author!!.mention} No such infraction: `$id`"
+                                )
+
+                                return@with
+                            }
+
+                            pardonInfraction(inf, inf.target_id, null, true)
+
+                            modLog.createEmbed {
+                                title = "Infraction Manually Expired"
+                                color = Colours.BLURPLE
+                                timestamp = Instant.now()
+
+                                description = "<@${inf.target_id}> (`${inf.target_id}`) is no longer " +
+                                        "${inf.infraction_type.actionText}.\n\n" +
+
+                                        "**This infraction was expired manually.**"
+
+                                field {
+                                    name = "Moderator"
+                                    value = "${message.author!!.mention} (`${message.author!!.id.longValue}`)"
+                                }
+
+                                footer {
+                                    text = "ID: ${inf.id}"
+                                }
+                            }
+
+                            message.channel.createMessage(
+                                    "${message.author!!.mention} Infraction has been manually expired: `$id`"
+                            )
+                        }
+                    }
+                }
+            }
+
+            command {
                 name = "reason"
                 aliases = arrayOf("r")
 
@@ -225,6 +280,7 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                     runSuspended {
                         with(parse<InfractionReasonCommandArgs>()) {
                             val inf = infQ.getInfraction(id).executeAsOneOrNull()
+                            val modLog = config.getChannel(Channels.MODERATOR_LOG) as TextChannel
 
                             if (inf == null) {
                                 message.channel.createMessage(
@@ -249,8 +305,25 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
 
                             message.channel.createMessage(
                                     "${message.author!!.mention} Reason for infraction `$id` updated to:\n" +
-                                            ">>> ${inf.reason}"
+                                            ">>> $joinedReason"
                             )
+
+                            modLog.createEmbed {
+                                title = "Infraction reason updated"
+                                color = Colours.BLURPLE
+
+                                description = "**Reason:** $joinedReason"
+                                timestamp = Instant.now()
+
+                                field {
+                                    name = "Moderator"
+                                    value = "${message.author!!.mention} (`${message.author!!.id.longValue}`)"
+                                }
+
+                                footer {
+                                    text = "ID: ${inf.id}"
+                                }
+                            }
                         }
                     }
                 }
