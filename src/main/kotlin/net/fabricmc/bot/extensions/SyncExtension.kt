@@ -94,7 +94,7 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
         }
     }
 
-    private suspend fun initialSync() {
+    private suspend fun initialSync() = runSuspended {
         val (rolesUpdated, rolesRemoved) = updateRoles()
         val (usersUpdated, usersAbsent) = updateUsers()
         val (allInfractions, expiredInfractions) = infractionSync()
@@ -230,7 +230,7 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
         }
     }
 
-    private suspend fun updateRoles(): Pair<Int, Int> {
+    private suspend fun updateRoles(): Pair<Int, Int> = runSuspended {
         val dbRoles = roles.getAllRoles().executeAsList().map { it.id to it }.toMap()
         val discordRoles = config.getGuild().roles.toList().map { it.id.longValue to it }.toMap()
 
@@ -258,7 +258,7 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
             roleDeleted(it)
         }
 
-        return Pair(rolesUpdated, rolesToRemove.size)
+        Pair(rolesUpdated, rolesToRemove.size)
     }
 
     private suspend fun updateUsers(): Pair<Int, Int> = runSuspended {
