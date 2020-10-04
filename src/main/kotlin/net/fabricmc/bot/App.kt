@@ -44,6 +44,6 @@ suspend fun main() {
     bot.addExtension(VersionCheckExtension::class)
 
     bot.start(intents={
-        Intents.all
+        +Intents.all
     })
 }
