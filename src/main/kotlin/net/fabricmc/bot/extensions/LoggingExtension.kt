@@ -148,13 +148,13 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                         color = Colours.BLURPLE
                         title = "Member updated"
 
-                        val old = it.old!!
+                        val old = it.old
                         val new = it.getMember()
 
                         field { name = "Username"; value = new.username; inline = true }
                         field { name = "Discriminator"; value = new.discriminator; inline = true }
 
-                        if (old.nickname != new.nickname) {
+                        if (old == null || old.nickname != new.nickname) {
                             field {
                                 name = "Nickname"
                                 inline = true
@@ -167,7 +167,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                             }
                         }
 
-                        if (old.premiumSince != new.premiumSince) {
+                        if (old?.premiumSince != new.premiumSince) {
                             field {
                                 name = "Boost status"
                                 inline = true
@@ -180,7 +180,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                             }
                         }
 
-                        val oldRoles = old.roles.toSet()
+                        val oldRoles = old?.roles?.toSet() ?: setOf()
                         val newRoles = new.roles.toSet()
 
                         if (oldRoles != newRoles) {

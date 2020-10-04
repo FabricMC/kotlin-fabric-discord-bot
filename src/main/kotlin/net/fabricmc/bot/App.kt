@@ -43,7 +43,14 @@ suspend fun main() {
     bot.addExtension(SyncExtension::class)
     bot.addExtension(VersionCheckExtension::class)
 
-    bot.start(intents={
-        +Intents.all
-    })
+    // Leaving this here until Apple enables intents on the dev bot
+//    val intents: (Intents.IntentsBuilder.() -> Unit)? = if (environment != "production"){
+//        null
+//    } else {
+//        { +Intents.all }
+//    }
+//
+//    bot.start(intents=intents)
+
+    bot.start(intents={ +Intents.all })
 }
