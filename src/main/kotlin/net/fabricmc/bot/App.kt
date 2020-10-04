@@ -3,6 +3,8 @@
  */
 package net.fabricmc.bot
 
+import com.gitlab.kordlib.gateway.Intents
+import com.gitlab.kordlib.gateway.PrivilegedIntent
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import mu.KotlinLogging
 import net.fabricmc.bot.conf.buildInfo
@@ -16,6 +18,7 @@ val bot = ExtensibleBot(prefix = config.prefix, token = config.token)
 /**
  * The main function. Every story has a beginning!
  */
+@OptIn(PrivilegedIntent::class)
 suspend fun main() {
     val logger = KotlinLogging.logger {}
 
@@ -40,5 +43,7 @@ suspend fun main() {
     bot.addExtension(SyncExtension::class)
     bot.addExtension(VersionCheckExtension::class)
 
-    bot.start()
+    bot.start(intents={
+        Intents.all
+    })
 }

@@ -99,7 +99,7 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
         val (usersUpdated, usersAbsent) = updateUsers()
         val (allInfractions, expiredInfractions) = infractionSync()
 
-        (config.getChannel(Channels.MODERATOR_LOG) as TextChannel)
+        (config.getChannel(Channels.ACTION_LOG) as TextChannel)
                 .createEmbed {
                     title = "Sync statistics"
 

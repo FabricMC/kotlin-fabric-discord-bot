@@ -121,7 +121,10 @@ compileKotlin.configure {
 }
 
 compileKotlin {
-    kotlinOptions.freeCompilerArgs = ["-XXLanguage:+NewInference"]
+    kotlinOptions.freeCompilerArgs = [
+            "-XXLanguage:+NewInference",
+            "-Xopt-in=kotlin.RequiresOptIn"
+    ]
 }
 
 processResources {

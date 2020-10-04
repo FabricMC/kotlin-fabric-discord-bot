@@ -2,6 +2,9 @@
 
 This bot is designed for a specific discord server, so it most likely will not fit the needs of your server.
 
+**Note:** If you're testing the bot, make sure you have both privileged intents enabled for the OAuth app.
+[See here](https://discord.com/developers/docs/topics/gateway#privileged-intents) for more information.
+
 ## Configuration
 
 Note that the bot can be configured using a config file called `config.toml` instead if you prefer. The part
