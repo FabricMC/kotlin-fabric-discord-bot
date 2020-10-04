@@ -206,8 +206,9 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
         memberUpdated(member)
 
         val infractions = config.db.infractionQueries
-                .getActiveExpirableInfractionsByUser(member.id.longValue)
+                .getActiveInfractionsByUser(member.id.longValue)
                 .executeAsList()
+                .filter { it.infraction_type.expires }
 
         infractions.forEach {
             applyInfraction(it, member.id.longValue, null)  // Expiry already scheduled at this point

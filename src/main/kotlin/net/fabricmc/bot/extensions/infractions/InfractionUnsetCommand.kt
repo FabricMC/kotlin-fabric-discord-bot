@@ -159,8 +159,8 @@ class InfractionUnsetCommand(extension: Extension, private val type: InfractionT
         }
 
         val infractions = runSuspended {
-            queries.getInfractionsByUser(memberId).executeAsList()
-        }.filter { it.active && it.infraction_type == type }
+            queries.getActiveInfractionsByUser(memberId).executeAsList()
+        }.filter { it.infraction_type == type }
 
         if (infractions.isEmpty()) {
             message.channel.createMessage(

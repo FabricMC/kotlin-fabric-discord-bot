@@ -217,8 +217,6 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
             null
         }
 
-        val active = expires != null
-
         val infraction = runSuspended {
             if (expires != null) {
                 queries.addInfraction(
@@ -226,13 +224,17 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
                         author.id.longValue,
                         memberId,
                         instantToMysql(expires),
-                        active,
+                        true,
                         type
                 )
             } else {
                 queries.addInfraction(
-                        reason, author.id.longValue, memberId, null,  // null for forever
-                        active, type
+                        reason,
+                        author.id.longValue,
+                        memberId,
+                        null,  // null for forever
+                        true,
+                        type
                 )
             }
 

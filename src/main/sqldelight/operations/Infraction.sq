@@ -28,6 +28,12 @@ getInfractionsByUser:
 --     INNER JOIN user ON user.id = infraction.moderator_id OR user.id = infraction.target_id
     WHERE target_id = :id;
 
+getActiveInfractionsByUser:
+    SELECT * FROM infraction
+--     SELECT infraction.*, user.* FROM infraction
+--     INNER JOIN user ON user.id = infraction.moderator_id OR user.id = infraction.target_id
+    WHERE target_id = :id AND active = TRUE;
+
 getActiveExpirableInfractionsByUser:
     SELECT * FROM infraction
 --     SELECT infraction.*, user.* FROM infraction
