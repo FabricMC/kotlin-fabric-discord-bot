@@ -282,13 +282,13 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
             val role = discordRoles[it] ?: error("Role suddenly disappeared from the list: $it.")
             val dbRole = dbRoles[it]
 
-            logger.debug { "Updating role: ${role.name} ($it)" }
-
             if (
                     dbRole == null
                     || dbRole.colour != role.color.rgb
                     || dbRole.name != role.name
             ) {
+                logger.debug { "Updating role: ${role.name} ($it)" }
+
                 roleUpdated(role)
                 rolesUpdated += 1
             }
@@ -320,8 +320,6 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
             val member = discordUsers[it] ?: error("User suddenly disappeared from the list: $it.")
             val dbUser = dbUsers[it]
 
-            logger.debug { "Updating user: ${member.username}#${member.discriminator} ($it)" }
-
             val dbUserRoles = junction.getUserRoleByUser(it).executeAsList().map { role -> role.role_id }
             val discordUserRoles = member.roles.toList().map { role -> role.id.longValue }
 
@@ -337,6 +335,8 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
                     || !dbUser.present
                     || !rolesUpToDate
             ) {
+                logger.debug { "Updating user: ${member.username}#${member.discriminator} ($it)" }
+
                 memberUpdated(member)
                 usersUpdated += 1
             }
