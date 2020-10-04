@@ -269,6 +269,70 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
             }
 
             command {
+                name = "reactivate"
+                aliases = arrayOf("ra")
+
+                description = "Manually reactivate an infraction by ID, if it hasn't yet expired."
+
+                signature<InfractionIDCommandArgs>()
+
+                action {
+                    runSuspended {
+                        with(parse<InfractionIDCommandArgs>()) {
+                            val inf = infQ.getInfraction(id).executeAsOneOrNull()
+                            val modLog = config.getChannel(Channels.MODERATOR_LOG) as TextChannel
+
+                            if (inf == null) {
+                                message.channel.createMessage(
+                                        "${message.author!!.mention} No such infraction: `$id`"
+                                )
+
+                                return@with
+                            }
+
+                            val expires = mysqlToInstant(inf.expires)
+                            val delay = getDelayFromNow(expires)
+
+                            if (expires != null && delay < 1) {
+                                message.channel.createMessage(
+                                        "${message.author!!.mention} Infraction already expired, " +
+                                                "not reactivating: `$id`"
+                                )
+
+                                return@with
+                            }
+
+                            applyInfraction(inf, inf.target_id, expires, true)
+
+                            modLog.createEmbed {
+                                title = "Infraction Manually Reactivated"
+                                color = Colours.BLURPLE
+                                timestamp = Instant.now()
+
+                                description = "<@${inf.target_id}> (`${inf.target_id}`) is once again " +
+                                        "${inf.infraction_type.actionText}.\n\n" +
+
+                                        "**This infraction was reactivated manually.**"
+
+                                field {
+                                    name = "Moderator"
+                                    value = "${message.author!!.mention} (`${message.author!!.id.longValue}`)"
+                                }
+
+                                footer {
+                                    text = "ID: ${inf.id}"
+                                }
+                            }
+
+                            message.channel.createMessage(
+                                    "${message.author!!.mention} Infraction has been manually reactivated: `$id`"
+                            )
+                        }
+                    }
+                }
+            }
+
+            command {
                 name = "reason"
                 aliases = arrayOf("r")
 
