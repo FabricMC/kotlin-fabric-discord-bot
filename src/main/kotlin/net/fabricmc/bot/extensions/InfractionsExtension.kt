@@ -238,6 +238,8 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                                 return@with
                             }
 
+                            infQ.setInfractionActive(false, inf.id)
+
                             pardonInfraction(inf, inf.target_id, null, true)
 
                             modLog.createEmbed {
@@ -301,6 +303,8 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
 
                                 return@with
                             }
+
+                            infQ.setInfractionActive(true, inf.id)
 
                             applyInfraction(inf, inf.target_id, expires, true)
 
