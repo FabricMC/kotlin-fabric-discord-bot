@@ -23,6 +23,7 @@ import net.fabricmc.bot.enums.InfractionTypes
 import net.fabricmc.bot.enums.Roles
 import net.fabricmc.bot.runSuspended
 import java.time.Instant
+import java.util.*
 
 /** Data class representing the arguments for the infraction pardoning command.
  *
@@ -171,9 +172,9 @@ class InfractionUnsetCommand(extension: Extension, private val type: InfractionT
         }
 
         for (infraction in infractions) {
-            val expires = mysqlToInstant(infraction.expires)
+            cancelJobForInfraction(UUID.fromString(infraction.id))
 
-            infrAction.invoke(infraction, memberId, expires)
+            infrAction.invoke(infraction, memberId, null)
 
             sendToUser(infraction)
             sendToChannel(message.channel, infraction)

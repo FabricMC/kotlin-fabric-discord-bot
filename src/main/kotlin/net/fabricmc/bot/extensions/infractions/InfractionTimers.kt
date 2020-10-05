@@ -151,11 +151,9 @@ private fun schedule(delay: Long, infraction: Infraction, manual: Boolean, callb
         callback.invoke(it)
 
         runSuspended {
-            val inf = queries.getInfraction(infraction.id).executeAsOne()
-
             queries.setInfractionActive(
                     false,
-                    inf.id
+                    infraction.id
             )
         }
 
