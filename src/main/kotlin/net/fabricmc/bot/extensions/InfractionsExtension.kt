@@ -184,7 +184,7 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
 
             check(
                     ::defaultCheck,
-                    topRoleHigherOrEqual(config.getRole(Roles.MODERATOR))
+                    topRoleHigherOrEqual(config.getRole(Roles.TRAINEE_MODERATOR))
             )
 
             command {
@@ -221,6 +221,10 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                 aliases = arrayOf("e")
 
                 description = "Manually expire an infraction by ID."
+
+                check(
+                        topRoleHigherOrEqual(config.getRole(Roles.MODERATOR))
+                )
 
                 signature<InfractionIDCommandArgs>()
 
@@ -275,6 +279,10 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                 aliases = arrayOf("ra")
 
                 description = "Manually reactivate an infraction by ID, if it hasn't yet expired."
+
+                check(
+                        topRoleHigherOrEqual(config.getRole(Roles.MODERATOR))
+                )
 
                 signature<InfractionIDCommandArgs>()
 
@@ -341,6 +349,10 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                 aliases = arrayOf("r")
 
                 description = "Get or update the reason for a specific infraction."
+
+                check(
+                        topRoleHigherOrEqual(config.getRole(Roles.MODERATOR))
+                )
 
                 signature<InfractionReasonCommandArgs>()
 

@@ -64,6 +64,7 @@ later sources overriding earlier ones:
   
 * ROLES_ADMIN = The ID of the admin role
 * ROLES_MOD = The ID of the moderator role
+* ROLES_TRAINEE_MOD = The ID of the trainee moderator role
 * ROLES_MUTED = The ID of the muted role
   
   

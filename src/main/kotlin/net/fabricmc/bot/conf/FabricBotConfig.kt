@@ -121,6 +121,7 @@ class FabricBotConfig {
         return when (role) {
             Roles.ADMIN -> Snowflake(config[RolesSpec.admin])
             Roles.MODERATOR -> Snowflake(config[RolesSpec.mod])
+            Roles.TRAINEE_MODERATOR -> Snowflake(config[RolesSpec.traineeMod])
             Roles.MUTED -> Snowflake(config[RolesSpec.muted])
 
             Roles.NO_META -> Snowflake(config[RolesSpec.noMeta])

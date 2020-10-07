@@ -8,6 +8,7 @@ package net.fabricmc.bot.enums
 enum class Roles(val value: String) {
     ADMIN("Admin"),
     MODERATOR("Moderator"),
+    TRAINEE_MODERATOR("Trainee Moderator"),
 
     MUTED("Muted"),
 

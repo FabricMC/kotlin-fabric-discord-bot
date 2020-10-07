@@ -184,7 +184,13 @@ class InfractionUnsetCommand(extension: Extension, private val type: InfractionT
 
     override val checkList: MutableList<suspend (MessageCreateEvent) -> Boolean> = mutableListOf(
             ::defaultCheck,
-            { topRoleHigherOrEqual(config.getRole(Roles.MODERATOR))(it) }  // Gotta be suspended
+            {
+                if (type.notForTrainees) {
+                    topRoleHigherOrEqual(config.getRole(Roles.MODERATOR))(it)
+                } else {
+                    topRoleHigherOrEqual(config.getRole(Roles.TRAINEE_MODERATOR))(it)
+                }
+            }
     )
 
     init {

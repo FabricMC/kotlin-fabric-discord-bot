@@ -8,14 +8,17 @@ package net.fabricmc.bot.enums
  * @param expires Whether this infraction type may expire.
  * @param relay Whether a user should be notified in private when they receive this infraction.
  * @param requirePresent Whether a user needs to be in the guild in order for this infraction to be applied at all.
+ * @param notForTrainees Whether an infraction type requires a non-trainee moderator or not.
  */
 enum class InfractionTypes(
         val actionText: String,
         val verb: String,
         val expires: Boolean = true,
         val relay: Boolean = true,
-        val requirePresent: Boolean = false) {
-    BAN("banned", "ban"),
+        val requirePresent: Boolean = false,
+        val notForTrainees: Boolean = false
+) {
+    BAN("banned", "ban", notForTrainees = true),
     KICK("kicked", "kick", false, requirePresent = true),
 
     MUTE("muted", "mute"),

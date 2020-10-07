@@ -14,6 +14,9 @@ object RolesSpec : ConfigSpec() {
     /** Configured mod role ID. **/
     val mod by required<Long>()
 
+    /** Configured trainee role ID. **/
+    val traineeMod by required<Long>()
+
     /** Configured muted role ID. **/
     val muted by required<Long>()
 
