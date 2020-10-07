@@ -23,7 +23,7 @@ import java.time.temporal.ChronoUnit
 import java.util.*
 
 private const val SLOWMODE_LIMIT = 60 * 60 * 6  // Six hours
-private const val DEFAULT_LOCK_MINUTES = 10L
+private const val DEFAULT_LOCK_MINUTES = 5L
 
 private const val UNITS = "**__Durations__**\n" +
         "Durations are specified in pairs of amounts and units - for example, `12d` would be 12 days. " +
