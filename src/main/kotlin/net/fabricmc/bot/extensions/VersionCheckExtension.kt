@@ -110,14 +110,14 @@ class VersionCheckExtension(bot: ExtensibleBot) : Extension(bot) {
 
                         field {
                             name = "Latest (JIRA)"
-                            value = jiraVersions.maxByOrNull { it.id }!!.name
+                            value = jiraVersions.last().name
 
                             inline = true
                         }
 
                         field {
                             name = "Latest (Minecraft)"
-                            value = minecraftVersions.maxByOrNull { it.id }!!.id
+                            value = minecraftVersions.first().id
 
                             inline = true
                         }
@@ -254,7 +254,7 @@ class VersionCheckExtension(bot: ExtensibleBot) : Extension(bot) {
     private suspend fun getJiraVersions(): List<JiraVersion> {
         val response = client.get<List<JiraVersion>>(JIRA_URL)
 
-        logger.debug { "     JIRA | Latest release: " + response.maxByOrNull { it.id }!!.name }
+        logger.debug { "     JIRA | Latest release: " + response.last().name }
         logger.debug { "     JIRA | Total releases: " + response.size }
 
         return response
