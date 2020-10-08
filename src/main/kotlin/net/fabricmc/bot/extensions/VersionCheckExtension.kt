@@ -101,6 +101,27 @@ class VersionCheckExtension(bot: ExtensibleBot) : Extension(bot) {
                 @Suppress("TooGenericExceptionCaught")
                 try {
                     updateCheck()
+
+                    message.channel.createEmbed {
+                        title = "Version check success"
+                        color = Colours.POSITIVE
+
+                        description = "Successfully checked for new Minecraft versions and JIRA releases."
+
+                        field {
+                            name = "Latest (JIRA)"
+                            value = jiraVersions.maxByOrNull { it.id }!!.name
+
+                            inline = true
+                        }
+
+                        field {
+                            name = "Latest (Minecraft)"
+                            value = minecraftVersions.maxByOrNull { it.id }!!.id
+
+                            inline = true
+                        }
+                    }
                 } catch (e: Exception) {
                     message.channel.createEmbed {
                         title = "Version check error"
@@ -233,7 +254,7 @@ class VersionCheckExtension(bot: ExtensibleBot) : Extension(bot) {
     private suspend fun getJiraVersions(): List<JiraVersion> {
         val response = client.get<List<JiraVersion>>(JIRA_URL)
 
-        logger.debug { "     JIRA | Latest release: " + response.minByOrNull { it.id }!!.name }
+        logger.debug { "     JIRA | Latest release: " + response.maxByOrNull { it.id }!!.name }
         logger.debug { "     JIRA | Total releases: " + response.size }
 
         return response
