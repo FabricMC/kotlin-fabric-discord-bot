@@ -1,6 +1,7 @@
 package net.fabricmc.bot.extensions
 
 import com.gitlab.kordlib.common.entity.ChannelType
+import com.gitlab.kordlib.core.behavior.channel.createEmbed
 import com.gitlab.kordlib.core.event.gateway.ReadyEvent
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import com.kotlindiscord.kord.extensions.checks.topRoleHigherOrEqual
@@ -16,6 +17,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import mu.KotlinLogging
 import net.fabricmc.bot.conf.config
+import net.fabricmc.bot.constants.Colours
 import net.fabricmc.bot.defaultCheck
 import net.fabricmc.bot.enums.Roles
 
@@ -96,7 +98,19 @@ class VersionCheckExtension(bot: ExtensibleBot) : Extension(bot) {
 
                 logger.debug { "Version check requested by command." }
 
-                updateCheck()
+                @Suppress("TooGenericExceptionCaught")
+                try {
+                    updateCheck()
+                } catch (e: Exception) {
+                    message.channel.createEmbed {
+                        title = "Version check error"
+                        color = Colours.NEGATIVE
+
+                        description = "```" +
+                                "$e: ${e.stackTraceToString()}" +
+                                "```"
+                    }
+                }
             }
         }
 
@@ -111,7 +125,7 @@ class VersionCheckExtension(bot: ExtensibleBot) : Extension(bot) {
 
                 signature<UrlCommand>()
 
-                check (
+                check(
                         ::defaultCheck,
                         topRoleHigherOrEqual(config.getRole(Roles.ADMIN))
                 )
@@ -135,7 +149,7 @@ class VersionCheckExtension(bot: ExtensibleBot) : Extension(bot) {
 
                 signature<UrlCommand>()
 
-                check (
+                check(
                         ::defaultCheck,
                         topRoleHigherOrEqual(config.getRole(Roles.ADMIN))
                 )
