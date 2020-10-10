@@ -8,12 +8,14 @@ import com.gitlab.kordlib.core.entity.User
 import com.gitlab.kordlib.core.entity.channel.TextChannel
 import com.gitlab.kordlib.core.event.UserUpdateEvent
 import com.gitlab.kordlib.core.event.gateway.ReadyEvent
+import com.gitlab.kordlib.core.event.guild.GuildCreateEvent
 import com.gitlab.kordlib.core.event.guild.MemberJoinEvent
 import com.gitlab.kordlib.core.event.guild.MemberLeaveEvent
 import com.gitlab.kordlib.core.event.guild.MemberUpdateEvent
 import com.gitlab.kordlib.core.event.role.RoleCreateEvent
 import com.gitlab.kordlib.core.event.role.RoleDeleteEvent
 import com.gitlab.kordlib.core.event.role.RoleUpdateEvent
+import com.gitlab.kordlib.gateway.RequestGuildMembers
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import com.kotlindiscord.kord.extensions.checks.topRoleHigherOrEqual
 import com.kotlindiscord.kord.extensions.extensions.Extension
@@ -53,6 +55,14 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
 
                 runSuspended {
                     initialSync()
+                }
+            }
+        }
+
+        event<GuildCreateEvent> {
+            action {
+                if (it.guild.id == config.guildSnowflake) {
+                    it.gateway.send(RequestGuildMembers(listOf(it.guild.id.value)))
                 }
             }
         }
