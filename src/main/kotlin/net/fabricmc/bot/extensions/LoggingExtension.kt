@@ -19,6 +19,8 @@ import net.fabricmc.bot.*
 import net.fabricmc.bot.conf.config
 import net.fabricmc.bot.constants.Colours
 import net.fabricmc.bot.enums.Channels
+import net.fabricmc.bot.utils.deltas.MemberDelta
+import net.fabricmc.bot.utils.deltas.UserDelta
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -56,7 +58,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                         title = "User banned"
 
                         field { name = "Username"; value = it.user.username; inline = true }
-                        field { name = "Discriminator"; value = it.user.discriminator; inline = true }
+                        field { name = "Discrim"; value = it.user.discriminator; inline = true }
 
                         footer { text = it.user.id.value }
                         thumbnail { url = it.user.avatar.url }
@@ -67,7 +69,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                         title = "User unbanned"
 
                         field { name = "Username"; value = it.user.username; inline = true }
-                        field { name = "Discriminator"; value = it.user.discriminator; inline = true }
+                        field { name = "Discrim"; value = it.user.discriminator; inline = true }
 
                         footer { text = it.user.id.value }
                         thumbnail { url = it.user.avatar.url }
@@ -115,7 +117,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                         title = "Member joined"
 
                         field { name = "Username"; value = it.member.username; inline = true }
-                        field { name = "Discriminator"; value = it.member.discriminator; inline = true }
+                        field { name = "Discrim"; value = it.member.discriminator; inline = true }
 
                         val createdAt = timeFormatter.format(it.member.createdAt)
 
@@ -138,74 +140,132 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                         title = "Member left"
 
                         field { name = "Username"; value = it.user.username; inline = true }
-                        field { name = "Discriminator"; value = it.user.discriminator; inline = true }
+                        field { name = "Discrim"; value = it.user.discriminator; inline = true }
 
                         footer { text = it.user.id.value }
                         thumbnail { url = it.user.avatar.url }
                     }
 
-                    is MemberUpdateEvent -> sendEmbed(Channels.ACTION_LOG) {
-                        color = Colours.BLURPLE
-                        title = "Member updated"
-
-                        val old = it.old
+                    is MemberUpdateEvent -> {
                         val new = it.getMember()
+                        val delta = MemberDelta.from(it.old, new)
 
-                        field { name = "Username"; value = new.username; inline = true }
-                        field { name = "Discriminator"; value = new.discriminator; inline = true }
+                        if (delta?.changes?.isEmpty() == true) {
+                            logger.debug { "No changes found." }
+                        } else {
+                            sendEmbed(Channels.ACTION_LOG) {
+                                color = Colours.BLURPLE
+                                title = "Member updated"
 
-                        if (old == null || old.nickname != new.nickname) {
-                            field {
-                                name = "Nickname"
-                                inline = true
-
-                                value = if (new.nickname == null) {
-                                    "**Removed**"
-                                } else {
-                                    "**Updated**: ${new.nickname}"
-                                }
-                            }
-                        }
-
-                        if (old?.premiumSince != new.premiumSince) {
-                            field {
-                                name = "Boost status"
-                                inline = true
-
-                                value = if (new.premiumSince == null) {
-                                    "**No longer boosting**"
-                                } else {
-                                    "**Boosting since**: " + timeFormatter.format(new.premiumSince)
-                                }
-                            }
-                        }
-
-                        val oldRoles = old?.roles?.toSet() ?: setOf()
-                        val newRoles = new.roles.toSet()
-
-                        if (oldRoles != newRoles) {
-                            val added = newRoles - oldRoles
-                            val removed = oldRoles - newRoles
-
-                            if (added.isNotEmpty()) {
                                 field {
-                                    name = "Roles added"
+                                    name = "Username"
 
-                                    value = added.joinToString(" ") { role -> role.mention }
+                                    value = if (delta?.username != null) {
+                                        "**${new.username}**"
+                                    } else {
+                                        new.username
+                                    }
+
+                                    inline = true
                                 }
-                            }
 
-                            if (removed.isNotEmpty()) {
                                 field {
-                                    name = "Roles removed"
+                                    name = "Discrim"
 
-                                    value = removed.joinToString(" ") { role -> role.mention }
+                                    value = if (delta?.discriminator != null) {
+                                        "**${new.discriminator}**"
+                                    } else {
+                                        new.discriminator
+                                    }
+
+                                    inline = true
                                 }
+
+                                if (delta?.avatar != null) {
+                                    field {
+                                        name = "Avatar"
+                                        inline = true
+
+                                        value = "[New avatar](${delta.avatar})"
+                                    }
+                                }
+
+                                if (delta?.nickname != null) {
+                                    field {
+                                        name = "Nickname"
+                                        inline = true
+
+                                        value = if (new.nickname == null) {
+                                            "**Removed**"
+                                        } else {
+                                            "**Updated:** ${new.nickname}"
+                                        }
+                                    }
+                                }
+
+                                if (delta?.boosting != null) {
+                                    field {
+                                        name = "Boost status"
+                                        inline = true
+
+                                        value = if (new.premiumSince == null) {
+                                            "**No longer boosting**"
+                                        } else {
+                                            "**Boosting since**: " + timeFormatter.format(new.premiumSince)
+                                        }
+                                    }
+                                }
+
+                                if (delta?.owner != null) {
+                                    field {
+                                        name = "Server owner"
+                                        inline = true
+
+                                        value = if (delta.owner == true) {
+                                            "**Gained server ownership**"
+                                        } else {
+                                            "**Lost server ownership**"
+                                        }
+                                    }
+                                }
+
+                                if (delta?.roles != null) {
+                                    val oldRoles = it.old?.roles?.toSet() ?: setOf()
+                                    val newRoles = new.roles.toSet()
+
+                                    if (oldRoles != newRoles) {
+                                        val added = newRoles - oldRoles
+                                        val removed = oldRoles - newRoles
+
+                                        if (added.isNotEmpty()) {
+                                            field {
+                                                name = "Roles added"
+
+                                                value = added.joinToString(" ") { role -> role.mention }
+                                            }
+                                        }
+
+                                        if (removed.isNotEmpty()) {
+                                            field {
+                                                name = "Roles removed"
+
+                                                value = removed.joinToString(" ") { role -> role.mention }
+                                            }
+                                        }
+                                    }
+                                }
+
+                                footer {
+                                    text = if (delta == null) {
+                                        "Not cached: ${new.id.longValue}"
+                                    } else {
+                                        new.id.value
+                                    }
+                                }
+
+                                thumbnail { url = new.avatar.url }
                             }
                         }
-
-                        footer { text = new.id.value }
-                        thumbnail { url = new.avatar.url }
                     }
 
                     is MessageBulkDeleteEvent -> sendEmbed(Channels.MODERATOR_LOG) {
@@ -541,15 +601,55 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                         return@action
                     }
 
-                    sendEmbed(Channels.ACTION_LOG) {
-                        title = "User updated"
+                    val delta = UserDelta.from(old, user)
 
-                        field { name = "Created"; value = timeFormatter.format(user.createdAt); inline = true }
-                        field { name = "Username"; value = user.username; inline = true }
-                        field { name = "Discriminator"; value = user.discriminator; inline = true }
+                    if (delta?.changes?.isEmpty() != true) {
+                        sendEmbed(Channels.ACTION_LOG) {
+                            title = "User updated"
 
-                        footer { text = user.id.value }
-                        thumbnail { url = user.avatar.url }
+                            if (delta?.avatar != null) {
+                                field {
+                                    name = "Avatar"
+                                    inline = true
+
+                                    value = "[New avatar](${delta.avatar})"
+                                }
+                            }
+
+                            field {
+                                name = "Username"
+
+                                value = if (delta?.username != null) {
+                                    "**${user.username}**"
+                                } else {
+                                    user.username
+                                }
+
+                                inline = true
+                            }
+
+                            field {
+                                name = "Discrim"
+
+                                value = if (delta?.discriminator != null) {
+                                    "**${user.discriminator}**"
+                                } else {
+                                    user.discriminator
+                                }
+
+                                inline = true
+                            }
+
+                            footer {
+                                text = if (delta == null) {
+                                    "Not cached: ${user.id.longValue}"
+                                } else {
+                                    user.id.value
+                                }
+                            }
+
+                            thumbnail { url = user.avatar.url }
+                        }
                     }
                 }
             }

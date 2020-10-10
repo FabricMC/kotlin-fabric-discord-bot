@@ -62,6 +62,9 @@ dependencies {
     implementation 'io.github.microutils:kotlin-logging:2.0.3'
     implementation 'org.codehaus.groovy:groovy:3.0.4'  // For logback config
 
+    // Guava
+    implementation "com.google.guava:guava:29.0-jre"
+
     // Database: https://cashapp.github.io/sqldelight/jvm_mysql/
     implementation 'com.squareup.sqldelight:coroutines-extensions-jvm:1.4.3'
     implementation 'com.squareup.sqldelight:jdbc-driver:1.4.3'
