@@ -8,15 +8,12 @@ import com.gitlab.kordlib.core.entity.User
 import com.gitlab.kordlib.core.entity.channel.TextChannel
 import com.gitlab.kordlib.core.event.UserUpdateEvent
 import com.gitlab.kordlib.core.event.gateway.ReadyEvent
-import com.gitlab.kordlib.core.event.guild.GuildCreateEvent
 import com.gitlab.kordlib.core.event.guild.MemberJoinEvent
 import com.gitlab.kordlib.core.event.guild.MemberLeaveEvent
 import com.gitlab.kordlib.core.event.guild.MemberUpdateEvent
 import com.gitlab.kordlib.core.event.role.RoleCreateEvent
 import com.gitlab.kordlib.core.event.role.RoleDeleteEvent
 import com.gitlab.kordlib.core.event.role.RoleUpdateEvent
-import com.gitlab.kordlib.gateway.GuildMembersChunk
-import com.gitlab.kordlib.gateway.RequestGuildMembers
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import com.kotlindiscord.kord.extensions.checks.topRoleHigherOrEqual
 import com.kotlindiscord.kord.extensions.extensions.Extension
@@ -51,32 +48,12 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
     override suspend fun setup() {
         event<ReadyEvent> {
             action {
-                logger.debug { "Delaying sync for 10 seconds." }
+                logger.info { "Delaying sync for 10 seconds." }
                 delay(READY_DELAY)  // To ensure things are ready
+                logger.info { "Beginning sync." }
 
                 runSuspended {
                     initialSync()
-                }
-            }
-        }
-
-        event<GuildCreateEvent> {
-            action {
-                if (it.guild.id.longValue == config.guildSnowflake.longValue) {
-                    it.gateway.send(RequestGuildMembers(listOf(it.guild.id.value)))
-                }
-            }
-        }
-
-        event<GuildMembersChunk> {
-            action {
-                if (it.data.guildId == config.guildSnowflake.value) {
-                    logger.info {
-                        "Got member chunk ${it.data.chunkIndex + 1} / ${it.data.chunkCount} " +
-                                "(${it.data.members.size} members)"
-                    }
-                } else {
-                    logger.info { "Got member chunk for guild that wasn't requested: ${it.data.guildId}" }
                 }
             }
         }
@@ -296,6 +273,8 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
         logger.debug { "Updating roles: Getting roles from Discord" }
         val discordRoles = config.getGuild().roles.toList().map { it.id.longValue to it }.toMap()
 
+        logger.info { "Syncing ${discordRoles.size} roles." }
+
         val rolesToAdd = discordRoles.keys.filter { it !in dbRoles }
         val rolesToRemove = dbRoles.keys.filter { it !in discordRoles }
         val rolesToUpdate = dbRoles.keys.filter { it in discordRoles }
@@ -333,6 +312,8 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
 
         logger.debug { "Updating users: Getting users from Discord" }
         val discordUsers = config.getGuild().members.toList().map { it.id.longValue to it }.toMap()
+
+        logger.info { "Syncing ${discordUsers.size} members." }
 
         val usersToAdd = discordUsers.keys.filter { it !in dbUsers }
         val usersToRemove = dbUsers.keys.filter { it !in discordUsers && (dbUsers[it] ?: error("???")).present }

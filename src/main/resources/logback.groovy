@@ -4,7 +4,7 @@ def environment = System.getenv().getOrDefault("ENVIRONMENT", "production")
 
 def defaultLevel = DEBUG
 
-if (environment == "production") {
+if (environment == "production" || environment == "spam") {
     defaultLevel = INFO
 } else {
     // Silence warning about missing native PRNG
@@ -13,6 +13,10 @@ if (environment == "production") {
     // Hikari is quite loud in debug mode
     logger("com.zaxxer.hikari.HikariConfig", INFO)
     logger("com.zaxxer.hikari.pool.HikariPool", INFO)
+}
+
+if (environment == "spam") {
+    logger("com.gitlab.kordlib.gateway.DefaultGateway", TRACE)
 }
 
 appender("CONSOLE", ConsoleAppender) {

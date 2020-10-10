@@ -13,7 +13,12 @@ import net.fabricmc.bot.database.Migrator
 import net.fabricmc.bot.extensions.*
 
 /** The current instance of the bot. **/
-val bot = ExtensibleBot(prefix = config.prefix, token = config.token)
+val bot = ExtensibleBot(
+        prefix = config.prefix,
+        token = config.token,
+
+        guildsToFill = listOf(config.guildSnowflake.value)
+)
 
 /**
  * The main function. Every story has a beginning!
