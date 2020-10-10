@@ -15,6 +15,7 @@ import com.gitlab.kordlib.core.event.guild.MemberUpdateEvent
 import com.gitlab.kordlib.core.event.role.RoleCreateEvent
 import com.gitlab.kordlib.core.event.role.RoleDeleteEvent
 import com.gitlab.kordlib.core.event.role.RoleUpdateEvent
+import com.gitlab.kordlib.gateway.GuildMembersChunk
 import com.gitlab.kordlib.gateway.RequestGuildMembers
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import com.kotlindiscord.kord.extensions.checks.topRoleHigherOrEqual
@@ -61,8 +62,21 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
 
         event<GuildCreateEvent> {
             action {
-                if (it.guild.id == config.guildSnowflake) {
+                if (it.guild.id.longValue == config.guildSnowflake.longValue) {
                     it.gateway.send(RequestGuildMembers(listOf(it.guild.id.value)))
+                }
+            }
+        }
+
+        event<GuildMembersChunk> {
+            action {
+                if (it.data.guildId == config.guildSnowflake.value) {
+                    logger.info {
+                        "Got member chunk ${it.data.chunkIndex + 1} / ${it.data.chunkCount} " +
+                                "(${it.data.members.size} members)"
+                    }
+                } else {
+                    logger.info { "Got member chunk for guild that wasn't requested: ${it.data.guildId}" }
                 }
             }
         }
