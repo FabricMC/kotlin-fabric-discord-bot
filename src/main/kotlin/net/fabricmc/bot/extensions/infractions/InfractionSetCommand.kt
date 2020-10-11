@@ -5,7 +5,6 @@ import com.gitlab.kordlib.core.behavior.channel.MessageChannelBehavior
 import com.gitlab.kordlib.core.behavior.channel.createEmbed
 import com.gitlab.kordlib.core.entity.Message
 import com.gitlab.kordlib.core.entity.User
-import com.gitlab.kordlib.core.entity.channel.TextChannel
 import com.gitlab.kordlib.core.event.message.MessageCreateEvent
 import com.gitlab.kordlib.rest.request.RestRequestException
 import com.kotlindiscord.kord.extensions.checks.topRoleHigherOrEqual
@@ -18,10 +17,10 @@ import net.fabricmc.bot.conf.config
 import net.fabricmc.bot.constants.Colours
 import net.fabricmc.bot.database.Infraction
 import net.fabricmc.bot.defaultCheck
-import net.fabricmc.bot.enums.Channels
 import net.fabricmc.bot.enums.InfractionTypes
 import net.fabricmc.bot.enums.Roles
 import net.fabricmc.bot.runSuspended
+import net.fabricmc.bot.utils.modLog
 import java.time.Duration
 import java.time.Instant
 
@@ -174,13 +173,12 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
     }
 
     private suspend fun sendInfractionToModLog(infraction: Infraction, expires: Instant?, actor: User) {
-        val channel = config.getChannel(Channels.MODERATOR_LOG) as TextChannel
         var descriptionText = getInfractionMessage(true, infraction, expires)
 
         descriptionText += "\n\n**User ID:** `${infraction.target_id}`"
         descriptionText += "\n**Moderator:** ${actor.mention} (`${actor.id.longValue}`)"
 
-        channel.createEmbed {
+        modLog {
             color = Colours.NEGATIVE
             title = "User ${infraction.infraction_type.actionText}"
 
@@ -189,8 +187,6 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
             footer {
                 text = "ID: ${infraction.id}"
             }
-
-            timestamp = Instant.now()
         }
     }
 

@@ -9,9 +9,8 @@ import com.gitlab.kordlib.rest.builder.message.MessageCreateBuilder
 import com.gitlab.kordlib.rest.request.RestRequestException
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import io.ktor.http.HttpStatusCode
-import net.fabricmc.bot.conf.config
 import net.fabricmc.bot.deleteWithDelay
-import net.fabricmc.bot.enums.Channels
+import net.fabricmc.bot.utils.alertMessage
 
 /** How long to wait before removing notification messages in channels - 10 seconds. **/
 const val DELETE_DELAY = 10_000L
@@ -72,21 +71,18 @@ abstract class Filter(val bot: ExtensibleBot) {
      *
      * This function works just like the [TextChannel.createMessage] function.
      */
-    suspend fun sendAlert(mention: Boolean = true, builder: suspend MessageCreateBuilder.() -> Unit): Message {
-        val channel = config.getChannel(Channels.ALERTS) as TextChannel
+    suspend fun sendAlert(mention: Boolean = true, builder: suspend MessageCreateBuilder.() -> Unit): Message =
+            alertMessage {
+                builder()
 
-        return channel.createMessage {
-            builder()
-
-            if (mention) {
-                content = if (content == null) {
-                    "@here"
-                } else {
-                    "@here $content"
+                if (mention) {
+                    content = if (content == null) {
+                        "@here"
+                    } else {
+                        "@here $content"
+                    }
                 }
             }
-        }
-    }
 
     /**
      * Send a notification to a user - attempting to DM first, and then using a channel.

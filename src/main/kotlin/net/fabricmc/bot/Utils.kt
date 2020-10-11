@@ -11,6 +11,7 @@ import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.toList
 import mu.KotlinLogging
+import net.fabricmc.bot.conf.FabricBotConfig
 import net.fabricmc.bot.conf.config
 import net.fabricmc.bot.enums.Channels
 import net.fabricmc.bot.enums.Roles
@@ -115,10 +116,8 @@ fun Message.deleteWithDelay(millis: Long, retry: Boolean = true): Job {
 }
 
 /** Check if the user has the provided [role]. **/
-@Suppress("ExpressionBodySyntax")
-suspend fun Member.hasRole(role: Role): Boolean {
-    return this.roles.toList().contains(role)
-}
+suspend fun Member.hasRole(role: Role): Boolean =
+    this.roles.toList().contains(role)
 
 /**
  * Convert a Time4J Duration object to seconds.
@@ -163,8 +162,18 @@ suspend fun <T> runSuspended(dispatcher: CoroutineDispatcher = Dispatchers.IO, b
  * @param channel Configured channel to ensure a webhook exists for.
  * @return Webhook object for the newly created webhook, or the existing one if it's already there.
  */
-suspend fun ensureWebhook(channel: Channels): Webhook {
-    val channelObj = config.getChannel(channel) as TextChannel
+suspend fun ensureWebhook(channel: Channels): Webhook = ensureWebhook(config.getChannel(channel) as TextChannel)
+
+
+/**
+ * Ensure a webhook is created for the bot in a given channel, and return it.
+ *
+ * This will not create a new webhook if one named "Fabric Bot" already exists.
+ *
+ * @param channelObj TextChannel object to create the webhook for.
+ * @return Webhook object for the newly created webhook, or the existing one if it's already there.
+ */
+suspend fun ensureWebhook(channelObj: TextChannel): Webhook {
     val webhook = channelObj.webhooks.firstOrNull { it.name == "Fabric Bot" }
 
     if (webhook != null) {
@@ -175,7 +184,7 @@ suspend fun ensureWebhook(channel: Channels): Webhook {
 
     return channelObj.createWebhook {
         name = "Fabric Bot"
-        avatar = Image.raw(::ensureWebhook::class.java.getResource("/logo.png").readBytes(), Image.Format.PNG)
+        avatar = Image.raw(FabricBotConfig::class.java.getResource("/logo.png").readBytes(), Image.Format.PNG)
     }
 }
 

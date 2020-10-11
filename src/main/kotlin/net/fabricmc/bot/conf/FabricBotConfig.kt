@@ -103,7 +103,7 @@ class FabricBotConfig {
     suspend fun getChannel(channel: Channels): Channel {
         val snowflake = when (channel) {
             Channels.ALERTS -> Snowflake(config[ChannelsSpec.alerts])
-            Channels.ACTION_LOG -> Snowflake(config[ChannelsSpec.actionLog])
+            Channels.ACTION_LOG_CATEGORY -> Snowflake(config[ChannelsSpec.actionLogCategory])
             Channels.BOT_COMMANDS -> Snowflake(config[ChannelsSpec.botCommands])
             Channels.MODERATOR_LOG -> Snowflake(config[ChannelsSpec.moderatorLog])
         }
@@ -162,13 +162,13 @@ class FabricBotConfig {
      * Get the list of channels Jira updates should be sent to.
      */
     suspend fun getJiraUpdateChannels(): List<TextChannel> =
-        config[LiveUpdatesSpec.jiraChannels].mapNotNull { bot.kord.getChannel(Snowflake(it)) as? TextChannel}
+            config[LiveUpdatesSpec.jiraChannels].mapNotNull { bot.kord.getChannel(Snowflake(it)) as? TextChannel }
 
     /**
      * Get the list of channels Minecraft updates should be sent to.
      */
     suspend fun getMinecraftUpdateChannels(): List<TextChannel> =
-        config[LiveUpdatesSpec.minecraftChannels].mapNotNull { bot.kord.getChannel(Snowflake(it)) as? TextChannel }
+            config[LiveUpdatesSpec.minecraftChannels].mapNotNull { bot.kord.getChannel(Snowflake(it)) as? TextChannel }
 
     /**
      * The name of the GitHub organization.

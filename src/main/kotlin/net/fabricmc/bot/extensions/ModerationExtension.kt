@@ -14,9 +14,9 @@ import com.kotlindiscord.kord.extensions.utils.Scheduler
 import net.fabricmc.bot.conf.config
 import net.fabricmc.bot.constants.Colours
 import net.fabricmc.bot.defaultCheck
-import net.fabricmc.bot.enums.Channels
 import net.fabricmc.bot.enums.Roles
 import net.fabricmc.bot.toHuman
+import net.fabricmc.bot.utils.modLog
 import java.time.Duration
 import java.time.Instant
 import java.time.temporal.ChronoUnit
@@ -106,9 +106,7 @@ class ModerationExtension(bot: ExtensibleBot) : Extension(bot) {
 
                     channelObj.addOverwrite(permsObj)
 
-                    val modLog = config.getChannel(Channels.MODERATOR_LOG) as TextChannel
-
-                    modLog.createEmbed {
+                    modLog {
                         color = Colours.BLURPLE
                         title = "Channel locked"
 
@@ -142,11 +140,11 @@ class ModerationExtension(bot: ExtensibleBot) : Extension(bot) {
                                 PermissionOverwrite.forEveryone(
                                         channelObj.guildId,
                                         perms.allowed,
-                                        perms.denied - Permission.SendMessages + Permission.AddReactions
+                                        perms.denied - Permission.SendMessages - Permission.AddReactions
                                 )
                         )
 
-                        modLog.createEmbed {
+                        modLog {
                             color = Colours.BLURPLE
                             title = "Channel unlocked"
 
@@ -189,9 +187,7 @@ class ModerationExtension(bot: ExtensibleBot) : Extension(bot) {
 
                     channelObj.addOverwrite(permsObj)
 
-                    val modLog = config.getChannel(Channels.MODERATOR_LOG) as TextChannel
-
-                    modLog.createEmbed {
+                    modLog {
                         color = Colours.BLURPLE
                         title = "Channel unlocked"
 
@@ -275,10 +271,8 @@ class ModerationExtension(bot: ExtensibleBot) : Extension(bot) {
 
                     channel.edit { rateLimitPerUser = seconds }
 
-                    val modLog = config.getChannel(Channels.MODERATOR_LOG) as TextChannel
-
                     if (seconds > 0) {
-                        modLog.createEmbed {
+                        modLog {
                             color = Colours.BLURPLE
                             title = "Slowmode enabled"
 
@@ -300,7 +294,7 @@ class ModerationExtension(bot: ExtensibleBot) : Extension(bot) {
                             description = "Slowmode set to ${durationObj.toHuman()} in ${channel.mention}"
                         }
                     } else {
-                        modLog.createEmbed {
+                        modLog {
                             color = Colours.BLURPLE
                             title = "Slowmode disabled"
 

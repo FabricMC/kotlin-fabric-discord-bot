@@ -14,7 +14,7 @@ is the camelCase key you should use within that section.
 For example, you might do this in a bash script:
 
 ```bash
-export CHANNELS_ACTION_LOG=746875064200462416
+export CHANNELS_ACTION_LOG_CATEGORY=764817953463861288
 ```
 
 In `config.toml`, you might do this:
@@ -53,7 +53,7 @@ later sources overriding earlier ones:
     * Only optional if you are not using the github commands
   
   
-* CHANNELS_ACTION_LOG = The ID of the action log channel
+* CHANNELS_ACTION_LOG_CATEGORY = The ID of the action log category
 * CHANNELS_ALERTS = The ID of the alerts channel
 * CHANNELS_BOT_COMMANDS = The ID of the bot commands channel
 * CHANNELS_MODERATOR_LOG = The ID of the moderator log channel

@@ -1,6 +1,5 @@
 package net.fabricmc.bot.extensions
 
-import com.gitlab.kordlib.core.behavior.execute
 import com.gitlab.kordlib.core.event.*
 import com.gitlab.kordlib.core.event.channel.*
 import com.gitlab.kordlib.core.event.gateway.*
@@ -9,7 +8,6 @@ import com.gitlab.kordlib.core.event.message.*
 import com.gitlab.kordlib.core.event.role.RoleCreateEvent
 import com.gitlab.kordlib.core.event.role.RoleDeleteEvent
 import com.gitlab.kordlib.core.event.role.RoleUpdateEvent
-import com.gitlab.kordlib.rest.builder.message.EmbedBuilder
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import com.kotlindiscord.kord.extensions.checks.inGuild
 import com.kotlindiscord.kord.extensions.extensions.Extension
@@ -19,9 +17,10 @@ import net.fabricmc.bot.*
 import net.fabricmc.bot.conf.config
 import net.fabricmc.bot.constants.Colours
 import net.fabricmc.bot.enums.Channels
+import net.fabricmc.bot.utils.actionLog
 import net.fabricmc.bot.utils.deltas.MemberDelta
 import net.fabricmc.bot.utils.deltas.UserDelta
-import java.time.Instant
+import net.fabricmc.bot.utils.modLog
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.*
@@ -53,7 +52,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
 
             action {
                 when (it) {
-                    is BanAddEvent -> sendEmbed(Channels.MODERATOR_LOG) {
+                    is BanAddEvent -> modLog {
                         color = Colours.NEGATIVE
                         title = "User banned"
 
@@ -64,7 +63,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                         thumbnail { url = it.user.avatar.url }
                     }
 
-                    is BanRemoveEvent -> sendEmbed(Channels.MODERATOR_LOG) {
+                    is BanRemoveEvent -> modLog {
                         color = Colours.POSITIVE
                         title = "User unbanned"
 
@@ -75,7 +74,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                         thumbnail { url = it.user.avatar.url }
                     }
 
-                    is CategoryCreateEvent -> sendEmbed(Channels.MODERATOR_LOG) {
+                    is CategoryCreateEvent -> modLog {
                         color = Colours.POSITIVE
                         title = "Category created"
 
@@ -85,7 +84,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                         footer { text = it.channel.id.value }
                     }
 
-                    is CategoryDeleteEvent -> sendEmbed(Channels.MODERATOR_LOG) {
+                    is CategoryDeleteEvent -> modLog {
                         color = Colours.NEGATIVE
                         title = "Category deleted"
 
@@ -95,7 +94,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                         footer { text = it.channel.id.value }
                     }
 
-                    is InviteCreateEvent -> sendEmbed(Channels.ACTION_LOG) {
+                    is InviteCreateEvent -> actionLog {
                         color = Colours.POSITIVE
                         title = "Invite created"
 
@@ -104,7 +103,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                         field { name = "Inviter"; value = it.inviter.mention; inline = true }
                     }
 
-                    is InviteDeleteEvent -> sendEmbed(Channels.MODERATOR_LOG) {
+                    is InviteDeleteEvent -> modLog {
                         color = Colours.NEGATIVE
                         title = "Invite deleted"
 
@@ -112,7 +111,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                         field { name = "Code"; value = "`${it.code}`"; inline = true }
                     }
 
-                    is MemberJoinEvent -> sendEmbed(Channels.ACTION_LOG) {
+                    is MemberJoinEvent -> actionLog {
                         color = Colours.POSITIVE
                         title = "Member joined"
 
@@ -135,7 +134,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                         thumbnail { url = it.member.avatar.url }
                     }
 
-                    is MemberLeaveEvent -> sendEmbed(Channels.ACTION_LOG) {
+                    is MemberLeaveEvent -> actionLog {
                         color = Colours.NEGATIVE
                         title = "Member left"
 
@@ -153,7 +152,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                         if (delta?.changes?.isEmpty() == true) {
                             logger.debug { "No changes found." }
                         } else {
-                            sendEmbed(Channels.ACTION_LOG) {
+                            actionLog {
                                 color = Colours.BLURPLE
                                 title = "Member updated"
 
@@ -268,7 +267,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                         }
                     }
 
-                    is MessageBulkDeleteEvent -> sendEmbed(Channels.MODERATOR_LOG) {
+                    is MessageBulkDeleteEvent -> modLog {
                         // TODO: There's a Flow<Message> we could use for something.
                         // I don't think outputting all the messages to the channel is a good idea, though.
 
@@ -279,7 +278,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                         field { name = "Count"; value = it.messageIds.size.toString(); inline = true }
                     }
 
-                    is MessageDeleteEvent -> sendEmbed(Channels.ACTION_LOG) {
+                    is MessageDeleteEvent -> actionLog {
                         color = Colours.NEGATIVE
                         title = "Message deleted"
 
@@ -315,7 +314,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                     }
 
                     is MessageUpdateEvent -> if (it.getMessage().author != null) {
-                        sendEmbed(Channels.ACTION_LOG) {
+                        actionLog {
                             color = Colours.BLURPLE
                             title = "Message edited"
 
@@ -368,7 +367,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                         }
                     }
 
-                    is NewsChannelCreateEvent -> sendEmbed(Channels.MODERATOR_LOG) {
+                    is NewsChannelCreateEvent -> modLog {
                         color = Colours.POSITIVE
                         title = "News channel created"
 
@@ -384,7 +383,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                         footer { text = it.channel.id.value }
                     }
 
-                    is NewsChannelDeleteEvent -> sendEmbed(Channels.MODERATOR_LOG) {
+                    is NewsChannelDeleteEvent -> modLog {
                         color = Colours.NEGATIVE
                         title = "News channel deleted"
 
@@ -400,7 +399,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                     }
 
                     is ReactionRemoveAllEvent -> if (it.getMessage().author != null) {
-                        sendEmbed(Channels.MODERATOR_LOG) {
+                        modLog {
                             color = Colours.NEGATIVE
                             title = "All reactions removed"
 
@@ -416,7 +415,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                     }
 
                     is ReactionRemoveEmojiEvent -> if (it.getMessage().author != null) {
-                        sendEmbed(Channels.MODERATOR_LOG) {
+                        modLog {
                             color = Colours.NEGATIVE
                             title = "All reactions removed"
 
@@ -432,7 +431,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                         }
                     }
 
-                    is RoleCreateEvent -> sendEmbed(Channels.MODERATOR_LOG) {
+                    is RoleCreateEvent -> modLog {
                         color = Colours.POSITIVE
                         title = "Role created"
 
@@ -441,7 +440,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                         footer { text = it.role.id.value }
                     }
 
-                    is RoleDeleteEvent -> sendEmbed(Channels.MODERATOR_LOG) {
+                    is RoleDeleteEvent -> modLog {
                         color = Colours.NEGATIVE
                         title = "Role deleted"
 
@@ -456,7 +455,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                         footer { text = it.roleId.value }
                     }
 
-                    is StoreChannelCreateEvent -> sendEmbed(Channels.MODERATOR_LOG) {
+                    is StoreChannelCreateEvent -> modLog {
                         color = Colours.POSITIVE
                         title = "Store channel created"
 
@@ -472,7 +471,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                         footer { text = it.channel.id.value }
                     }
 
-                    is StoreChannelDeleteEvent -> sendEmbed(Channels.MODERATOR_LOG) {
+                    is StoreChannelDeleteEvent -> modLog {
                         color = Colours.NEGATIVE
                         title = "Store channel deleted"
 
@@ -487,38 +486,52 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                         footer { text = it.channel.id.value }
                     }
 
-                    is TextChannelCreateEvent -> sendEmbed(Channels.MODERATOR_LOG) {
-                        color = Colours.POSITIVE
-                        title = "Text channel created"
-
+                    is TextChannelCreateEvent -> {
                         val category = it.channel.category
 
-                        if (category != null) {
-                            field { name = "Category"; value = category.asChannel().name; inline = true }
+                        if (
+                                category == null ||
+                                category.id.longValue != config.getChannel(Channels.ACTION_LOG_CATEGORY).id.longValue
+                        ) {
+                            modLog {
+                                color = Colours.POSITIVE
+                                title = "Text channel created"
+
+                                if (category != null) {
+                                    field { name = "Category"; value = category.asChannel().name; inline = true }
+                                }
+
+                                field { name = "Mention"; value = it.channel.mention; inline = true }
+                                field { name = "Name"; value = "#${it.channel.name}"; inline = true }
+
+                                footer { text = it.channel.id.value }
+                            }
                         }
-
-                        field { name = "Mention"; value = it.channel.mention; inline = true }
-                        field { name = "Name"; value = "#${it.channel.name}"; inline = true }
-
-                        footer { text = it.channel.id.value }
                     }
 
-                    is TextChannelDeleteEvent -> sendEmbed(Channels.MODERATOR_LOG) {
-                        color = Colours.NEGATIVE
-                        title = "Text channel deleted"
-
+                    is TextChannelDeleteEvent -> {
                         val category = it.channel.category
 
-                        if (category != null) {
-                            field { name = "Category"; value = category.asChannel().name; inline = true }
+                        if (
+                                category == null ||
+                                category.id.longValue != config.getChannel(Channels.ACTION_LOG_CATEGORY).id.longValue
+                        ) {
+                            modLog {
+                                color = Colours.NEGATIVE
+                                title = "Text channel deleted"
+
+                                if (category != null) {
+                                    field { name = "Category"; value = category.asChannel().name; inline = true }
+                                }
+
+                                field { name = "Channel"; value = "#${it.channel.name}"; inline = true }
+
+                                footer { text = it.channel.id.value }
+                            }
                         }
-
-                        field { name = "Channel"; value = "#${it.channel.name}"; inline = true }
-
-                        footer { text = it.channel.id.value }
                     }
 
-                    is VoiceChannelCreateEvent -> sendEmbed(Channels.MODERATOR_LOG) {
+                    is VoiceChannelCreateEvent -> modLog {
                         color = Colours.POSITIVE
                         title = "Voice channel created"
 
@@ -534,7 +547,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                         footer { text = it.channel.id.value }
                     }
 
-                    is VoiceChannelDeleteEvent -> sendEmbed(Channels.MODERATOR_LOG) {
+                    is VoiceChannelDeleteEvent -> modLog {
                         color = Colours.NEGATIVE
                         title = "Voice channel deleted"
 
@@ -577,7 +590,8 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                     is StoreChannelUpdateEvent -> logger.debug { "Ignoring event: $it" }
                     is TextChannelUpdateEvent -> logger.debug { "Ignoring event: $it" }
                     is TypingStartEvent -> logger.debug { "Ignoring event: $it" }
-                    is UserUpdateEvent -> { /* We have more specific handling for this event below. */ }
+                    is UserUpdateEvent -> { /* We have more specific handling for this event below. */
+                    }
                     is VoiceChannelUpdateEvent -> logger.debug { "Ignoring event: $it" }
                     is VoiceServerUpdateEvent -> logger.debug { "Ignoring event: $it" }
                     is VoiceStateUpdateEvent -> logger.debug { "Ignoring event: $it" }
@@ -604,7 +618,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                     val delta = UserDelta.from(old, user)
 
                     if (delta?.changes?.isEmpty() != true) {
-                        sendEmbed(Channels.ACTION_LOG) {
+                        actionLog {
                             title = "User updated"
 
                             if (delta?.avatar != null) {
@@ -653,20 +667,6 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                     }
                 }
             }
-        }
-    }
-
-    private suspend fun sendEmbed(channel: Channels, body: suspend EmbedBuilder.() -> Unit) {
-        val builder = EmbedBuilder().apply {
-            timestamp = Instant.now()
-
-            body()
-        }
-
-        val webhook = ensureWebhook(channel)
-
-        webhook.execute(webhook.token!!) {
-            embeds += builder.toRequest()
         }
     }
 }

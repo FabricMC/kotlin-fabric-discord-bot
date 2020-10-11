@@ -9,5 +9,6 @@ import com.uchuhimo.konf.ConfigSpec
  */
 object GitHubSpec : ConfigSpec(prefix = "github") {
     val organization by optional("", "GitHub organization")
-    val token by optional("","Token with admin:org scope")
+
+    val token by optional("", "Token with admin:org scope")
 }

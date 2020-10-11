@@ -6,13 +6,7 @@ import com.kotlindiscord.kord.extensions.checks.topRoleHigherOrEqual
 import com.kotlindiscord.kord.extensions.extensions.Extension
 import io.ktor.client.HttpClient
 import io.ktor.client.features.defaultRequest
-import io.ktor.client.request.accept
-import io.ktor.client.request.delete
-import io.ktor.client.request.get
-import io.ktor.client.request.header
-import io.ktor.client.request.host
-import io.ktor.client.request.put
-import io.ktor.client.request.url
+import io.ktor.client.request.*
 import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
@@ -34,7 +28,7 @@ class GitHubExtension(bot: ExtensibleBot) : Extension(bot) {
      * @param user the GitHub username to act on.
      */
     data class BlockArgs(
-        val user: String,
+            val user: String,
     )
 
     override suspend fun setup() {
@@ -43,8 +37,8 @@ class GitHubExtension(bot: ExtensibleBot) : Extension(bot) {
             description = "Commands for working with GitHub."
 
             check(
-                ::defaultCheck,
-                topRoleHigherOrEqual(config.getRole(Roles.MODERATOR))
+                    ::defaultCheck,
+                    topRoleHigherOrEqual(config.getRole(Roles.MODERATOR))
             )
 
             command {
@@ -115,9 +109,9 @@ class GitHubExtension(bot: ExtensibleBot) : Extension(bot) {
 
     private suspend fun isBlocked(user: String): Boolean {
         val resp =
-            client.get<HttpResponse> {
-                url("/orgs/${config.githubOrganization}/blocks/$user".encodeURLPath())
-            }
+                client.get<HttpResponse> {
+                    url("/orgs/${config.githubOrganization}/blocks/$user".encodeURLPath())
+                }
         return when (resp.status) {
             HttpStatusCode.NoContent -> true
             HttpStatusCode.NotFound -> false

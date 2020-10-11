@@ -1,9 +1,7 @@
 package net.fabricmc.bot.extensions
 
-import com.gitlab.kordlib.core.behavior.channel.createEmbed
 import com.gitlab.kordlib.core.behavior.channel.createMessage
 import com.gitlab.kordlib.core.entity.User
-import com.gitlab.kordlib.core.entity.channel.TextChannel
 import com.gitlab.kordlib.rest.builder.message.EmbedBuilder
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import com.kotlindiscord.kord.extensions.Paginator
@@ -13,12 +11,12 @@ import net.fabricmc.bot.conf.config
 import net.fabricmc.bot.constants.Colours
 import net.fabricmc.bot.database.Infraction
 import net.fabricmc.bot.defaultCheck
-import net.fabricmc.bot.enums.Channels
 import net.fabricmc.bot.enums.InfractionTypes
 import net.fabricmc.bot.enums.Roles
 import net.fabricmc.bot.enums.getInfractionType
 import net.fabricmc.bot.extensions.infractions.*
 import net.fabricmc.bot.runSuspended
+import net.fabricmc.bot.utils.modLog
 import java.time.Instant
 
 private const val PAGINATOR_TIMEOUT = 120 * 1000L
@@ -232,7 +230,6 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                     runSuspended {
                         with(parse<InfractionIDCommandArgs>()) {
                             val inf = infQ.getInfraction(id).executeAsOneOrNull()
-                            val modLog = config.getChannel(Channels.MODERATOR_LOG) as TextChannel
 
                             if (inf == null) {
                                 message.channel.createMessage(
@@ -246,10 +243,9 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
 
                             pardonInfraction(inf, inf.target_id, null, true)
 
-                            modLog.createEmbed {
+                            modLog {
                                 title = "Infraction Manually Expired"
                                 color = Colours.BLURPLE
-                                timestamp = Instant.now()
 
                                 description = "<@${inf.target_id}> (`${inf.target_id}`) is no longer " +
                                         "${inf.infraction_type.actionText}.\n\n" +
@@ -290,7 +286,6 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                     runSuspended {
                         with(parse<InfractionIDCommandArgs>()) {
                             val inf = infQ.getInfraction(id).executeAsOneOrNull()
-                            val modLog = config.getChannel(Channels.MODERATOR_LOG) as TextChannel
 
                             if (inf == null) {
                                 message.channel.createMessage(
@@ -316,10 +311,9 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
 
                             applyInfraction(inf, inf.target_id, expires, true)
 
-                            modLog.createEmbed {
+                            modLog {
                                 title = "Infraction Manually Reactivated"
                                 color = Colours.BLURPLE
-                                timestamp = Instant.now()
 
                                 description = "<@${inf.target_id}> (`${inf.target_id}`) is once again " +
                                         "${inf.infraction_type.actionText}.\n\n" +
@@ -360,7 +354,6 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                     runSuspended {
                         with(parse<InfractionReasonCommandArgs>()) {
                             val inf = infQ.getInfraction(id).executeAsOneOrNull()
-                            val modLog = config.getChannel(Channels.MODERATOR_LOG) as TextChannel
 
                             if (inf == null) {
                                 message.channel.createMessage(
@@ -388,12 +381,11 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                                             ">>> $joinedReason"
                             )
 
-                            modLog.createEmbed {
+                            modLog {
                                 title = "Infraction reason updated"
                                 color = Colours.BLURPLE
 
                                 description = "**Reason:** $joinedReason"
-                                timestamp = Instant.now()
 
                                 field {
                                     name = "Moderator"

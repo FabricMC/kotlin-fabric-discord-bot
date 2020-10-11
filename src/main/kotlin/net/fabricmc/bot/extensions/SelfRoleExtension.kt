@@ -53,7 +53,7 @@ class SelfRoleExtension(bot: ExtensibleBot) : Extension(bot) {
                         color = Colours.POSITIVE
                         title = "No longer living the dev life."
                         description =
-                            "You will once again see community channels. Run the command again to toggle back."
+                                "You will once again see community channels. Run the command again to toggle back."
                     }
                 }
 

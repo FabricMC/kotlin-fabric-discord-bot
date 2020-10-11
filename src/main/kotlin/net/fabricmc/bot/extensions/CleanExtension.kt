@@ -2,13 +2,11 @@ package net.fabricmc.bot.extensions
 
 import com.gitlab.kordlib.cache.api.query
 import com.gitlab.kordlib.common.entity.Snowflake
-import com.gitlab.kordlib.core.behavior.channel.createEmbed
 import com.gitlab.kordlib.core.cache.data.MessageData
 import com.gitlab.kordlib.core.entity.Message
 import com.gitlab.kordlib.core.entity.User
 import com.gitlab.kordlib.core.entity.channel.Channel
 import com.gitlab.kordlib.core.entity.channel.GuildMessageChannel
-import com.gitlab.kordlib.core.entity.channel.TextChannel
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import com.kotlindiscord.kord.extensions.checks.topRoleHigherOrEqual
 import com.kotlindiscord.kord.extensions.extensions.Extension
@@ -16,8 +14,8 @@ import mu.KotlinLogging
 import net.fabricmc.bot.*
 import net.fabricmc.bot.conf.config
 import net.fabricmc.bot.constants.Colours
-import net.fabricmc.bot.enums.Channels
 import net.fabricmc.bot.enums.Roles
+import net.fabricmc.bot.utils.modLog
 import java.time.Instant
 
 /** Maximum number of deleted messages allowed without the force flag. **/
@@ -244,14 +242,11 @@ class CleanExtension(bot: ExtensibleBot) : Extension(bot) {
         val author = message.author!!
         val channel = message.channel
 
-        val modLog = config.getChannel(Channels.MODERATOR_LOG) as TextChannel
-
-        modLog.createEmbed {
+        modLog {
             color = Colours.BLURPLE
             title = "Clean command summary"
 
             description = "Clean command executed by ${author.mention} in ${channel.mention}."
-            timestamp = Instant.now()
 
             field {
                 name = "Bot-only"

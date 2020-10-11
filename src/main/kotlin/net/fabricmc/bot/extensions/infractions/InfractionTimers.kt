@@ -1,16 +1,14 @@
 package net.fabricmc.bot.extensions.infractions
 
 import com.gitlab.kordlib.common.entity.Snowflake
-import com.gitlab.kordlib.core.behavior.channel.createEmbed
-import com.gitlab.kordlib.core.entity.channel.TextChannel
 import com.kotlindiscord.kord.extensions.utils.Scheduler
 import net.fabricmc.bot.conf.config
 import net.fabricmc.bot.constants.Colours
 import net.fabricmc.bot.database.Infraction
-import net.fabricmc.bot.enums.Channels
 import net.fabricmc.bot.enums.InfractionTypes
 import net.fabricmc.bot.enums.Roles
 import net.fabricmc.bot.runSuspended
+import net.fabricmc.bot.utils.modLog
 import java.time.Duration
 import java.time.Instant
 import java.util.*
@@ -157,10 +155,9 @@ private fun schedule(delay: Long, infraction: Infraction, manual: Boolean, callb
             )
         }
 
-        val modLog = config.getChannel(Channels.MODERATOR_LOG) as TextChannel
 
         if (!manual) {
-            modLog.createEmbed {
+            modLog {
                 title = "Infraction Expired"
                 color = Colours.BLURPLE
 
@@ -170,8 +167,6 @@ private fun schedule(delay: Long, infraction: Infraction, manual: Boolean, callb
                 footer {
                     text = "ID: ${infraction.id}"
                 }
-
-                timestamp = Instant.now()
             }
         }
 

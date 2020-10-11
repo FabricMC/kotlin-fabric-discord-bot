@@ -22,4 +22,7 @@ object ChannelsSpec : ConfigSpec() {
 
     /** Channels that should be ignored by the logging extension. **/
     val ignoredChannels by required<List<Long>>()
+
+    /** Category used for rotating action logs. **/
+    val actionLogCategory by required<Long>()
 }

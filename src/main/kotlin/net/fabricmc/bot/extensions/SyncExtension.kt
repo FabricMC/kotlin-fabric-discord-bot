@@ -5,7 +5,6 @@ import com.gitlab.kordlib.core.behavior.channel.createEmbed
 import com.gitlab.kordlib.core.entity.Member
 import com.gitlab.kordlib.core.entity.Role
 import com.gitlab.kordlib.core.entity.User
-import com.gitlab.kordlib.core.entity.channel.TextChannel
 import com.gitlab.kordlib.core.event.UserUpdateEvent
 import com.gitlab.kordlib.core.event.gateway.ReadyEvent
 import com.gitlab.kordlib.core.event.guild.MemberJoinEvent
@@ -22,13 +21,13 @@ import kotlinx.coroutines.flow.toList
 import mu.KotlinLogging
 import net.fabricmc.bot.conf.config
 import net.fabricmc.bot.defaultCheck
-import net.fabricmc.bot.enums.Channels
 import net.fabricmc.bot.enums.Roles
 import net.fabricmc.bot.extensions.infractions.applyInfraction
 import net.fabricmc.bot.extensions.infractions.getDelayFromNow
 import net.fabricmc.bot.extensions.infractions.mysqlToInstant
 import net.fabricmc.bot.extensions.infractions.scheduleUndoInfraction
 import net.fabricmc.bot.runSuspended
+import net.fabricmc.bot.utils.actionLog
 import java.time.Instant
 
 private val roles = config.db.roleQueries
@@ -120,33 +119,30 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
         val (allInfractions, expiredInfractions) = infractionSync()
 
         logger.debug { "Initial sync done." }
-        (config.getChannel(Channels.ACTION_LOG) as TextChannel)
-                .createEmbed {
-                    title = "Sync statistics"
+        actionLog {
+            title = "Sync statistics"
 
-                    field {
-                        inline = false
+            field {
+                inline = false
 
-                        name = "Roles"
-                        value = "**Updated:** $rolesUpdated | **Removed:** $rolesRemoved"
-                    }
+                name = "Roles"
+                value = "**Updated:** $rolesUpdated | **Removed:** $rolesRemoved"
+            }
 
-                    field {
-                        inline = false
+            field {
+                inline = false
 
-                        name = "Users"
-                        value = "**Updated:** $usersUpdated | **Absent:** $usersAbsent"
-                    }
+                name = "Users"
+                value = "**Updated:** $usersUpdated | **Absent:** $usersAbsent"
+            }
 
-                    field {
-                        inline = false
+            field {
+                inline = false
 
-                        name = "Infractions"
-                        value = "**All:** $allInfractions | **Expired now:** $expiredInfractions"
-                    }
-
-                    timestamp = Instant.now()
-                }
+                name = "Infractions"
+                value = "**All:** $allInfractions | **Expired now:** $expiredInfractions"
+            }
+        }
     }
 
     private suspend inline fun infractionSync(): Pair<Long, Int> {
