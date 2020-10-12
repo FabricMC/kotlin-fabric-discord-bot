@@ -1,4 +1,5 @@
 [bot]
+emojiGuild = 748444397858717727  # It's actually the modmail server, but I won't tell anyone!
 guild = 507304429255393322
 prefix = "!"
 

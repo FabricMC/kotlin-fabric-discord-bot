@@ -17,7 +17,8 @@ val bot = ExtensibleBot(
         prefix = config.prefix,
         token = config.token,
 
-        guildsToFill = listOf(config.guildSnowflake.value)
+        guildsToFill = listOf(config.guildSnowflake.value),
+        fillPresences = true
 )
 
 /**
@@ -40,6 +41,7 @@ suspend fun main() {
 
     bot.addExtension(ActionLogExtension::class)
     bot.addExtension(CleanExtension::class)
+    bot.addExtension(EmojiExtension::class)
     bot.addExtension(FilterExtension::class)
     bot.addExtension(GitHubExtension::class)
     bot.addExtension(InfractionsExtension::class)
@@ -47,6 +49,7 @@ suspend fun main() {
     bot.addExtension(ModerationExtension::class)
     bot.addExtension(SelfRoleExtension::class)
     bot.addExtension(SyncExtension::class)
+    bot.addExtension(UtilsExtension::class)
     bot.addExtension(VersionCheckExtension::class)
 
     bot.start(

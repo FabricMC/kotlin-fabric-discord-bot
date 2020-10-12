@@ -45,6 +45,7 @@ later sources overriding earlier ones:
 ### Optional Environment Variables 
 
 * BOT_GUILD = The ID of the discord guild this bot should operate on
+* BOT_EMOJI_GUILD = The ID of the discord guild this bot should index emojis from
 * BOT_PREFIX = The prefix required for commands
   
   

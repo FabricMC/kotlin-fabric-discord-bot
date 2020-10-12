@@ -87,11 +87,10 @@ suspend fun inBotChannel(event: Event): Boolean {
  * Check that checks that the user is at least a moderator, or that the event
  * happened in the bot commands channel.
  */
-suspend fun botChannelOrModerator(): suspend (Event) -> Boolean = or(
+suspend fun botChannelOrTraineeModerator(event: Event): Boolean = or(
         ::inBotChannel,
-        hasRole(config.getRole(Roles.MODERATOR)),
-        hasRole(config.getRole(Roles.ADMIN))
-)
+        topRoleHigherOrEqual(config.getRole(Roles.TRAINEE_MODERATOR))
+)(event)
 
 /**
  * Check that ensures an event wasn't fired by a bot. If an event doesn't

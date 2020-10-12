@@ -11,6 +11,9 @@ object BotSpec : ConfigSpec() {
     /** Configured primary guild ID. **/
     val guild by required<Long>(description = "Primary guild ID")
 
+    /** Configured emoji guild ID. **/
+    val emojiGuild by required<Long>(description = "Emoji guild ID")
+
     /** Configured bot login token. **/
     val token by required<String>(description = "Bot login token")
 
