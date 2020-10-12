@@ -67,7 +67,9 @@ fun pardonInfraction(infraction: Infraction, id: Long,
  */
 @Suppress("UnusedPrivateMember")
 suspend fun ban(infraction: Infraction, id: Long, expires: Instant?, manual: Boolean = false) {
-    config.getGuild().ban(Snowflake(id)) { this.reason = infraction.reason }
+    // Upstream issue means we can't safely pass in the ban reason
+//    config.getGuild().ban(Snowflake(id)) { this.reason = infraction.reason }
+    config.getGuild().ban(Snowflake(id)) { this.reason = "Infraction: ${infraction.id}" }
 
     unbanAt(id, infraction, expires ?: return, manual)
 }
