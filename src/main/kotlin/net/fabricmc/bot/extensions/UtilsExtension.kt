@@ -1,5 +1,6 @@
 package net.fabricmc.bot.extensions
 
+import com.gitlab.kordlib.common.entity.GuildFeature
 import com.gitlab.kordlib.common.entity.Snowflake
 import com.gitlab.kordlib.common.entity.Status
 import com.gitlab.kordlib.core.behavior.channel.createEmbed
@@ -237,7 +238,9 @@ class UtilsExtension(bot: ExtensibleBot) : Extension(bot) {
                         inline = false
 
                         value = if (guild.features.isNotEmpty()) {
-                            guild.features.joinToString(", ") { "`${it.value}`" }
+                            guild.features
+                                    .filter { it != GuildFeature.Unknown }
+                                    .joinToString(", ") { "`${it.value}`" }
                         } else {
                             "No features."
                         }
