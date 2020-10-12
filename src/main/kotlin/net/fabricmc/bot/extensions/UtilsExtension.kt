@@ -1,6 +1,7 @@
 package net.fabricmc.bot.extensions
 
 import com.gitlab.kordlib.common.entity.Snowflake
+import com.gitlab.kordlib.common.entity.Status
 import com.gitlab.kordlib.core.behavior.channel.createEmbed
 import com.gitlab.kordlib.core.entity.User
 import com.gitlab.kordlib.core.entity.channel.Category
@@ -165,16 +166,20 @@ class UtilsExtension(bot: ExtensibleBot) : Extension(bot) {
                 val emojiOffline = EmojiExtension.getEmoji(Emojis.STATUS_OFFLINE)
                 val emojiOnline = EmojiExtension.getEmoji(Emojis.STATUS_ONLINE)
 
-                val statuses: MutableMap<String, Long> = mutableMapOf(
-                        emojiAway to 0,
-                        emojiDnd to 0,
-                        emojiOffline to 0,
-                        emojiOnline to 0,
+                val statuses: MutableMap<Status, Long> = mutableMapOf(
+                        Status.Idle to 0,
+                        Status.DnD to 0,
+                        Status.Offline to 0,
+                        Status.Online to 0,
                 )
 
-                members.forEach {
-                    statuses[it.getStatusEmoji()] = statuses[it.getStatusEmoji()]!!.plus(1)
+                val presences = guild.presences.toList()
+
+                presences.toList().forEach {
+                    statuses[it.status] = statuses[it.status]!!.plus(1)
                 }
+
+                val offline = members.size - presences.size + statuses[Status.Offline]!!
 
                 val channels: MutableMap<String, Long> = mutableMapOf(
                         "Category" to 0,
@@ -221,10 +226,10 @@ class UtilsExtension(bot: ExtensibleBot) : Extension(bot) {
 
                         value = "**Total:** ${members.size}\n\n" +
 
-                                "$emojiOnline ${statuses[emojiOnline]}\n" +
-                                "$emojiAway ${statuses[emojiAway]}\n" +
-                                "$emojiDnd ${statuses[emojiDnd]}\n" +
-                                "$emojiOffline ${statuses[emojiOffline]}"
+                                "$emojiOnline ${statuses[Status.Online]}\n" +
+                                "$emojiAway ${statuses[Status.Idle]}\n" +
+                                "$emojiDnd ${statuses[Status.DnD]}\n" +
+                                "$emojiOffline $offline"
                     }
 
                     field {
