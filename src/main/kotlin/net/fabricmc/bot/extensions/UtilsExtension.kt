@@ -14,7 +14,6 @@ import com.kotlindiscord.kord.extensions.ExtensibleBot
 import com.kotlindiscord.kord.extensions.checks.topRoleHigherOrEqual
 import com.kotlindiscord.kord.extensions.extensions.Extension
 import com.kotlindiscord.kord.extensions.getTopRole
-import kotlinx.coroutines.flow.count
 import kotlinx.coroutines.flow.toList
 import net.fabricmc.bot.*
 import net.fabricmc.bot.conf.config
@@ -104,24 +103,38 @@ class UtilsExtension(bot: ExtensibleBot) : Extension(bot) {
 
                         val activeInfractions = infractions.count { it.active }
 
+                        val roles = member.roles.toList()
+
                         message.channel.createEmbed {
                             title = "User info: ${member.tag}"
 
                             color = member.getTopRole()?.color ?: Colours.BLURPLE
 
                             description = "**ID:** `$memberId`\n" +
-                                    "**Status:** ${member.getStatusEmoji()}\n\n" +
+                                    "**Status:** ${member.getStatusEmoji()}\n"
 
+                            if (member.nickname != null) {
+                                description += "**Nickname:** ${member.nickname}\n"
+                            }
+
+                            description += "\n" +
                                     "**Created at:** ${instantToDisplay(member.createdAt)}\n" +
-                                    "**Joined at:** ${instantToDisplay(member.joinedAt)}\n\n" +
+                                    "**Joined at:** ${instantToDisplay(member.joinedAt)}"
 
-                                    "**Infractions:** ${infractions.size} (${activeInfractions} active)\n\n" +
+                            if (infractions.isNotEmpty()) {
+                                description += "\n\n" +
 
-                                    "**Roles:** " +
-                                    member.roles.toList()
-                                            .sortedBy { it.rawPosition }
-                                            .reversed()
-                                            .joinToString(" ") { it.mention }
+                                        "**Infractions:** ${infractions.size} (${activeInfractions} active)"
+                            }
+
+                            if (roles.isNotEmpty()) {
+                                description += "\n\n" +
+
+                                        "**Roles:** " +
+                                        roles.sortedBy { it.rawPosition }
+                                                .reversed()
+                                                .joinToString(" ") { it.mention }
+                            }
 
                             thumbnail { url = member.avatar.url }
                             timestamp = Instant.now()
