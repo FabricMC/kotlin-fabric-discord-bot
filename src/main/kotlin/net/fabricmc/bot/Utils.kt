@@ -3,7 +3,7 @@ package net.fabricmc.bot
 import com.gitlab.kordlib.core.behavior.channel.createWebhook
 import com.gitlab.kordlib.core.cache.data.MessageData
 import com.gitlab.kordlib.core.entity.*
-import com.gitlab.kordlib.core.entity.channel.TextChannel
+import com.gitlab.kordlib.core.entity.channel.GuildMessageChannel
 import com.gitlab.kordlib.core.firstOrNull
 import com.gitlab.kordlib.rest.Image
 import com.gitlab.kordlib.rest.request.RestRequestException
@@ -162,7 +162,7 @@ suspend fun <T> runSuspended(dispatcher: CoroutineDispatcher = Dispatchers.IO, b
  * @param channel Configured channel to ensure a webhook exists for.
  * @return Webhook object for the newly created webhook, or the existing one if it's already there.
  */
-suspend fun ensureWebhook(channel: Channels): Webhook = ensureWebhook(config.getChannel(channel) as TextChannel)
+suspend fun ensureWebhook(channel: Channels): Webhook = ensureWebhook(config.getChannel(channel) as GuildMessageChannel)
 
 
 /**
@@ -170,10 +170,10 @@ suspend fun ensureWebhook(channel: Channels): Webhook = ensureWebhook(config.get
  *
  * This will not create a new webhook if one named "Fabric Bot" already exists.
  *
- * @param channelObj TextChannel object to create the webhook for.
+ * @param channelObj Channel to create the webhook for.
  * @return Webhook object for the newly created webhook, or the existing one if it's already there.
  */
-suspend fun ensureWebhook(channelObj: TextChannel): Webhook {
+suspend fun ensureWebhook(channelObj: GuildMessageChannel): Webhook {
     val webhook = channelObj.webhooks.firstOrNull { it.name == "Fabric Bot" }
 
     if (webhook != null) {

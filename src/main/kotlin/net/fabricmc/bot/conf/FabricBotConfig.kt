@@ -4,7 +4,7 @@ import com.gitlab.kordlib.common.entity.Snowflake
 import com.gitlab.kordlib.core.entity.Guild
 import com.gitlab.kordlib.core.entity.Role
 import com.gitlab.kordlib.core.entity.channel.Channel
-import com.gitlab.kordlib.core.entity.channel.TextChannel
+import com.gitlab.kordlib.core.entity.channel.GuildMessageChannel
 import com.squareup.sqldelight.sqlite.driver.JdbcDriver
 import com.squareup.sqldelight.sqlite.driver.asJdbcDriver
 import com.uchuhimo.konf.Config
@@ -176,14 +176,14 @@ class FabricBotConfig {
     /**
      * Get the list of channels Jira updates should be sent to.
      */
-    suspend fun getJiraUpdateChannels(): List<TextChannel> =
-            config[LiveUpdatesSpec.jiraChannels].map { bot.kord.getChannel(Snowflake(it)) as TextChannel }
+    suspend fun getJiraUpdateChannels(): List<GuildMessageChannel> =
+            config[LiveUpdatesSpec.jiraChannels].map { bot.kord.getChannel(Snowflake(it)) as GuildMessageChannel }
 
     /**
      * Get the list of channels Minecraft updates should be sent to.
      */
-    suspend fun getMinecraftUpdateChannels(): List<TextChannel> =
-            config[LiveUpdatesSpec.minecraftChannels].map { bot.kord.getChannel(Snowflake(it)) as TextChannel }
+    suspend fun getMinecraftUpdateChannels(): List<GuildMessageChannel> =
+            config[LiveUpdatesSpec.minecraftChannels].map { bot.kord.getChannel(Snowflake(it)) as GuildMessageChannel }
 
     /**
      * The name of the GitHub organization.

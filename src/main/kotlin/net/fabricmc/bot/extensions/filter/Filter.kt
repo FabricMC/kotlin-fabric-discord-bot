@@ -2,7 +2,7 @@ package net.fabricmc.bot.extensions.filter
 
 import com.gitlab.kordlib.core.behavior.channel.createMessage
 import com.gitlab.kordlib.core.entity.Message
-import com.gitlab.kordlib.core.entity.channel.TextChannel
+import com.gitlab.kordlib.core.entity.channel.GuildMessageChannel
 import com.gitlab.kordlib.core.event.message.MessageCreateEvent
 import com.gitlab.kordlib.core.event.message.MessageUpdateEvent
 import com.gitlab.kordlib.rest.builder.message.MessageCreateBuilder
@@ -69,7 +69,7 @@ abstract class Filter(val bot: ExtensibleBot) {
     /**
      * Send an alert to the alerts channel.
      *
-     * This function works just like the [TextChannel.createMessage] function.
+     * This function works just like the [GuildMessageChannel.createMessage] function.
      */
     suspend fun sendAlert(mention: Boolean = true, builder: suspend MessageCreateBuilder.() -> Unit): Message =
             alertMessage {

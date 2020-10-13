@@ -3,6 +3,7 @@ package net.fabricmc.bot.extensions
 import com.gitlab.kordlib.core.behavior.channel.edit
 import com.gitlab.kordlib.core.behavior.createTextChannel
 import com.gitlab.kordlib.core.entity.channel.Category
+import com.gitlab.kordlib.core.entity.channel.GuildMessageChannel
 import com.gitlab.kordlib.core.entity.channel.TextChannel
 import com.gitlab.kordlib.core.event.gateway.ReadyEvent
 import com.kotlindiscord.kord.extensions.ExtensibleBot
@@ -47,12 +48,12 @@ data class ActionLogDebugArgs(
 class ActionLogExtension(bot: ExtensibleBot) : Extension(bot) {
     override val name = "action log"
 
-    private var channels = listOf<TextChannel>()
+    private var channels = listOf<GuildMessageChannel>()
     private var checkJob: Job? = null
     private var debugOffset = 0L
 
     /** Current action log channel; the last in the rotation. **/
-    val channel: TextChannel get() = channels.last()
+    val channel: GuildMessageChannel get() = channels.last()
 
     /** Boolean representing whether there's an action log channel to send to yet. **/
     val hasChannel: Boolean get() = channels.isNotEmpty()
@@ -151,10 +152,10 @@ class ActionLogExtension(bot: ExtensibleBot) : Extension(bot) {
         }
 
         var currentChannelExists = false
-        val allChannels = mutableListOf<TextChannel>()
+        val allChannels = mutableListOf<GuildMessageChannel>()
 
         category.channels.toList().forEach {
-            if (it is TextChannel) {
+            if (it is GuildMessageChannel) {
                 logger.debug { "Checking existing channel: ${it.name}" }
 
                 val match = NAME_REGEX.matchEntire(it.name)
@@ -241,7 +242,7 @@ class ActionLogExtension(bot: ExtensibleBot) : Extension(bot) {
             if (curPos != i) {
                 logger.debug { "Updating channel position for ${c.name}: $curPos -> $i" }
 
-                allChannels[i].edit {
+                (allChannels[i] as TextChannel).edit {
                     position = i
                 }
             }
@@ -250,14 +251,14 @@ class ActionLogExtension(bot: ExtensibleBot) : Extension(bot) {
         logger.debug { "Done." }
     }
 
-    private suspend fun logCreation(channel: TextChannel) = modLog {
+    private suspend fun logCreation(channel: GuildMessageChannel) = modLog {
         title = "Action log rotation"
         color = Colours.POSITIVE
 
         description = "Channel created: **#${channel.name} (`${channel.id.longValue}`)**"
     }
 
-    private suspend fun logDeletion(channel: TextChannel) = modLog {
+    private suspend fun logDeletion(channel: GuildMessageChannel) = modLog {
         title = "Action log rotation"
         color = Colours.NEGATIVE
 

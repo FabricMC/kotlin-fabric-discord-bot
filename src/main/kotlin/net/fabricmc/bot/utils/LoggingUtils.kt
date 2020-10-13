@@ -3,7 +3,7 @@ package net.fabricmc.bot.utils
 import com.gitlab.kordlib.core.behavior.channel.createMessage
 import com.gitlab.kordlib.core.behavior.execute
 import com.gitlab.kordlib.core.entity.Message
-import com.gitlab.kordlib.core.entity.channel.TextChannel
+import com.gitlab.kordlib.core.entity.channel.GuildMessageChannel
 import com.gitlab.kordlib.rest.builder.message.EmbedBuilder
 import com.gitlab.kordlib.rest.builder.message.MentionTypes
 import com.gitlab.kordlib.rest.builder.message.MessageCreateBuilder
@@ -85,7 +85,7 @@ suspend fun modLog(body: suspend EmbedBuilder.() -> Unit): Message {
  */
 suspend fun alert(body: suspend EmbedBuilder.() -> Unit): Message {
     val builder = EmbedBuilder()
-    val channel = config.getChannel(Channels.ALERTS) as TextChannel
+    val channel = config.getChannel(Channels.ALERTS) as GuildMessageChannel
 
     body.invoke(builder)
     builder.timestamp = Instant.now()
@@ -108,7 +108,7 @@ suspend fun alert(body: suspend EmbedBuilder.() -> Unit): Message {
  * @param body Lambda for building the embed.
  */
 suspend fun alertMessage(body: suspend MessageCreateBuilder.() -> Unit): Message {
-    val channel = config.getChannel(Channels.ALERTS) as TextChannel
+    val channel = config.getChannel(Channels.ALERTS) as GuildMessageChannel
 
     return channel.createMessage {
         body()
