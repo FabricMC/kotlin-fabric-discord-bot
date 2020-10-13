@@ -22,6 +22,7 @@ import net.fabricmc.bot.defaultCheck
 import net.fabricmc.bot.enums.Roles
 
 private const val UPDATE_CHECK_DELAY = 1000L * 30L  // 30 seconds, consider kotlin.time when it's not experimental
+private const val SETUP_DELAY = 1000L * 10L  // 10 seconds
 
 private var JIRA_URL = "https://bugs.mojang.com/rest/api/latest/project/MC/versions"
 private var MINECRAFT_URL = "https://launchermeta.mojang.com/mc/game/version_manifest.json"
@@ -57,13 +58,16 @@ class VersionCheckExtension(bot: ExtensibleBot) : Extension(bot) {
 
         event<ReadyEvent> {
             action {
+                logger.info { "Delaying setup to ensure everything is cached." }
+                delay(SETUP_DELAY)
+
                 if (config.getMinecraftUpdateChannels().isEmpty() && config.getJiraUpdateChannels().isEmpty()) {
                     logger.warn { "No channels are configured, not enabling version checks." }
 
                     return@action // No point if we don't have anywhere to post.
                 }
 
-                logger.debug { "Fetching initial data." }
+                logger.info { "Fetching initial data." }
 
                 minecraftVersions = getMinecraftVersions()
                 jiraVersions = getJiraVersions()
@@ -79,6 +83,8 @@ class VersionCheckExtension(bot: ExtensibleBot) : Extension(bot) {
                         updateCheck()
                     }
                 }
+
+                logger.info { "Ready to go!" }
             }
         }
 
