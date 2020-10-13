@@ -113,7 +113,7 @@ data class InfractionNickCommandArgs(
         val target: User? = null,
         val targetId: Long? = null,
 
-        val nickname: List<String>
+        val nickname: List<String> = listOf()
 )
 
 /**
@@ -208,7 +208,7 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
 
             aliases = arrayOf("nickname")
 
-            signature = "<user> <nickname>"
+            signature = "<user> [nickname ...]"
 
             check(
                     ::defaultCheck,
@@ -236,12 +236,11 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                         return@action
                     }
 
-                    if (nickname.isEmpty()) {
-                        message.respond("Please provide a nickname to set.")
-                        return@action
+                    val newNick = if (nickname.isEmpty()) {
+                        null
+                    } else {
+                        nickname.joinToString(" ")
                     }
-
-                    val newNick = nickname.joinToString(" ")
 
                     sanctionedNickChanges.put(memberId, newNick)
 
@@ -253,8 +252,13 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                         title = "Nickname set"
                         color = Colours.POSITIVE
 
-                        description = "Nickname for ${member.mention} (${member.tag} / `${member.id.longValue}`) " +
-                                "updated to: $newNick"
+                        description = if (newNick != null) {
+                            "Nickname for ${member.mention} (${member.tag} / " +
+                                    "`${member.id.longValue}`) updated to: $newNick"
+                        } else {
+                            "Nickname for ${member.mention} (${member.tag} / " +
+                                    "`${member.id.longValue}`) removed."
+                        }
 
                         field {
                             name = "Moderator"
@@ -268,7 +272,12 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                             title = "Nickname set"
                             color = Colours.NEGATIVE
 
-                            description = "A moderator has updated your nickname to: $newNick"
+                            description = if (newNick != null) {
+                                "A moderator has updated your nickname to: $newNick"
+                            } else {
+                                "A moderator has removed your nickname."
+                            }
+
                             timestamp = Instant.now()
                         }
                     }
