@@ -54,8 +54,8 @@ dependencies {
     implementation 'com.kotlindiscord.kord.extensions:kord-extensions:1.2-SNAPSHOT'
 
     // Config framework
-    implementation 'com.uchuhimo:konf:0.22.1'
-    implementation 'com.uchuhimo:konf-toml:0.22.1'
+    implementation 'com.uchuhimo:konf:0.23.0'
+    implementation 'com.uchuhimo:konf-toml:0.23.0'
 
     // Logging deps
     implementation 'ch.qos.logback:logback-classic:1.2.3'

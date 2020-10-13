@@ -32,6 +32,6 @@ noSupport = 731277600764198923
 
 devLife = 758836903066992693
 
-[live_updates]
+[liveUpdates]
 minecraftChannels = [ 507304986921664533, 535180192960872458 ]
 jiraChannels = [ 535180192960872458 ]

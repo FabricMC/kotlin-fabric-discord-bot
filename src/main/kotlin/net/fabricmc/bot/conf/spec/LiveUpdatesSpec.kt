@@ -7,7 +7,7 @@ import com.uchuhimo.konf.ConfigSpec
  *
  * This is used by Konf, and will not need to be accessed externally.
  */
-object LiveUpdatesSpec : ConfigSpec(prefix = "live_updates") {
+object LiveUpdatesSpec : ConfigSpec() {
     /* List of channels to send Jira version updates to */
     val jiraChannels by optional<Array<Long>>(emptyArray())
 
