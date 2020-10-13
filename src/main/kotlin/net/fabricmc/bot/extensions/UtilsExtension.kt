@@ -64,7 +64,7 @@ class UtilsExtension(bot: ExtensibleBot) : Extension(bot) {
                         val inBotChannel = inBotChannel(event)
                         val isModerator = topRoleHigherOrEqual(config.getRole(Roles.TRAINEE_MODERATOR))(event)
 
-                        if (inBotChannel && !isModerator) {
+                        if (!inBotChannel && !isModerator) {
                             val botCommands = config.getChannel(Channels.BOT_COMMANDS)
 
                             message.deleteWithDelay(DELETE_DELAY)
@@ -146,7 +146,7 @@ class UtilsExtension(bot: ExtensibleBot) : Extension(bot) {
                 val inBotChannel = inBotChannel(event)
                 val isModerator = topRoleHigherOrEqual(config.getRole(Roles.TRAINEE_MODERATOR))(event)
 
-                if (inBotChannel && !isModerator) {
+                if (!inBotChannel && !isModerator) {
                     val botCommands = config.getChannel(Channels.BOT_COMMANDS)
 
                     message.deleteWithDelay(DELETE_DELAY)
