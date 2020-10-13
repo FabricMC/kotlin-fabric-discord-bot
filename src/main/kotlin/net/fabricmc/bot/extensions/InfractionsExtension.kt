@@ -569,12 +569,16 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
 
                             val pages = infractions.map { infractionToString(it) }.filterNotNull()
 
-                            val paginator = Paginator(
-                                    bot, message.channel, "Infractions",
-                                    pages, author, PAGINATOR_TIMEOUT, true
-                            )
+                            if (pages.isEmpty()) {
+                                message.respond("No matching infractions found.")
+                            } else {
+                                val paginator = Paginator(
+                                        bot, message.channel, "Infractions",
+                                        pages, author, PAGINATOR_TIMEOUT, true
+                                )
 
-                            paginator.send()
+                                paginator.send()
+                            }
                         }
                     }
                 }

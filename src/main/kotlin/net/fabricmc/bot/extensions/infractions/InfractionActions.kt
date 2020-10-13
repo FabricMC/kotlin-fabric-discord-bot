@@ -30,7 +30,7 @@ fun applyInfraction(infraction: Infraction, id: Long,
 //    compiler rewrite.
 
     when (infraction.infraction_type) {
-        InfractionTypes.BAN -> kick(infraction, id, expires, manual)
+        InfractionTypes.BAN -> ban(infraction, id, expires, manual)
         InfractionTypes.KICK -> kick(infraction, id, expires, manual)
         InfractionTypes.META_MUTE -> metaMute(infraction, id, expires, manual)
         InfractionTypes.MUTE -> mute(infraction, id, expires, manual)
@@ -183,7 +183,7 @@ fun nickLock(infraction: Infraction, id: Long, expires: Instant?, manual: Boolea
  */
 @Suppress("UnusedPrivateMember")
 suspend fun kick(infraction: Infraction, id: Long, expires: Instant?, manual: Boolean = false) {
-    config.getGuild().kick(Snowflake(id), infraction.reason)
+    config.getGuild().kick(Snowflake(id), "Infraction: ${infraction.id}")
 }
 
 /**
