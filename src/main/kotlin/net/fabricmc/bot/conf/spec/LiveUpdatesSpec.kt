@@ -9,8 +9,8 @@ import com.uchuhimo.konf.ConfigSpec
  */
 object LiveUpdatesSpec : ConfigSpec() {
     /* List of channels to send Jira version updates to */
-    val jiraChannels by required<Array<Long>>()
+    val jiraChannels by optional<Array<Long>>(emptyArray())
 
     /* List of channels to send Minecraft version updates to */
-    val minecraftChannels by required<Array<Long>>()
+    val minecraftChannels by optional<Array<Long>>(emptyArray())
 }

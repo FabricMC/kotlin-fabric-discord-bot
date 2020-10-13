@@ -42,10 +42,6 @@ later sources overriding earlier ones:
 * DB_USERNAME = Database username to auth with
 * DB_PASSWORD = Database password to auth with
 
-
-* LIVE_UPDATES_MINECRAFT_CHANNELS = A comma separated list of discord channels to send minecraft version updates to
-* LIVE_UPDATES_JIRA_CHANNELS = A comma separated list of discord channels to send JIRA version updates to
-
 ### Optional Environment Variables 
 
 * BOT_GUILD = The ID of the discord guild this bot should operate on
@@ -80,3 +76,7 @@ later sources overriding earlier ones:
   
 
 * ROLES_DEV_LIFE = The ID of the dev life role
+
+
+* LIVE_UPDATES_MINECRAFT_CHANNELS = A comma separated list of discord channels to send minecraft version updates to
+* LIVE_UPDATES_JIRA_CHANNELS = A comma separated list of discord channels to send JIRA version updates to
