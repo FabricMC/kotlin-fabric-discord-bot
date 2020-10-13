@@ -177,13 +177,13 @@ class FabricBotConfig {
      * Get the list of channels Jira updates should be sent to.
      */
     suspend fun getJiraUpdateChannels(): List<TextChannel> =
-            config[LiveUpdatesSpec.jiraChannels].mapNotNull { bot.kord.getChannel(Snowflake(it)) as? TextChannel }
+            config[LiveUpdatesSpec.jiraChannels].map { bot.kord.getChannel(Snowflake(it)) as TextChannel }
 
     /**
      * Get the list of channels Minecraft updates should be sent to.
      */
     suspend fun getMinecraftUpdateChannels(): List<TextChannel> =
-            config[LiveUpdatesSpec.minecraftChannels].mapNotNull { bot.kord.getChannel(Snowflake(it)) as? TextChannel }
+            config[LiveUpdatesSpec.minecraftChannels].map { bot.kord.getChannel(Snowflake(it)) as TextChannel }
 
     /**
      * The name of the GitHub organization.
