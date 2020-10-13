@@ -1,12 +1,20 @@
 package net.fabricmc.bot.extensions
 
+import com.gitlab.kordlib.common.entity.Snowflake
 import com.gitlab.kordlib.core.behavior.channel.createMessage
+import com.gitlab.kordlib.core.behavior.edit
 import com.gitlab.kordlib.core.entity.User
+import com.gitlab.kordlib.core.event.guild.MemberUpdateEvent
 import com.gitlab.kordlib.rest.builder.message.EmbedBuilder
+import com.google.common.collect.HashMultimap
+import com.google.common.collect.Multimap
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import com.kotlindiscord.kord.extensions.Paginator
+import com.kotlindiscord.kord.extensions.checks.inGuild
 import com.kotlindiscord.kord.extensions.checks.topRoleHigherOrEqual
+import com.kotlindiscord.kord.extensions.checks.topRoleLower
 import com.kotlindiscord.kord.extensions.extensions.Extension
+import mu.KotlinLogging
 import net.fabricmc.bot.conf.config
 import net.fabricmc.bot.constants.Colours
 import net.fabricmc.bot.database.Infraction
@@ -16,7 +24,10 @@ import net.fabricmc.bot.enums.Roles
 import net.fabricmc.bot.enums.getInfractionType
 import net.fabricmc.bot.extensions.infractions.*
 import net.fabricmc.bot.runSuspended
+import net.fabricmc.bot.utils.deltas.MemberDelta
+import net.fabricmc.bot.utils.dm
 import net.fabricmc.bot.utils.modLog
+import net.fabricmc.bot.utils.respond
 import java.time.Instant
 
 private const val PAGINATOR_TIMEOUT = 120 * 1000L
@@ -54,9 +65,11 @@ private const val FILTERS = "**__Filters__**\n" +
         "**__Other filters__**\n" +
 
         "**Infraction Type:** `type`, matched against the start of the following types: `banned`, `kicked`, `muted`, " +
-        "`meta-muted`, `reaction-muted`, `requests-muted`, `support-muted`, `warned`, `noted`.\n\n" +
+        "`meta-muted`, `reaction-muted`, `requests-muted`, `support-muted`, `nick-locked`, `warned`, `noted`.\n\n" +
 
         "**Active:** `active`, either `true` or `false`."
+
+private val logger = KotlinLogging.logger {}
 
 /**
  * Arguments for the infraction search command.
@@ -93,12 +106,25 @@ data class InfractionIDCommandArgs(
 )
 
 /**
+ * Arguments for the nickname command.
+ */
+@Suppress("UndocumentedPublicProperty")
+data class InfractionNickCommandArgs(
+        val target: User? = null,
+        val targetId: Long? = null,
+
+        val nickname: List<String>
+)
+
+/**
  * Infractions extension, containing commands used to apply and remove infractions.
  */
 class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
     override val name = "infractions"
     private val infQ = config.db.infractionQueries
     private val userQ = config.db.userQueries
+
+    private val sanctionedNickChanges: Multimap<Long, String> = HashMultimap.create()
 
     @Suppress("UnusedPrivateMember")
     private fun validateSearchArgs(args: InfractionSearchCommandArgs): String? {
@@ -172,6 +198,88 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
     }
 
     override suspend fun setup() {
+        sanctionedNickChanges.clear()
+
+        // region: Utility commands
+
+        command {
+            name = "nick"
+            description = "Change the nickname of a user, even if they're nick-locked."
+
+            aliases = arrayOf("nickname")
+
+            signature = "<user> <nickname>"
+
+            check(
+                    ::defaultCheck,
+                    topRoleHigherOrEqual(config.getRole(Roles.TRAINEE_MODERATOR))
+            )
+
+            action {
+                with(parse<InfractionNickCommandArgs>()) {
+                    if (target != null && targetId != null) {
+                        message.respond("Please specify a user mention or user ID - not both.")
+                        return@action
+                    }
+
+                    val memberId = getMemberId(target, targetId)
+
+                    if (memberId == null) {
+                        message.respond("Please specify a user to change the nick for.")
+                        return@action
+                    }
+
+                    val member = config.getGuild().getMemberOrNull(Snowflake(memberId))
+
+                    if (member == null) {
+                        message.respond("Unable to find that user - are they on the server?")
+                        return@action
+                    }
+
+                    if (nickname.isEmpty()) {
+                        message.respond("Please provide a nickname to set.")
+                        return@action
+                    }
+
+                    val newNick = nickname.joinToString(" ")
+
+                    sanctionedNickChanges.put(memberId, newNick)
+
+                    member.edit {
+                        this.nickname = newNick
+                    }
+
+                    modLog {
+                        title = "Nickname set"
+                        color = Colours.POSITIVE
+
+                        description = "Nickname for ${member.mention} (${member.tag} / `${member.id.longValue}`) " +
+                                "updated to: $newNick"
+
+                        field {
+                            name = "Moderator"
+                            value = "${message.author!!.mention} (${message.author!!.tag} / " +
+                                    "`${message.author!!.id.longValue}`)"
+                        }
+                    }
+
+                    member.dm {
+                        embed {
+                            title = "Nickname set"
+                            color = Colours.NEGATIVE
+
+                            description = "A moderator has updated your nickname to: $newNick"
+                            timestamp = Instant.now()
+                        }
+                    }
+
+                    message.respond("User's nickname has been updated.")
+                }
+            }
+        }
+
+        // endregion
+
         // region: Infraction querying commands
         group {
             name = "infractions"
@@ -254,7 +362,8 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
 
                                 field {
                                     name = "Moderator"
-                                    value = "${message.author!!.mention} (`${message.author!!.id.longValue}`)"
+                                    value = "${message.author!!.mention} (${message.author!!.tag} / " +
+                                            "`${message.author!!.id.longValue}`)"
                                 }
 
                                 footer {
@@ -322,7 +431,8 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
 
                                 field {
                                     name = "Moderator"
-                                    value = "${message.author!!.mention} (`${message.author!!.id.longValue}`)"
+                                    value = "${message.author!!.mention} (${message.author!!.tag} / " +
+                                            "`${message.author!!.id.longValue}`)"
                                 }
 
                                 footer {
@@ -389,7 +499,8 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
 
                                 field {
                                     name = "Moderator"
-                                    value = "${message.author!!.mention} (`${message.author!!.id.longValue}`)"
+                                    value = "${message.author!!.mention} (${message.author!!.tag} / " +
+                                            "`${message.author!!.id.longValue}`)"
                                 }
 
                                 footer {
@@ -481,6 +592,17 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                         "Kick a user from the server.",
                         "kick",
                         arrayOf("k"),
+                        ::applyInfraction
+                )
+        )
+
+        command(
+                InfractionSetCommand(
+                        this,
+                        InfractionTypes.NICK_LOCK,
+                        "Prevent a user from changing their nickname.",
+                        "nick-lock",
+                        arrayOf("nicklock", "nl"),
                         ::applyInfraction
                 )
         )
@@ -584,6 +706,16 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                         ::pardonInfraction
                 )
         )
+        command(
+                InfractionUnsetCommand(
+                        this,
+                        InfractionTypes.NICK_LOCK,
+                        "Pardon all nick-lock infractions for a user.",
+                        "un-nick-lock",
+                        arrayOf("un-nicklock", "unnick-lock", "unnicklock", "unl"),
+                        ::pardonInfraction
+                )
+        )
 
         command(
                 InfractionUnsetCommand(
@@ -658,6 +790,85 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                         ::pardonInfraction
                 )
         )
+        // endregion
+
+        // region: Special event handlers
+
+        event<MemberUpdateEvent> {
+            check(
+                    inGuild(config.getGuild()),
+                    topRoleLower(config.getRole(Roles.TRAINEE_MODERATOR))  // Staff should be immune
+            )
+
+            action {
+                runSuspended {
+                    val oldMember = it.old
+                    val newMember = it.getMember()
+
+                    logger.debug { "Checking out nick change for user: ${newMember.tag} -> ${newMember.nickname}" }
+
+                    val infractions = infQ.getActiveInfractionsByUser(it.memberId.longValue)
+                            .executeAsList()
+                            .filter { it.infraction_type == InfractionTypes.NICK_LOCK }
+
+                    if (infractions.isEmpty()) {
+                        logger.debug { "User isn't nick-locked, not doing anything." }
+
+                        return@runSuspended  // They're not nick-locked.
+                    }
+
+                    val delta = MemberDelta.from(oldMember, newMember)
+
+                    if (delta?.nickname != null) {  // We've got the old one if there's a delta
+                        val oldNick = oldMember!!.nickname
+                        val newNick = newMember.nickname
+                        val memberId = it.memberId.longValue
+
+                        if (newNick in sanctionedNickChanges.get(memberId)) {
+                            logger.debug { "This was a sanctioned nickname change, not reverting." }
+
+                            sanctionedNickChanges.remove(memberId, newNick)
+                            return@runSuspended
+                        }
+
+                        logger.debug { "Reversing nickname change." }
+
+                        sanctionedNickChanges.put(memberId, oldNick)
+
+                        newMember.edit {
+                            nickname = oldNick
+                        }
+
+                        modLog {
+                            title = "Nick-lock enforced"
+                            description = "Prevented nickname change for ${newMember.mention} (${newMember.tag} / " +
+                                    "`${newMember.id.longValue}`)."
+
+                            color = Colours.POSITIVE
+
+                            footer {
+                                text = "Latest matching: ${infractions.last().id}"
+                            }
+                        }
+                    } else {  // If there's no delta, the user wasn't in the cache.
+                        logger.warn { "Can't reverse nickname change for ${newMember.tag}, user not in the cache." }
+
+                        modLog {
+                            title = "Nick-lock enforcement failed"
+                            description = "Failed to enforce nick-lock because user isn't in the cache:" +
+                                    " ${newMember.mention} (${newMember.tag} / `${newMember.id.longValue}`)."
+
+                            color = Colours.NEGATIVE
+
+                            footer {
+                                text = "Latest matching: ${infractions.last().id}"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         // endregion
     }
 

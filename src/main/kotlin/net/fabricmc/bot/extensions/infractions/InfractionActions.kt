@@ -34,6 +34,7 @@ fun applyInfraction(infraction: Infraction, id: Long,
         InfractionTypes.KICK -> kick(infraction, id, expires, manual)
         InfractionTypes.META_MUTE -> metaMute(infraction, id, expires, manual)
         InfractionTypes.MUTE -> mute(infraction, id, expires, manual)
+        InfractionTypes.NICK_LOCK -> nickLock(infraction, id, expires, manual)
         InfractionTypes.NOTE -> doNothing(infraction, id, expires, manual)
         InfractionTypes.REACTION_MUTE -> reactionMute(infraction, id, expires, manual)
         InfractionTypes.REQUESTS_MUTE -> requestsMute(infraction, id, expires, manual)
@@ -156,7 +157,20 @@ suspend fun supportMute(infraction: Infraction, id: Long, expires: Instant?, man
             .getMemberOrNull(Snowflake(id))
             ?.addRole(config.getRoleSnowflake(Roles.NO_SUPPORT))
 
-    unSupportMuteAtAt(id, infraction, expires ?: return, manual)
+    unSupportMuteAt(id, infraction, expires ?: return, manual)
+}
+
+/**
+ * Apply a support-mute infraction on the Discord server.
+ *
+ * @param id The ID of the user this infraction applies to.
+ * @param reason The reason given for this infraction.
+ * @param expires An [Instant] representing when this infraction should expire, if it does. Null otherwise.
+ * @param infraction The [Infraction] object from the database.
+ */
+@Suppress("UnusedPrivateMember")
+fun nickLock(infraction: Infraction, id: Long, expires: Instant?, manual: Boolean = false) {
+    unNickLockAt(id, infraction, expires ?: return, manual)
 }
 
 /**

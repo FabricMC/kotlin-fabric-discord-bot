@@ -198,7 +198,7 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
     }
 
     private suspend inline fun memberJoined(member: Member) {
-        logger.debug { "Member Joined: ${member.username}#${member.discriminator} (${member.id.longValue})" }
+        logger.debug { "Member Joined: ${member.tag} (${member.id.longValue})" }
 
         memberUpdated(member)
 
@@ -213,7 +213,7 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
     }
 
     private suspend inline fun memberUpdated(member: Member) {
-        logger.debug { "Member updated: ${member.username}#${member.discriminator} (${member.id.longValue})" }
+        logger.debug { "Member updated: ${member.tag} (${member.id.longValue})" }
 
         val memberId = member.id.longValue
         val dbUser = users.getUser(memberId).executeAsOneOrNull()
@@ -250,7 +250,7 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
     }
 
     private suspend inline fun userUpdated(user: User) {
-        logger.debug { "User updated: ${user.username}#${user.discriminator} (${user.id.longValue})" }
+        logger.debug { "User updated: ${user.tag} (${user.id.longValue})" }
 
         val member = config.getGuild().getMemberOrNull(user.id)
         val dbUser = users.getUser(user.id.longValue).executeAsOneOrNull()

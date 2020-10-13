@@ -66,7 +66,7 @@ fun instantToMysql(ts: Instant): String =
  */
 fun getMemberId(member: User?, id: Long?) =
         if (member == null && id == null) {
-            Pair(null, "Please specify a user to apply this infraction to.")
+            Pair(null, "Please specify a user argument.")
         } else if (member != null && id != null) {
             Pair(null, "Please specify exactly one user argument, not two.")
         } else {

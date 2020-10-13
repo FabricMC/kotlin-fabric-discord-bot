@@ -264,7 +264,9 @@ class CleanExtension(bot: ExtensibleBot) : Extension(bot) {
                     name = "Channels"
                     inline = true
 
-                    value = args.`in`.joinToString(", ") { "${it.mention} (${it.id.longValue})" }
+                    value = args.`in`.joinToString(", ") {
+                        "${it.mention} (`${it.id.longValue}`)"
+                    }
                 }
             }
 
@@ -320,7 +322,9 @@ class CleanExtension(bot: ExtensibleBot) : Extension(bot) {
                     name = "Users"
                     inline = true
 
-                    value = args.user.joinToString(", ") { "${it.mention} (${it.id.longValue})" }
+                    value = args.user.joinToString(", ") {
+                        "${it.mention} (${it.tag} / ${it.id.longValue})"
+                    }
                 }
             }
         }

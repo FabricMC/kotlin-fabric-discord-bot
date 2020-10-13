@@ -27,6 +27,8 @@ enum class InfractionTypes(
     REQUESTS_MUTE("requests-muted", "requests-mute"),
     SUPPORT_MUTE("support-muted", "support-mute"),
 
+    NICK_LOCK("nick-locked", "nick-lock", requirePresent = true),
+
     WARN("warned", "warn", false),
     NOTE("noted", "note", false, false);
 

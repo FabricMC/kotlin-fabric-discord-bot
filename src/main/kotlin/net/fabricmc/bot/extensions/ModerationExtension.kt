@@ -111,7 +111,7 @@ class ModerationExtension(bot: ExtensibleBot) : Extension(bot) {
 
                         field {
                             name = "Moderator"
-                            value = "${author.mention} (${author.username}#${author.discriminator} / " +
+                            value = "${author.mention} (${author.tag} / " +
                                     "`${author.id.longValue}`)"
                         }
 
@@ -192,7 +192,7 @@ class ModerationExtension(bot: ExtensibleBot) : Extension(bot) {
 
                         field {
                             name = "Moderator"
-                            value = "${author.mention} (${author.username}#${author.discriminator} / " +
+                            value = "${author.mention} (${author.tag} / " +
                                     "`${author.id.longValue}`)"
                         }
 
@@ -275,7 +275,7 @@ class ModerationExtension(bot: ExtensibleBot) : Extension(bot) {
 
                             field {
                                 name = "Moderator"
-                                value = "${author.mention} (${author.username}#${author.discriminator} / " +
+                                value = "${author.mention} (${author.tag} / " +
                                         "`${author.id.longValue}`)"
                             }
 
@@ -297,7 +297,7 @@ class ModerationExtension(bot: ExtensibleBot) : Extension(bot) {
 
                             field {
                                 name = "Moderator"
-                                value = "${author.mention} (${author.username}#${author.discriminator} / " +
+                                value = "${author.mention} (${author.tag} / " +
                                         "`${author.id.longValue}`)"
                             }
 

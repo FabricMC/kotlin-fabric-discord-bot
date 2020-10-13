@@ -176,7 +176,7 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
         var descriptionText = getInfractionMessage(true, infraction, expires)
 
         descriptionText += "\n\n**User ID:** `${infraction.target_id}`"
-        descriptionText += "\n**Moderator:** ${actor.mention} (`${actor.id.longValue}`)"
+        descriptionText += "\n**Moderator:** ${actor.mention} (${actor.tag} / `${actor.id.longValue}`)"
 
         modLog {
             color = Colours.NEGATIVE

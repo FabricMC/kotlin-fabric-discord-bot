@@ -32,7 +32,7 @@ suspend fun scheduleUndoInfraction(id: Long, infraction: Infraction, time: Insta
         InfractionTypes.MUTE -> unMuteAt(id, infraction, time, manual)
         InfractionTypes.REACTION_MUTE -> unReactionMuteAt(id, infraction, time, manual)
         InfractionTypes.REQUESTS_MUTE -> unRequestsMuteAt(id, infraction, time, manual)
-        InfractionTypes.SUPPORT_MUTE -> unSupportMuteAtAt(id, infraction, time, manual)
+        InfractionTypes.SUPPORT_MUTE -> unSupportMuteAt(id, infraction, time, manual)
 
         else -> null  // Do nothing
     }
@@ -112,12 +112,23 @@ suspend fun unRequestsMuteAt(id: Long, infraction: Infraction, time: Instant?, m
  * @param id The ID of the user to unban.
  * @param time The [Instant] representing the time to remove the mute.
  */
-suspend fun unSupportMuteAtAt(id: Long, infraction: Infraction, time: Instant?, manual: Boolean) {
+suspend fun unSupportMuteAt(id: Long, infraction: Infraction, time: Instant?, manual: Boolean) {
     schedule(getDelayFromNow(time), infraction, manual) {
         val member = config.getGuild().getMemberOrNull(Snowflake(id)) ?: return@schedule
 
         member.removeRole(config.getRoleSnowflake(Roles.NO_SUPPORT), "Expiring temporary support mute")
     }
+}
+
+/**
+ * Automatically un-support-mute a user (by ID) at a given [Instant].
+ *
+ * @param id The ID of the user to unban.
+ * @param time The [Instant] representing the time to remove the mute.
+ */
+@Suppress("UnusedPrivateMember")
+fun unNickLockAt(id: Long, infraction: Infraction, time: Instant?, manual: Boolean) {
+    schedule(getDelayFromNow(time), infraction, manual) { }
 }
 
 /**
