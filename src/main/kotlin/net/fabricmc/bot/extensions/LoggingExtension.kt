@@ -17,6 +17,7 @@ import net.fabricmc.bot.*
 import net.fabricmc.bot.conf.config
 import net.fabricmc.bot.constants.Colours
 import net.fabricmc.bot.enums.Channels
+import net.fabricmc.bot.extensions.infractions.instantToDisplay
 import net.fabricmc.bot.utils.actionLog
 import net.fabricmc.bot.utils.deltas.MemberDelta
 import net.fabricmc.bot.utils.deltas.UserDelta
@@ -294,6 +295,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                             }
 
                             field { name = "Channel"; value = it.channel.mention; inline = true }
+                            field { name = "Created"; value = instantToDisplay(it.messageId.timeStamp)!! }
 
                             field { name = "Attachments"; value = message.attachments.size.toString(); inline = true }
                             field { name = "Embeds"; value = message.embeds.size.toString(); inline = true }
@@ -308,6 +310,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                             description = "_Message was not cached, so information about it is unavailable._"
 
                             field { name = "Channel"; value = it.channel.mention }
+                            field { name = "Created"; value = instantToDisplay(it.messageId.timeStamp)!! }
                         }
 
                         footer { text = it.messageId.value }
