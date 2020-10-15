@@ -20,6 +20,7 @@ import net.fabricmc.bot.defaultCheck
 import net.fabricmc.bot.enums.Channels
 import net.fabricmc.bot.enums.Roles
 import net.fabricmc.bot.utils.modLog
+import net.fabricmc.bot.utils.respond
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.time.temporal.ChronoField
@@ -94,8 +95,8 @@ class ActionLogExtension(bot: ExtensibleBot) : Extension(bot) {
             action {
                 populateChannels()
 
-                message.channel.createMessage(
-                        "${message.author!!.mention} Rotation check done. Channels will have been rotated " +
+                message.respond(
+                        "Rotation check done. Channels will have been rotated " +
                                 "if it was appropriate."
                 )
             }
@@ -122,8 +123,8 @@ class ActionLogExtension(bot: ExtensibleBot) : Extension(bot) {
                     with(parse<ActionLogDebugArgs>()) {
                         debugOffset = weeks
 
-                        message.channel.createMessage(
-                                "${message.author!!.mention} Debug offset set to $debugOffset weeks."
+                        message.respond(
+                                "Debug offset set to $debugOffset weeks."
                         )
                     }
                 }

@@ -318,8 +318,8 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                             val embedBuilder = infractionToEmbed(inf)
 
                             if (embedBuilder == null) {
-                                message.channel.createMessage(
-                                        "${message.author!!.mention} No such infraction: `$id`"
+                                message.respond(
+                                        "No such infraction: `$id`"
                                 )
 
                                 return@with
@@ -349,8 +349,8 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                             val inf = infQ.getInfraction(id).executeAsOneOrNull()
 
                             if (inf == null) {
-                                message.channel.createMessage(
-                                        "${message.author!!.mention} No such infraction: `$id`"
+                                message.respond(
+                                        "No such infraction: `$id`"
                                 )
 
                                 return@with
@@ -380,8 +380,8 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                                 }
                             }
 
-                            message.channel.createMessage(
-                                    "${message.author!!.mention} Infraction has been manually expired: `$id`"
+                            message.respond(
+                                    "Infraction has been manually expired: `$id`"
                             )
                         }
                     }
@@ -406,8 +406,8 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                             val inf = infQ.getInfraction(id).executeAsOneOrNull()
 
                             if (inf == null) {
-                                message.channel.createMessage(
-                                        "${message.author!!.mention} No such infraction: `$id`"
+                                message.respond(
+                                        "No such infraction: `$id`"
                                 )
 
                                 return@with
@@ -417,8 +417,8 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                             val delay = getDelayFromNow(expires)
 
                             if (expires != null && delay < 1) {
-                                message.channel.createMessage(
-                                        "${message.author!!.mention} Infraction already expired, " +
+                                message.respond(
+                                        "Infraction already expired, " +
                                                 "not reactivating: `$id`"
                                 )
 
@@ -449,8 +449,8 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                                 }
                             }
 
-                            message.channel.createMessage(
-                                    "${message.author!!.mention} Infraction has been manually reactivated: `$id`"
+                            message.respond(
+                                    "Infraction has been manually reactivated: `$id`"
                             )
                         }
                     }
@@ -475,16 +475,16 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                             val inf = infQ.getInfraction(id).executeAsOneOrNull()
 
                             if (inf == null) {
-                                message.channel.createMessage(
-                                        "${message.author!!.mention} No such infraction: `$id`"
+                                message.respond(
+                                        "No such infraction: `$id`"
                                 )
 
                                 return@with
                             }
 
                             if (reason.isEmpty()) {
-                                message.channel.createMessage(
-                                        "${message.author!!.mention} Reason for infraction `$id` is:\n" +
+                                message.respond(
+                                        "Reason for infraction `$id` is:\n" +
                                                 ">>> ${inf.reason}"
                                 )
 
@@ -495,8 +495,8 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
 
                             infQ.setInfractionReason(joinedReason, id)
 
-                            message.channel.createMessage(
-                                    "${message.author!!.mention} Reason for infraction `$id` updated to:\n" +
+                            message.respond(
+                                    "Reason for infraction `$id` updated to:\n" +
                                             ">>> $joinedReason"
                             )
 

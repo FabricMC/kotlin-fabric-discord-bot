@@ -20,6 +20,7 @@ import net.fabricmc.bot.conf.config
 import net.fabricmc.bot.constants.Colours
 import net.fabricmc.bot.defaultCheck
 import net.fabricmc.bot.enums.Roles
+import net.fabricmc.bot.utils.respond
 
 private const val UPDATE_CHECK_DELAY = 1000L * 30L  // 30 seconds, consider kotlin.time when it's not experimental
 private const val SETUP_DELAY = 1000L * 10L  // 10 seconds
@@ -98,8 +99,8 @@ class VersionCheckExtension(bot: ExtensibleBot) : Extension(bot) {
             )
 
             action {
-                message.channel.createMessage(
-                        "${message.author!!.mention} Manually executing a version check."
+                message.respond(
+                        "Manually executing a version check."
                 )
 
                 logger.debug { "Version check requested by command." }
@@ -161,8 +162,8 @@ class VersionCheckExtension(bot: ExtensibleBot) : Extension(bot) {
                     with(parse<UrlCommand>()) {
                         JIRA_URL = url
 
-                        message.channel.createMessage(
-                                "${message.author!!.mention} JIRA URL updated to `$url`."
+                        message.respond(
+                                "JIRA URL updated to `$url`."
                         )
                     }
                 }
@@ -185,8 +186,8 @@ class VersionCheckExtension(bot: ExtensibleBot) : Extension(bot) {
                     with(parse<UrlCommand>()) {
                         MINECRAFT_URL = url
 
-                        message.channel.createMessage(
-                                "${message.author!!.mention} MC URL updated to `$url`."
+                        message.respond(
+                                "MC URL updated to `$url`."
                         )
                     }
                 }

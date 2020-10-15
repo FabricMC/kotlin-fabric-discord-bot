@@ -16,6 +16,7 @@ import net.fabricmc.bot.conf.config
 import net.fabricmc.bot.constants.Colours
 import net.fabricmc.bot.enums.Roles
 import net.fabricmc.bot.utils.modLog
+import net.fabricmc.bot.utils.respond
 import java.time.Instant
 
 /** Maximum number of deleted messages allowed without the force flag. **/
@@ -226,8 +227,8 @@ class CleanExtension(bot: ExtensibleBot) : Extension(bot) {
                     }
 
                     if (dryRun) {
-                        message.channel.createMessage(
-                                "${message.author!!.mention} **Dry-run:** $removalCount messages would have " +
+                        message.respond(
+                                "**Dry-run:** $removalCount messages would have " +
                                         "been cleaned."
                         )
                     } else {

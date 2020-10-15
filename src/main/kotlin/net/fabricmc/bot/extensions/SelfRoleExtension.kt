@@ -10,6 +10,7 @@ import net.fabricmc.bot.deleteWithDelay
 import net.fabricmc.bot.enums.Channels
 import net.fabricmc.bot.enums.Roles
 import net.fabricmc.bot.hasRole
+import net.fabricmc.bot.utils.respond
 
 private const val DELETE_DELAY = 10_000L  // 10 seconds
 
@@ -28,8 +29,8 @@ class SelfRoleExtension(bot: ExtensibleBot) : Extension(bot) {
                 val botCommands = config.getChannel(Channels.BOT_COMMANDS)
 
                 if (message.channel.id.longValue != botCommands.id.longValue) {
-                    message.channel.createMessage(
-                            "${message.author!!.mention} Please use ${botCommands.mention} for this command."
+                    message.respond(
+                            "Please use ${botCommands.mention} for this command."
                     ).deleteWithDelay(DELETE_DELAY)
 
                     return@action
