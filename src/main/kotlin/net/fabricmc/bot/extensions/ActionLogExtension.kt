@@ -53,6 +53,8 @@ class ActionLogExtension(bot: ExtensibleBot) : Extension(bot) {
     private var checkJob: Job? = null
     private var debugOffset = 0L
 
+    private var currentlyPopulating = false
+
     /** Current action log channel; the last in the rotation. **/
     val channel: GuildMessageChannel get() = channels.last()
 
@@ -93,6 +95,11 @@ class ActionLogExtension(bot: ExtensibleBot) : Extension(bot) {
             )
 
             action {
+                if (currentlyPopulating) {
+                    message.respond("A rotation check is currently running, try again later.")
+                    return@action
+                }
+
                 populateChannels()
 
                 message.respond(
@@ -144,129 +151,134 @@ class ActionLogExtension(bot: ExtensibleBot) : Extension(bot) {
     }
 
     private suspend fun populateChannels() {
-        val category = config.getChannel(Channels.ACTION_LOG_CATEGORY) as Category
+        currentlyPopulating = true
 
-        val now = OffsetDateTime.now(ZoneOffset.UTC)
+        @Suppress("TooGenericExceptionCaught")  // Anything could happen, you know how it is
+        try {
+            val category = config.getChannel(Channels.ACTION_LOG_CATEGORY) as Category
 
-        // TODO: Consider changing date logic via actually calculating the real difference across years
-        // TODO: Also consider that some years have 53 weeks (ugh)
-        // TODO: Also also, enforce only one population job at a time (with exception handling)
+            val now = OffsetDateTime.now(ZoneOffset.UTC)
+            var thisWeek = now.getLong(ChronoField.ALIGNED_WEEK_OF_YEAR)
+            var thisYear = now.getLong(ChronoField.YEAR)
 
-        var thisWeek = now.getLong(ChronoField.ALIGNED_WEEK_OF_YEAR)
-        var thisYear = now.getLong(ChronoField.YEAR)
-        val thisYearWeeks = getTotalWeeks(thisYear.toInt())
+            val thisYearWeeks = getTotalWeeks(thisYear.toInt())
 
-        if (debugOffset > 0) {
-            thisWeek += debugOffset
+            if (debugOffset > 0) {
+                thisWeek += debugOffset
 
-            @Suppress("MagicNumber")
-            if (thisWeek > thisYearWeeks) {
-                thisWeek -= thisYearWeeks
-                thisYear += 1
+                @Suppress("MagicNumber")
+                if (thisWeek > thisYearWeeks) {
+                    thisWeek -= thisYearWeeks
+                    thisYear += 1
+                }
+
+                logger.debug { "Applied debug offset of $debugOffset weeks - it is now week $thisWeek of $thisYear." }
             }
 
-            logger.debug { "Applied debug offset of $debugOffset weeks - it is now week $thisWeek of $thisYear." }
-        }
+            var currentChannelExists = false
+            val allChannels = mutableListOf<GuildMessageChannel>()
 
-        var currentChannelExists = false
-        val allChannels = mutableListOf<GuildMessageChannel>()
+            category.channels.toList().forEach {
+                if (it is GuildMessageChannel) {
+                    logger.debug { "Checking existing channel: ${it.name}" }
 
-        category.channels.toList().forEach {
-            if (it is GuildMessageChannel) {
-                logger.debug { "Checking existing channel: ${it.name}" }
+                    val match = NAME_REGEX.matchEntire(it.name)
 
-                val match = NAME_REGEX.matchEntire(it.name)
+                    if (match != null) {
+                        val year = match.groups[1]!!.value.toLong()
+                        val week = match.groups[2]!!.value.toLong()
+                        val yearWeeks = getTotalWeeks(year.toInt())
 
-                if (match != null) {
-                    val year = match.groups[1]!!.value.toLong()
-                    val week = match.groups[2]!!.value.toLong()
-                    val yearWeeks = getTotalWeeks(year.toInt())
+                        val weekDifference = abs(thisWeek - week)
+                        val yearDifference = abs(thisYear - year)
 
-                    val weekDifference = abs(thisWeek - week)
-                    val yearDifference = abs(thisYear - year)
+                        if (year == thisYear && week == thisWeek) {
+                            logger.debug { "Passing: This is the latest channel." }
 
-                    if (year == thisYear && week == thisWeek) {
-                        logger.debug { "Passing: This is the latest channel." }
+                            currentChannelExists = true
+                            allChannels.add(it)
+                        } else if (year > thisYear) {
+                            // It's in the future, so this isn't valid!
+                            logger.debug { "Deleting: This is next year's channel." }
 
-                        currentChannelExists = true
-                        allChannels.add(it)
-                    } else if (year > thisYear) {
-                        // It's in the future, so this isn't valid!
-                        logger.debug { "Deleting: This is next year's channel." }
+                            it.delete()
+                            logDeletion(it)
+                        } else if (year == thisYear && week > thisWeek) {
+                            // It's in the future, so this isn't valid!
+                            logger.debug { "Deleting: This is a future week's channel." }
 
-                        it.delete()
-                        logDeletion(it)
-                    } else if (year == thisYear && week > thisWeek) {
-                        // It's in the future, so this isn't valid!
-                        logger.debug { "Deleting: This is a future week's channel." }
+                            it.delete()
+                            logDeletion(it)
+                        } else if (yearDifference > 1L || yearDifference != 1L && weekDifference > WEEK_DIFFERENCE) {
+                            // This one is _definitely_ too old.
+                            logger.debug { "Deleting: This is an old channel." }
 
-                        it.delete()
-                        logDeletion(it)
-                    } else if (yearDifference > 1L || yearDifference != 1L && weekDifference > WEEK_DIFFERENCE) {
-                        // This one is _definitely_ too old.
-                        logger.debug { "Deleting: This is an old channel." }
+                            it.delete()
+                            logDeletion(it)
+                        } else if (yearDifference == 1L && yearWeeks - week + thisWeek > WEEK_DIFFERENCE) {
+                            // This is from last year, but more than 5 weeks ago.
+                            logger.debug { "Deleting: This is an old channel from last year." }
 
-                        it.delete()
-                        logDeletion(it)
-                    } else if (yearDifference == 1L && yearWeeks - week + thisWeek > WEEK_DIFFERENCE) {
-                        // This is from last year, but more than 5 weeks ago.
-                        logger.debug { "Deleting: This is an old channel from last year." }
-
-                        it.delete()
-                        logDeletion(it)
-                    } else {
-                        allChannels.add(it)
+                            it.delete()
+                            logDeletion(it)
+                        } else {
+                            allChannels.add(it)
+                        }
                     }
                 }
             }
-        }
 
-        @Suppress("MagicNumber")
-        if (!currentChannelExists) {
-            logger.debug { "Creating this week's channel." }
+            @Suppress("MagicNumber")
+            if (!currentChannelExists) {
+                logger.debug { "Creating this week's channel." }
 
-            val c = config.getGuild().createTextChannel {
-                val yearPadded = thisYear.toString().padStart(4, '0')
-                val weekPadded = thisWeek.toString().padStart(2, '0')
+                val c = config.getGuild().createTextChannel {
+                    val yearPadded = thisYear.toString().padStart(4, '0')
+                    val weekPadded = thisWeek.toString().padStart(2, '0')
 
-                name = "action-log-$yearPadded-$weekPadded"
-                parentId = category.id
+                    name = "action-log-$yearPadded-$weekPadded"
+                    parentId = category.id
+                }
+
+                currentChannelExists = true
+
+                logCreation(c)
+                allChannels.add(c)
             }
 
-            currentChannelExists = true
+            allChannels.sortBy { it.name }
 
-            logCreation(c)
-            allChannels.add(c)
-        }
+            while (allChannels.size > WEEK_DIFFERENCE) {
+                val c = allChannels.removeFirst()
 
-        allChannels.sortBy { it.name }
+                logger.debug { "Deleting extra channel: ${c.name}" }
 
-        while (allChannels.size > WEEK_DIFFERENCE) {
-            val c = allChannels.removeFirst()
+                c.delete()
+                logDeletion(c)
+            }
 
-            logger.debug { "Deleting extra channel: ${c.name}" }
+            channels = allChannels
 
-            c.delete()
-            logDeletion(c)
-        }
+            logger.debug { "Sorting channels." }
 
-        channels = allChannels
+            allChannels.forEachIndexed { i, c ->
+                val curPos = c.rawPosition
 
-        logger.debug { "Sorting channels." }
+                if (curPos != i) {
+                    logger.debug { "Updating channel position for ${c.name}: $curPos -> $i" }
 
-        allChannels.forEachIndexed { i, c ->
-            val curPos = c.rawPosition
-
-            if (curPos != i) {
-                logger.debug { "Updating channel position for ${c.name}: $curPos -> $i" }
-
-                (allChannels[i] as TextChannel).edit {
-                    position = i
+                    (allChannels[i] as TextChannel).edit {
+                        position = i
+                    }
                 }
             }
+
+            logger.debug { "Done." }
+        } catch (t: Throwable) {
+            logger.error(t) { "Error thrown during action log channel rotation." }
         }
 
-        logger.debug { "Done." }
+        currentlyPopulating = false
     }
 
     private suspend fun logCreation(channel: GuildMessageChannel) = modLog {
