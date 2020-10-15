@@ -24,12 +24,12 @@ import net.fabricmc.bot.utils.respond
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.time.temporal.ChronoField
+import java.util.*
 import kotlin.math.abs
 
 private val logger = KotlinLogging.logger {}
 
-private const val WEEK_DIFFERENCE = 5L  // 5 weeks
-private const val YEAR_WEEK_DIFFERENCE = 52L + WEEK_DIFFERENCE  // A year of weeks, plus the difference
+private const val WEEK_DIFFERENCE = 5L  // 5 weeksA year of weeks, plus the difference
 private const val CHECK_DELAY = 1000L * 60L * 30L  // 30 minutes
 
 private val NAME_REGEX = Regex("action-log-(\\d{4})-(\\d{2})")
@@ -132,20 +132,36 @@ class ActionLogExtension(bot: ExtensibleBot) : Extension(bot) {
         }
     }
 
+    @Suppress("MagicNumber")  // It's the days in december, c'mon
+    private fun getTotalWeeks(year: Int): Int {
+        val cal = Calendar.getInstance()
+
+        cal.set(Calendar.YEAR, year)
+        cal.set(Calendar.MONTH, Calendar.DECEMBER)
+        cal.set(Calendar.DAY_OF_MONTH, 31)
+
+        return cal.getActualMaximum(Calendar.WEEK_OF_YEAR)
+    }
+
     private suspend fun populateChannels() {
         val category = config.getChannel(Channels.ACTION_LOG_CATEGORY) as Category
 
         val now = OffsetDateTime.now(ZoneOffset.UTC)
 
+        // TODO: Consider changing date logic via actually calculating the real difference across years
+        // TODO: Also consider that some years have 53 weeks (ugh)
+        // TODO: Also also, enforce only one population job at a time (with exception handling)
+
         var thisWeek = now.getLong(ChronoField.ALIGNED_WEEK_OF_YEAR)
         var thisYear = now.getLong(ChronoField.YEAR)
+        val thisYearWeeks = getTotalWeeks(thisYear.toInt())
 
         if (debugOffset > 0) {
             thisWeek += debugOffset
 
             @Suppress("MagicNumber")
-            if (thisWeek > 52) {
-                thisWeek -= 52
+            if (thisWeek > thisYearWeeks) {
+                thisWeek -= thisYearWeeks
                 thisYear += 1
             }
 
@@ -164,6 +180,7 @@ class ActionLogExtension(bot: ExtensibleBot) : Extension(bot) {
                 if (match != null) {
                     val year = match.groups[1]!!.value.toLong()
                     val week = match.groups[2]!!.value.toLong()
+                    val yearWeeks = getTotalWeeks(year.toInt())
 
                     val weekDifference = abs(thisWeek - week)
                     val yearDifference = abs(thisYear - year)
@@ -191,7 +208,7 @@ class ActionLogExtension(bot: ExtensibleBot) : Extension(bot) {
 
                         it.delete()
                         logDeletion(it)
-                    } else if (yearDifference == 1L && weekDifference > YEAR_WEEK_DIFFERENCE) {
+                    } else if (yearDifference == 1L && yearWeeks - week + thisWeek > WEEK_DIFFERENCE) {
                         // This is from last year, but more than 5 weeks ago.
                         logger.debug { "Deleting: This is an old channel from last year." }
 
