@@ -1,16 +1,15 @@
 package net.fabricmc.bot.extensions.filter
 
-import com.gitlab.kordlib.core.behavior.channel.createMessage
 import com.gitlab.kordlib.core.entity.Message
 import com.gitlab.kordlib.core.entity.channel.GuildMessageChannel
 import com.gitlab.kordlib.core.event.message.MessageCreateEvent
 import com.gitlab.kordlib.core.event.message.MessageUpdateEvent
 import com.gitlab.kordlib.rest.builder.message.MessageCreateBuilder
-import com.gitlab.kordlib.rest.request.RestRequestException
 import com.kotlindiscord.kord.extensions.ExtensibleBot
-import io.ktor.http.HttpStatusCode
 import net.fabricmc.bot.deleteWithDelay
 import net.fabricmc.bot.utils.alertMessage
+import net.fabricmc.bot.utils.dm
+import net.fabricmc.bot.utils.respond
 
 /** How long to wait before removing notification messages in channels - 10 seconds. **/
 const val DELETE_DELAY = 10_000L
@@ -93,21 +92,11 @@ abstract class Filter(val bot: ExtensibleBot) {
     suspend fun sendNotification(eventMessage: Message, reason: String): Message {
         val message = "$reason\n\n$mistakeMessage"
 
-        try {
-            val channel = eventMessage.author!!.getDmChannel()
-
-            return channel.createMessage(message)
-        } catch (e: RestRequestException) {
-            if (e.code == HttpStatusCode.Forbidden.value) {
-                val notificationMessage =
-                        eventMessage.channel.createMessage("${eventMessage.author!!.mention} $message")
-
-                notificationMessage.deleteWithDelay(DELETE_DELAY)
-
-                return notificationMessage
-            }
-
-            throw e
+        var sent = eventMessage.author!!.dm(message)
+        if (sent == null) { // DMs disabled
+            sent = eventMessage.respond(message)
+            sent.deleteWithDelay(DELETE_DELAY)
         }
+        return sent
     }
 }

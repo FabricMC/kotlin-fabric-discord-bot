@@ -6,7 +6,6 @@ import com.gitlab.kordlib.core.behavior.channel.createEmbed
 import com.gitlab.kordlib.core.entity.Message
 import com.gitlab.kordlib.core.entity.User
 import com.gitlab.kordlib.core.event.message.MessageCreateEvent
-import com.gitlab.kordlib.rest.request.RestRequestException
 import com.kotlindiscord.kord.extensions.checks.topRoleHigherOrEqual
 import com.kotlindiscord.kord.extensions.commands.Command
 import com.kotlindiscord.kord.extensions.commands.CommandContext
@@ -20,6 +19,7 @@ import net.fabricmc.bot.defaultCheck
 import net.fabricmc.bot.enums.InfractionTypes
 import net.fabricmc.bot.enums.Roles
 import net.fabricmc.bot.runSuspended
+import net.fabricmc.bot.utils.dm
 import net.fabricmc.bot.utils.modLog
 import java.time.Instant
 import java.util.*
@@ -90,10 +90,10 @@ class InfractionUnsetCommand(extension: Extension, private val type: InfractionT
 
     private suspend fun sendToUser(infraction: Infraction) {
         if (type.relay) {
-            try {
-                val targetObj = bot.kord.getUser(Snowflake(infraction.target_id))
+            val targetObj = bot.kord.getUser(Snowflake(infraction.target_id))
 
-                targetObj?.getDmChannel()?.createEmbed {
+            targetObj?.dm {
+                embed {
                     color = Colours.POSITIVE
                     title = type.actionText.capitalize() + "!"
 
@@ -105,11 +105,8 @@ class InfractionUnsetCommand(extension: Extension, private val type: InfractionT
 
                     timestamp = Instant.now()
                 }
-            } catch (e: RestRequestException) {
-                logger.debug(e) {
-                    "Unable to DM user with ID ${infraction.target_id}, they're probably not in the guild."
-                }
             }
+
         }
     }
 
