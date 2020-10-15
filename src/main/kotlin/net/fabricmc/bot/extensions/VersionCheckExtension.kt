@@ -80,8 +80,12 @@ class VersionCheckExtension(bot: ExtensibleBot) : Extension(bot) {
                         delay(UPDATE_CHECK_DELAY)
 
                         logger.debug { "Running scheduled check." }
-
-                        updateCheck()
+                        @Suppress("TooGenericExceptionCaught")
+                        try {
+                            updateCheck()
+                        } catch (e: Throwable) {
+                            logger.catching(e)
+                        }
                     }
                 }
 
@@ -95,7 +99,7 @@ class VersionCheckExtension(bot: ExtensibleBot) : Extension(bot) {
 
             check(
                     ::defaultCheck,
-                    topRoleHigherOrEqual(config.getRole(Roles.ADMIN))
+                    topRoleHigherOrEqual(config.getRole(Roles.MODERATOR))
             )
 
             action {
