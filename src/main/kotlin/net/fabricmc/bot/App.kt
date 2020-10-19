@@ -30,8 +30,6 @@ suspend fun main() {
 
     logger.info { "Starting Fabric Discord Bot, version ${buildInfo.version}." }
 
-    val environment = System.getenv().getOrDefault("ENVIRONMENT", "production")
-
     Migrator.migrate()
 
     bot.addExtension(ActionLogExtension::class)
