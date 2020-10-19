@@ -34,11 +34,6 @@ suspend fun main() {
 
     Migrator.migrate()
 
-    if (environment != "production") {
-        // Don't really want this loaded in prod for obvious reasons
-        bot.addExtension(EvalExtension::class)
-    }
-
     bot.addExtension(ActionLogExtension::class)
     bot.addExtension(CleanExtension::class)
     bot.addExtension(EmojiExtension::class)

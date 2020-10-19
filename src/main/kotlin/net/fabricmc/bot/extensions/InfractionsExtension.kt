@@ -236,6 +236,8 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                         return@action
                     }
 
+                    val oldNick = member.nickname
+
                     val newNick = if (nickname.isEmpty()) {
                         null
                     } else {
@@ -245,7 +247,7 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                     sanctionedNickChanges.put(memberId, newNick)
 
                     member.edit {
-                        this.nickname = newNick
+                        this.nickname = newNick ?: member.username  // Until Kord figures out this null/missing stuff
                     }
 
                     modLog {
@@ -264,6 +266,13 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                             name = "Moderator"
                             value = "${message.author!!.mention} (${message.author!!.tag} / " +
                                     "`${message.author!!.id.longValue}`)"
+                        }
+
+                        if (oldNick != null) {
+                            field {
+                                name = "Old Nick"
+                                value = oldNick
+                            }
                         }
                     }
 
