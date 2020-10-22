@@ -26,7 +26,6 @@
 \bta+r+d+\b
 \btow?l-?head+s*\b
 \btrann*y\b
-\bsimp(?:ing)?\b
 \b(?:wo)?mansplain(?:ing)?\b
 
 # Regexes that may be present within words
