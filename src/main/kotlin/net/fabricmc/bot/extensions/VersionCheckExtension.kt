@@ -53,12 +53,15 @@ class VersionCheckExtension(bot: ExtensibleBot) : Extension(bot) {
     private var minecraftVersions = listOf<MinecraftVersion>()
     private var jiraVersions = listOf<JiraVersion>()
     private var checkJob: Job? = null
+    private var currentlyChecking = false
 
     override suspend fun setup() {
         val environment = System.getenv().getOrDefault("ENVIRONMENT", "production")
 
         event<ReadyEvent> {
             action {
+                currentlyChecking = true
+
                 logger.info { "Delaying setup to ensure everything is cached." }
                 delay(SETUP_DELAY)
 
@@ -72,6 +75,8 @@ class VersionCheckExtension(bot: ExtensibleBot) : Extension(bot) {
 
                 minecraftVersions = getMinecraftVersions()
                 jiraVersions = getJiraVersions()
+
+                currentlyChecking = false
 
                 logger.debug { "Scheduling check job." }
 
@@ -103,6 +108,14 @@ class VersionCheckExtension(bot: ExtensibleBot) : Extension(bot) {
             )
 
             action {
+                if (currentlyChecking) {
+                    message.respond("A version check is already running - try again later!")
+
+                    return@action
+                }
+
+                currentlyChecking = true
+
                 message.respond(
                         "Manually executing a version check."
                 )
@@ -143,6 +156,8 @@ class VersionCheckExtension(bot: ExtensibleBot) : Extension(bot) {
                                 "```"
                     }
                 }
+
+                currentlyChecking = false
             }
         }
 
@@ -206,6 +221,13 @@ class VersionCheckExtension(bot: ExtensibleBot) : Extension(bot) {
     }
 
     private suspend fun updateCheck() {
+        if (currentlyChecking) {
+            logger.warn { "Looks like multiple checks are running concurrently - skipping check." }
+            return
+        }
+
+        currentlyChecking = true
+
         val mc = checkForMinecraftUpdates()
 
         if (mc != null) {
@@ -233,6 +255,8 @@ class VersionCheckExtension(bot: ExtensibleBot) : Extension(bot) {
                 }
             }
         }
+
+        currentlyChecking = false
     }
 
     private suspend fun checkForMinecraftUpdates(): MinecraftVersion? {
