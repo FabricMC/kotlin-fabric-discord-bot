@@ -18,6 +18,13 @@ ignoredChannels = [
     746875064200462416   # Action Log (System Log)
 ]
 
+[git]
+directory = "./git"
+
+tagsRepoBranch = "main"
+tagsRepoUrl = "https://github.com/FabricMC/community.git"
+tagsRepoPath = "/tags"
+
 [roles]
 admin = 507304850250268672
 mod = 521758400980320278

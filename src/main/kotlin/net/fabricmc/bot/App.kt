@@ -42,6 +42,7 @@ suspend fun main() {
     bot.addExtension(ModerationExtension::class)
     bot.addExtension(SelfRoleExtension::class)
     bot.addExtension(SyncExtension::class)
+    bot.addExtension(TagsExtension::class)
     bot.addExtension(UtilsExtension::class)
     bot.addExtension(VersionCheckExtension::class)
 

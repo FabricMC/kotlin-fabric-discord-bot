@@ -5,6 +5,9 @@ This bot is designed for a specific discord server, so it most likely will not f
 **Note:** If you're testing the bot, make sure you have both privileged intents enabled for the OAuth app.
 [See here](https://discord.com/developers/docs/topics/gateway#privileged-intents) for more information.
 
+If you're using the bot via Docker, note that `GIT_DIRECTORY` will automatically be set to `/git`. You
+will most likely want to mount this directory.
+
 ## Configuration
 
 Note that the bot can be configured using a config file called `config.toml` instead if you prefer. The part
@@ -47,6 +50,14 @@ later sources overriding earlier ones:
 * BOT_GUILD = The ID of the discord guild this bot should operate on
 * BOT_EMOJI_GUILD = The ID of the discord guild this bot should index emojis from
 * BOT_PREFIX = The prefix required for commands
+
+
+* GIT_DIRECTORY = The directory to store cloned Git repositories (for extensions)
+
+
+* GIT_TAGS_REPO_BRANCH = The branch name to checkout for the tags repo
+* GIT_TAGS_REPO_URL = URL to the git repo containing tags
+* GIT_TAGS_REPO_PATH = Root directory (within the repository) containing tags
   
   
 * GITHUB_ORG = The target github organisation for the github commands.
