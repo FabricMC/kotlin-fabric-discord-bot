@@ -2,6 +2,7 @@ package net.fabricmc.bot.extensions
 
 import com.gitlab.kordlib.common.entity.Permission
 import com.gitlab.kordlib.core.behavior.channel.createEmbed
+import com.gitlab.kordlib.core.behavior.channel.edit
 import com.gitlab.kordlib.core.entity.PermissionOverwrite
 import com.gitlab.kordlib.core.entity.channel.*
 import com.kotlindiscord.kord.extensions.ExtensibleBot
@@ -310,6 +311,10 @@ class ModerationExtension(bot: ExtensibleBot) : Extension(bot) {
 
                             description = "Slowmode disabled in ${channel.mention}"
                         }
+                    }
+
+                    channel.edit {
+                        rateLimitPerUser = seconds
                     }
                 }
             }
