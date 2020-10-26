@@ -14,18 +14,16 @@ import io.ktor.http.HttpStatusCode
  * @return The sent message, or `null` if the user has their DMs disabled.
  */
 suspend fun User.dm(builder: MessageCreateBuilder.() -> Unit): Message? {
-    val channel = try {
-        this.getDmChannel()
+    return try {
+        this.getDmChannel().createMessage { builder() }
     } catch (e: RestRequestException) {
         if (e.code == HttpStatusCode.Forbidden.value) {
             // They have DMs disabled
-            return null
+            null
         } else {
             throw e
         }
     }
-
-    return channel.createMessage { builder() }
 }
 
 /**
