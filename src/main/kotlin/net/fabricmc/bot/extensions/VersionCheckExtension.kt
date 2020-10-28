@@ -20,6 +20,7 @@ import net.fabricmc.bot.conf.config
 import net.fabricmc.bot.constants.Colours
 import net.fabricmc.bot.defaultCheck
 import net.fabricmc.bot.enums.Roles
+import net.fabricmc.bot.utils.alert
 import net.fabricmc.bot.utils.respond
 
 private const val UPDATE_CHECK_DELAY = 1000L * 30L  // 30 seconds, consider kotlin.time when it's not experimental
@@ -114,13 +115,13 @@ class VersionCheckExtension(bot: ExtensibleBot) : Extension(bot) {
                     return@action
                 }
 
-                currentlyChecking = true
-
                 message.respond(
                         "Manually executing a version check."
                 )
 
                 logger.debug { "Version check requested by command." }
+
+                currentlyChecking = true
 
                 @Suppress("TooGenericExceptionCaught")
                 try {
@@ -228,31 +229,42 @@ class VersionCheckExtension(bot: ExtensibleBot) : Extension(bot) {
 
         currentlyChecking = true
 
-        val mc = checkForMinecraftUpdates()
+        @Suppress("TooGenericExceptionCaught")
+        try {
+            val mc = checkForMinecraftUpdates()
 
-        if (mc != null) {
-            config.getMinecraftUpdateChannels().forEach {
-                val message = it.createMessage(
-                        "A new Minecraft ${mc.type} is out: ${mc.id}"
-                )
+            if (mc != null) {
+                config.getMinecraftUpdateChannels().forEach {
+                    val message = it.createMessage(
+                            "A new Minecraft ${mc.type} is out: ${mc.id}"
+                    )
 
-                if (it.type == ChannelType.GuildNews) {
-                    message.publish()
+                    if (it.type == ChannelType.GuildNews) {
+                        message.publish()
+                    }
                 }
             }
-        }
 
-        val jira = checkForJiraUpdates()
+            val jira = checkForJiraUpdates()
 
-        if (jira != null) {
-            config.getJiraUpdateChannels().forEach {
-                val message = it.createMessage(
-                        "A new version (${jira.name}) has been added to the Minecraft issue tracker!"
-                )
+            if (jira != null) {
+                config.getJiraUpdateChannels().forEach {
+                    val message = it.createMessage(
+                            "A new version (${jira.name}) has been added to the Minecraft issue tracker!"
+                    )
 
-                if (it.type == ChannelType.GuildNews) {
-                    message.publish()
+                    if (it.type == ChannelType.GuildNews) {
+                        message.publish()
+                    }
                 }
+            }
+        } catch (t: Throwable) {
+            logger.catching(t)
+
+            alert(false) {
+                title = "Version check failed"
+
+                description = t.localizedMessage
             }
         }
 
