@@ -254,7 +254,8 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                         title = "Nickname set"
                         color = Colours.POSITIVE
 
-                        description = if (newNick != null) {
+                        // Until Kord figures out this null/missing stuff
+                        description = if (newNick == member.username) {
                             "Nickname for ${member.mention} (${member.tag} / " +
                                     "`${member.id.longValue}`) updated to: $newNick"
                         } else {
