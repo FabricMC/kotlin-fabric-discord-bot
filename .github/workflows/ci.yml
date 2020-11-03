@@ -34,5 +34,5 @@ jobs:
         uses: actions/upload-artifact@v2
 
         with:
-          name: Production JAR
-          path: Tags/build/libs/Tags-*-SNAPSHOT-all.jar
+          name: Tags JAR
+          path: tags/build/libs/Tags-*-SNAPSHOT-all.jar

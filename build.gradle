@@ -72,7 +72,7 @@ dependencies {
 
     // Tags
     implementation 'org.eclipse.jgit:org.eclipse.jgit:5.9.0.202009080501-r'
-    implementation project(':Tags')
+    implementation project(':tags')
 
     // URL Filtering
     implementation 'org.nibor.autolink:autolink:0.10.0'

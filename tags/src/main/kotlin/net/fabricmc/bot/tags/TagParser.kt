@@ -8,6 +8,8 @@ import java.io.File
 import java.nio.file.Path
 
 private const val SEPARATOR = "\n---\n"
+private const val SUFFIX = ".tag"
+
 private val format = Yaml(configuration = YamlConfiguration(polymorphismStyle = PolymorphismStyle.Property))
 private val logger = KotlinLogging.logger {}
 
@@ -39,7 +41,7 @@ class TagParser(private val rootPath: String) {
         for (file in root.walkBottomUp()) {
             val path = file.withoutPrefix(rootPathNormalised)
 
-            if (path.endsWith(".md")) {
+            if (path.endsWith(SUFFIX)) {
                 val tagName = path.substring(1).substringBeforeLast(".")
 
                 val (tag, error) = loadTag(tagName)
@@ -73,7 +75,7 @@ class TagParser(private val rootPath: String) {
      * @return Pair of Tag object (if it loaded properly) and error string (if it failed to load).
      */
     fun loadTag(name: String): Pair<Tag?, String?> {
-        val file = Path.of(rootPath).resolve("$name.md").toFile()
+        val file = Path.of(rootPath).resolve("$name$SUFFIX").toFile()
 
         logger.debug { "Loading tag: $name" }
 
