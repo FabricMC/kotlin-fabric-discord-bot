@@ -63,7 +63,7 @@ class TagParser(private val rootPath: String) {
         logger.info { "${tags.size} tags loaded." }
 
         logger.debug {
-            tags.map { "${it.key} -> ${it.value}" }.joinToString("\n\n")
+            "All tags:\n" + tags.map { "${it.key} -> ${it.value}" }.joinToString("\n\n")
         }
 
         return errors
@@ -86,13 +86,15 @@ class TagParser(private val rootPath: String) {
 
         val content = file.readText().replace("\r", "")
 
-        if (!content.contains(SEPARATOR)) {
-            logger.error { "Tag '$name' does not contain the section separator, '---'." }
-            return Pair(null, "Tag '$name' does not contain the section separator, '---'.")
-        }
+        var yaml: String = ""
+        var markdown: String? = null
 
-        val yaml = content.substringBefore(SEPARATOR)
-        val markdown = content.substringAfter(SEPARATOR).trim()
+        if (!content.contains(SEPARATOR)) {
+            yaml = content
+        } else {
+            yaml = content.substringBefore(SEPARATOR)
+            markdown = content.substringAfter(SEPARATOR).trim()
+        }
 
         @Suppress("TooGenericExceptionCaught")
         val tagData = try {
@@ -100,6 +102,15 @@ class TagParser(private val rootPath: String) {
         } catch (t: Throwable) {
             logger.error(t) { "Tag '$name' does not contain a valid YAML front matter." }
             return Pair(null, "Tag '$name' does not contain a valid YAML front matter.")
+        }
+
+        if (tagData !is AliasTag && markdown == null) {
+            logger.error { "Tag '$name' requires Markdown content - is it separated with '---'?" }
+            return Pair(null, "Tag '$name' requires Markdown content - is it separated with '---'?")
+        } else if (tagData is AliasTag && markdown != null) {
+            logger.warn {
+                "Tag '$name' is an alias tag, but it contains Markdown content. Please consider removing it."
+            }
         }
 
         val tag = Tag(name.toLowerCase(), tagData, markdown)
