@@ -71,8 +71,8 @@ dependencies {
     implementation 'org.mariadb.jdbc:mariadb-java-client:2.6.+'
 
     // Tags
-    implementation 'com.charleskorn.kaml:kaml:0.23.0'
     implementation 'org.eclipse.jgit:org.eclipse.jgit:5.9.0.202009080501-r'
+    implementation project(':Tags')
 
     // URL Filtering
     implementation 'org.nibor.autolink:autolink:0.10.0'

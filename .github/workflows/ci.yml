@@ -21,11 +21,18 @@ jobs:
           version: 1.15
 
       - name: Gradle (Build)
-        run: sh gradlew build
+        run: sh gradlew Tags:build build
 
       - name: Upload artifact (Production JAR)
         uses: actions/upload-artifact@v2
 
         with:
           name: Production JAR
-          path: build/libs/discord-bot-*-SNAPSHOT.jar
+          path: build/libs/discord-bot-*-SNAPSHOT-all.jar
+
+      - name: Upload artifact (Tags JAR)
+        uses: actions/upload-artifact@v2
+
+        with:
+          name: Production JAR
+          path: Tags/build/libs/Tags-*-SNAPSHOT-all.jar

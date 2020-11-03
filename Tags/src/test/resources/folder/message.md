@@ -1,0 +1,5 @@
+type: message
+
+---
+
+**Markdown content!**
