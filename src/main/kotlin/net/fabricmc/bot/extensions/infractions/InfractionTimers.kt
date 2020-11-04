@@ -2,6 +2,7 @@ package net.fabricmc.bot.extensions.infractions
 
 import com.gitlab.kordlib.common.entity.Snowflake
 import com.kotlindiscord.kord.extensions.utils.Scheduler
+import mu.KotlinLogging
 import net.fabricmc.bot.conf.config
 import net.fabricmc.bot.constants.Colours
 import net.fabricmc.bot.database.Infraction
@@ -17,6 +18,7 @@ private val jobs: MutableMap<UUID, UUID> = mutableMapOf()
 private var scheduler = Scheduler()
 
 private val queries = config.db.infractionQueries
+private val logger = KotlinLogging.logger {}
 
 /**
  * Schedule the end of an infraction.
@@ -157,7 +159,16 @@ private fun schedule(delay: Long, infraction: Infraction, manual: Boolean, callb
     val uuid = UUID.fromString(infraction.id)
 
     jobs[uuid] = scheduler.schedule(delay, null) {
-        callback.invoke(it)
+        @Suppress("TooGenericExceptionCaught")
+        val failure = try {
+            callback.invoke(it)
+
+            null
+        } catch (t: Throwable) {
+            logger.catching(t)
+
+            t.localizedMessage
+        }
 
         runSuspended {
             queries.setInfractionActive(
@@ -174,6 +185,10 @@ private fun schedule(delay: Long, infraction: Infraction, manual: Boolean, callb
 
                 description = "<@${infraction.target_id}> (`${infraction.target_id}`) is no longer " +
                         "${infraction.infraction_type.actionText}."
+
+                if (failure != null) {
+                    description += "\n\n**Failed to undo infraction:** $failure"
+                }
 
                 footer {
                     text = "ID: ${infraction.id}"

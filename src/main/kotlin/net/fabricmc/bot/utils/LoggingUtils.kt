@@ -81,9 +81,10 @@ suspend fun modLog(body: suspend EmbedBuilder.() -> Unit): Message {
  *
  * Embeds will have a timestamp applied automatically.
  *
+ * @param mention Whether to send a @here mention with the embed.
  * @param body Lambda for building the embed.
  */
-suspend fun alert(body: suspend EmbedBuilder.() -> Unit): Message {
+suspend fun alert(mention: Boolean = true, body: suspend EmbedBuilder.() -> Unit): Message {
     val builder = EmbedBuilder()
     val channel = config.getChannel(Channels.ALERTS) as GuildMessageChannel
 
@@ -91,7 +92,10 @@ suspend fun alert(body: suspend EmbedBuilder.() -> Unit): Message {
     builder.timestamp = Instant.now()
 
     return channel.createMessage {
-        content = "@here"
+        if (mention) {
+            content = "@here"
+        }
+
         embed = builder
 
         allowedMentions {

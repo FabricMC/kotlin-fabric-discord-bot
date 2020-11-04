@@ -77,7 +77,11 @@ class ActionLogExtension(bot: ExtensibleBot) : Extension(bot) {
 
                         logger.debug { "Running scheduled channel population." }
 
-                        populateChannels()
+                        if (!currentlyPopulating) {
+                            populateChannels()
+                        } else {
+                            logger.warn { "Channels are currently populating!" }
+                        }
                     }
                 }
             }

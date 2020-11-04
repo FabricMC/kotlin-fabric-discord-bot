@@ -239,7 +239,7 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                     val oldNick = member.nickname
 
                     val newNick = if (nickname.isEmpty()) {
-                        null
+                        member.username  // Until Kord figures out this null/missing stuff
                     } else {
                         nickname.joinToString(" ")
                     }
@@ -247,14 +247,15 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                     sanctionedNickChanges.put(memberId, newNick)
 
                     member.edit {
-                        this.nickname = newNick ?: member.username  // Until Kord figures out this null/missing stuff
+                        this.nickname = newNick
                     }
 
                     modLog {
                         title = "Nickname set"
                         color = Colours.POSITIVE
 
-                        description = if (newNick != null) {
+                        // Until Kord figures out this null/missing stuff
+                        description = if (newNick == member.username) {
                             "Nickname for ${member.mention} (${member.tag} / " +
                                     "`${member.id.longValue}`) updated to: $newNick"
                         } else {
@@ -842,8 +843,8 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                     val delta = MemberDelta.from(oldMember, newMember)
 
                     if (delta?.nickname != null) {  // We've got the old one if there's a delta
-                        val oldNick = oldMember!!.nickname
-                        val newNick = newMember.nickname
+                        val oldNick = oldMember!!.nickname ?: oldMember.username
+                        val newNick = newMember.nickname ?: newMember.username
                         val memberId = it.memberId.longValue
 
                         if (newNick in sanctionedNickChanges.get(memberId)) {
