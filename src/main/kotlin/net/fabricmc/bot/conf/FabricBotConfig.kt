@@ -89,6 +89,11 @@ class FabricBotConfig {
     val prefix: String get() = config[BotSpec.commandPrefix]
 
     /**
+     * The bot's tag prefix.
+     */
+    val tagPrefix: String get() = config[BotSpec.tagPrefix]
+
+    /**
      * The [Snowflake] object representing the bot's configured primary guild.
      */
     val guildSnowflake: Snowflake get() = Snowflake(config[BotSpec.guild])

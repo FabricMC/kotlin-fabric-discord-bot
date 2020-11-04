@@ -8,7 +8,7 @@ import java.io.File
 import java.nio.file.Path
 
 private const val SEPARATOR = "\n---\n"
-private const val SUFFIX = ".tag"
+private const val SUFFIX = ".ytag"
 
 private val format = Yaml(configuration = YamlConfiguration(polymorphismStyle = PolymorphismStyle.Property))
 private val logger = KotlinLogging.logger {}
@@ -62,7 +62,7 @@ class TagParser(private val rootPath: String) {
 
         logger.info { "${tags.size} tags loaded." }
 
-        logger.debug {
+        logger.trace {
             "All tags:\n" + tags.map { "${it.key} -> ${it.value}" }.joinToString("\n\n")
         }
 
@@ -124,6 +124,21 @@ class TagParser(private val rootPath: String) {
      * @return Tag object, if it exists - null otherwise
      */
     fun getTag(name: String) = tags[name.toLowerCase()]
+
+    /**
+     * Get a set of loaded tags from the cache, matching a given name.
+     *
+     * @return List of matching Tag objects
+     */
+    fun getTags(name: String): List<Tag> {
+        val matchingTag = getTag(name)
+
+        if (matchingTag != null) {
+            return listOf(matchingTag)
+        }
+
+        return tags.filter { it.key.endsWith("/$name") }.values.toList().sortedBy { it.name }
+    }
 
     /**
      * Remove a loaded tag from the cache.

@@ -27,29 +27,27 @@ class AliasTag(
  *
  * This tag makes use of Kord's [EmbedData] class.
  *
- * @param attachments Optional list of attachment URLs
  * @param colour Optional embed colour
  * @param embed Embed definition, excluding colour and description
  */
 @Serializable
 @SerialName("embed")
 class EmbedTag(
-        val attachments: List<String> = listOf(),
         val colour: String? = null,
         val embed: EmbedData
 ) : TagData() {
-    override fun toString(): String = "Embed [attachments: ${attachments.size}, color: $colour, embed: $embed]"
+    override fun toString(): String = "Embed [color: $colour, embed: $embed]"
 }
 
 /**
  * Class representing a message tag - a tag containing a standard Discord message.
  *
- * @param attachments Optional list of attachment URLs
+ * @param webhook Whether to send this tag as a webhook.
  */
 @Serializable
-@SerialName("message")
-class MessageTag(
-        val attachments: List<String> = listOf()
-) : TagData() {
-    override fun toString(): String = "Message [attachments: ${attachments.size}]"
+@SerialName("text")
+class TextTag(
+        val webhook: Boolean = true  // Not used right now
+): TagData() {
+    override fun toString(): String = "Text [N/A]"
 }

@@ -1,0 +1,9 @@
+type: embed
+colour: RED
+
+embed:
+    title: "Embed title"
+
+---
+
+**This is `other_folder/embed`.**
