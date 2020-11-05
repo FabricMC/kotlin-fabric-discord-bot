@@ -26,6 +26,12 @@ suspend fun Message.respond(builder: MessageCreateBuilder.() -> Unit): Message {
     return channel.createMessage {
         builder()
 
+        allowedMentions {
+            if (author != null) {
+                users.add(author!!.id)
+            }
+        }
+
         content = "$mention$content"
     }
 }
