@@ -14,4 +14,17 @@ object Colours {
 
     /** @suppress **/
     val POSITIVE = Color.decode("#2ecc71")
+
+    /**
+     * Given a string name, return the corresponding colour.
+     *
+     * @return A Color object, or null if the name doesn't match anything.
+     */
+    fun fromName(name: String) = when(name) {
+        "blurple" -> BLURPLE
+        "negative" -> NEGATIVE
+        "positive" -> POSITIVE
+
+        else -> null
+    }
 }

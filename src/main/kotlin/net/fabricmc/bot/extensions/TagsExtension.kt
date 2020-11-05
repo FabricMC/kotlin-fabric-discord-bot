@@ -11,21 +11,39 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
+import net.fabricmc.bot.TagMissingArgumentException
 import net.fabricmc.bot.conf.config
 import net.fabricmc.bot.constants.Colours
 import net.fabricmc.bot.defaultCheck
+import net.fabricmc.bot.deleteWithDelay
 import net.fabricmc.bot.enums.Channels
+import net.fabricmc.bot.extensions.infractions.instantToDisplay
 import net.fabricmc.bot.runSuspended
 import net.fabricmc.bot.tags.*
 import net.fabricmc.bot.utils.ensureRepo
 import net.fabricmc.bot.utils.respond
 import org.eclipse.jgit.api.MergeResult
 import java.awt.Color
+import java.lang.Integer.max
 import java.nio.file.Path
+import java.time.Instant
 
-private const val MAX_ERRORS = 5
 private val logger = KotlinLogging.logger {}
+
+private const val DELETE_DELAY = 1000L * 15L  // 15 seconds
+private const val MAX_ERRORS = 5
+private val SUB_REGEX = "\\{\\{(?<name>.*?)}}".toRegex()
 private const val UPDATE_CHECK_DELAY = 1000L * 30L  // 30 seconds, consider kotlin.time when it's not experimental
+
+/**
+ * Arguments for commands that just want a tag name.
+ *
+ * @param tagName Name of the tag
+ */
+data class TagArgs(
+        val tagName: String
+)
+
 
 /**
  * Extension in charge of keeping track of and exposing tags.
@@ -129,12 +147,19 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
             check { it.message.content.startsWith(config.tagPrefix) }
 
             action {
-                val tagName = it.message.content.removePrefix(config.tagPrefix).trim()
+                val givenArgs = it.message.content.removePrefix(config.tagPrefix)
+
+                if (givenArgs.isEmpty()) {
+                    return@action
+                }
+
+                val (tagName, args) = parseArgs(givenArgs)
 
                 val tags = parser.getTags(tagName)
 
                 if (tags.isEmpty()) {
-                    it.message.respond("No such tag: $tagName")
+                    it.message.respond("No such tag: `$tagName`").deleteWithDelay(DELETE_DELAY)
+                    it.message.deleteWithDelay(DELETE_DELAY)
                     return@action
                 }
 
@@ -143,8 +168,9 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
                             "Multiple tags have been found with that name. " +
                                     "Please pick one of the following:\n\n" +
 
-                                    tags.joinToString(", ") { "`${it.name}`" }
-                    )
+                                    tags.joinToString(", ") { t -> "`${t.name}`" }
+                    ).deleteWithDelay(DELETE_DELAY)
+                    it.message.deleteWithDelay(DELETE_DELAY)
 
                     return@action
                 }
@@ -157,41 +183,188 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
                     tag = parser.getTag(data.target)
 
                     if (tag == null) {
-                        it.message.respond("No such alias target: $tagName -> ${data.target}")
+                        it.message.respond("No such alias target: `$tagName` -> `${data.target}`")
                         return@action
                     }
                 }
 
-                if (tag.data is TextTag) {
-                    val data = tag.data as TextTag
+                val markdown = try {
+                    substitute(tag.markdown, args)
+                } catch (e: TagMissingArgumentException) {
+                    it.message.respond(e.toString())
+                    return@action
+                }
 
-                    it.message.channel.createMessage(tag.markdown!!)  // If it's a text tag, the markdown is not null
+                if (tag.data is TextTag) {
+                    it.message.channel.createMessage(markdown!!)  // If it's a text tag, the markdown is not null
                 } else if (tag.data is EmbedTag) {
                     val data = tag.data as EmbedTag
 
                     it.message.channel.createEmbed {
                         Embed(data.embed, bot.kord).apply(this)
 
-                        description = tag.markdown ?: data.embed.description
+                        description = markdown ?: data.embed.description
 
                         if (data.colour != null) {
                             val colourString = data.colour!!.toLowerCase()
 
-                            color = if (colourString == "blurple") {
-                                Colours.BLURPLE
-                            } else if (colourString == "positive") {
-                                Colours.POSITIVE
-                            } else if (colourString == "negative") {
-                                Colours.NEGATIVE
-                            } else if (colourString.startsWith("#") || colourString.toIntOrNull() != null) {
-                                Color.decode(colourString)
-                            } else {
-                                null
+                            color = Colours.fromName(colourString) ?: Color.decode(colourString)
+                        }
+                    }
+                }
+            }
+        }
+
+        group {
+            name = "tags"
+            aliases = arrayOf("tag", "tricks", "trick")
+            description = "Commands for querying the loaded tags."
+
+            check(::defaultCheck)
+
+            command {
+                name = "show"
+                aliases = arrayOf("get")
+                description = "Get basic information about a specific tag."
+
+                signature<TagArgs>()
+
+                action {
+                    val parser = this@TagsExtension.parser
+
+                    with(parse<TagArgs>()) {
+                        val tag = parser.getTag(tagName)
+
+                        if (tag == null) {
+                            message.respond("No such tag: `$tagName`").deleteWithDelay(DELETE_DELAY)
+                            message.deleteWithDelay(DELETE_DELAY)
+                            return@action
+                        }
+
+                        val path = "${config.git.tagsRepoPath.removePrefix("/")}/${tag.nonLoweredName}${parser.suffix}"
+                        val log = git.log().addPath(path).setMaxCount(1).call()
+                        val rev = log.firstOrNull()
+
+                        message.channel.createEmbed {
+                            title = "Tag: $tagName"
+                            color = Colours.BLURPLE
+
+                            description = when {
+                                tag.data is AliasTag -> {
+                                    val data = tag.data as AliasTag
+
+                                    "This **alias tag** targets the following tag: `${data.target}`"
+                                }
+                                tag.markdown != null -> "This **${tag.data.type} tag** contains " +
+                                        "**${tag.markdown!!.length} characters** of Markdown in its body."
+
+                                else -> "This **${tag.data.type} tag** contains no Markdown body."
+                            }
+
+                            if (rev != null) {
+                                val author = rev.authorIdent
+
+                                if (author != null) {
+                                    field {
+                                        name = "Last author"
+                                        value = author.name
+
+                                        inline = true
+                                    }
+                                }
+
+                                val committer = rev.committerIdent
+
+                                if (committer != null && committer.name != author.name) {
+                                    field {
+                                        name = "Last committer"
+                                        value = committer.name
+
+                                        inline = true
+                                    }
+                                }
+
+                                val committed = instantToDisplay(Instant.ofEpochSecond(rev.commitTime.toLong()))!!
+
+                                field {
+                                    name = "Last edit"
+                                    value = committed
+
+                                    inline = true
+                                }
+
+                                @Suppress("MagicNumber")
+                                field {
+                                    name = "Current SHA"
+                                    value = "`${rev.name.substring(0, 8)}`"
+
+                                    inline = true
+                                }
                             }
                         }
                     }
                 }
             }
         }
+    }
+
+    /**
+     * Given a string, return the tag name and a list of arguments.
+     *
+     * @param args String of argument to parse.
+     */
+    private fun parseArgs(args: String): Pair<String, List<String>> {
+        val split = args.trim().split("\\s".toRegex())
+
+        val tag = split.first()
+        val arguments = split.drop(1)
+
+        return Pair(tag, arguments)
+    }
+
+    /**
+     * Attempt to parse some markdown and replace substitution strings within it.
+     *
+     * @param markdown Markdown to parse - if null, this function will also return null
+     * @param args List of string arguments to use for substitutions
+     *
+     * @return Markdown, but with substitutions replaced
+     * @throws TagMissingArgumentException Thrown if there aren't enough arguments to fulfil the substitutions.
+     */
+    @Throws(TagMissingArgumentException::class)
+    fun substitute(markdown: String?, args: List<String>): String? {
+        markdown ?: return null
+
+        val matches = SUB_REGEX.findAll(markdown)
+        val substitutions = mutableMapOf<String, String>()
+
+        var totalArgs = 0
+        val providedArgs = args.size
+
+        for (match in matches) {
+            val key = match.groups["name"]!!.value.toIntOrNull()
+
+            if (key == null) {
+                logger.warn { "Invalid substitution, '${match.value}' isn't an integer substitution." }
+            } else {
+                totalArgs = max(totalArgs, key + 1)
+
+                if (key > args.size - 1) {
+                    continue
+                }
+
+                substitutions[match.value] = args[key]
+            }
+        }
+
+        if (providedArgs < totalArgs) {
+            throw TagMissingArgumentException(providedArgs, totalArgs)
+        }
+
+        var result: String = markdown
+
+        substitutions.forEach { (key, value) -> result = result.replace(key, value) }
+
+        return result
     }
 }

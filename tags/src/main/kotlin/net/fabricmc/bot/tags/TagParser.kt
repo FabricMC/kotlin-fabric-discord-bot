@@ -8,7 +8,6 @@ import java.io.File
 import java.nio.file.Path
 
 private const val SEPARATOR = "\n---\n"
-private const val SUFFIX = ".ytag"
 
 private val format = Yaml(configuration = YamlConfiguration(polymorphismStyle = PolymorphismStyle.Property))
 private val logger = KotlinLogging.logger {}
@@ -23,6 +22,9 @@ private val logger = KotlinLogging.logger {}
 class TagParser(private val rootPath: String) {
     /** Mapping of all loaded tags. **/
     val tags: MutableMap<String, Tag> = mutableMapOf()
+
+    /** Suffix for all tag files. **/
+    val suffix = ".ytag"
 
     /**
      * Load all tags up from the root path. Overwrites any already-loaded tags.
@@ -41,7 +43,7 @@ class TagParser(private val rootPath: String) {
         for (file in root.walkBottomUp()) {
             val path = file.withoutPrefix(rootPathNormalised)
 
-            if (path.endsWith(SUFFIX)) {
+            if (path.endsWith(suffix)) {
                 val tagName = path.substring(1).substringBeforeLast(".")
 
                 val (tag, error) = loadTag(tagName)
@@ -75,7 +77,7 @@ class TagParser(private val rootPath: String) {
      * @return Pair of Tag object (if it loaded properly) and error string (if it failed to load).
      */
     fun loadTag(name: String): Pair<Tag?, String?> {
-        val file = Path.of(rootPath).resolve("$name$SUFFIX").toFile()
+        val file = Path.of(rootPath).resolve("$name$suffix").toFile()
 
         logger.debug { "Loading tag: $name" }
 
@@ -113,7 +115,7 @@ class TagParser(private val rootPath: String) {
             }
         }
 
-        val tag = Tag(name.toLowerCase(), tagData, markdown)
+        val tag = Tag(name.toLowerCase(), name, tagData, markdown)
 
         return Pair(tag, null)
     }

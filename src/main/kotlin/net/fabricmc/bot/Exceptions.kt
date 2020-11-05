@@ -26,3 +26,13 @@ class MissingGuildException(id: Long) : MissingObjectException(id) {
 class MissingChannelException(id: Long) : MissingObjectException(id) {
     override fun toString(): String = "Unable to find channel with ID: $id"
 }
+
+/**
+ * Thrown when a tag requiring substitutions hasn't been provided with enough arguments.
+ *
+ * @param current Current number of arguments provided.
+ * @param total Total number of required arguments.
+ */
+class TagMissingArgumentException(val current: Int, val total: Int): FabricBotException() {
+    override fun toString(): String = "This tag requires **$total** argument/s, **$current** provided."
+}
