@@ -22,6 +22,7 @@ import net.fabricmc.bot.extensions.infractions.instantToDisplay
 import net.fabricmc.bot.runSuspended
 import net.fabricmc.bot.tags.*
 import net.fabricmc.bot.utils.ensureRepo
+import net.fabricmc.bot.utils.requireBotChannel
 import net.fabricmc.bot.utils.respond
 import org.eclipse.jgit.api.MergeResult
 import java.awt.Color
@@ -46,6 +47,7 @@ private const val UPDATE_CHECK_DELAY = 1000L * 30L  // 30 seconds, consider kotl
 data class TagArgs(
         val tagName: String
 )
+
 /**
  * Arguments for tag commands that just want a search query.
  *
@@ -243,13 +245,8 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
                 signature<TagArgs>()
 
                 action {
-                    val botCommands = config.getChannel(Channels.BOT_COMMANDS)
-
-                    if (message.channel.id.longValue != botCommands.id.longValue) {
-                        message.respond(
-                                "Please use ${botCommands.mention} for this command."
-                        ).deleteWithDelay(DELETE_DELAY)
-
+                    if (!message.requireBotChannel(DELETE_DELAY)) {
+                        message.deleteWithDelay(DELETE_DELAY)
                         return@action
                     }
 
@@ -340,13 +337,8 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
                 signature<TagSearchArgs>()
 
                 action {
-                    val botCommands = config.getChannel(Channels.BOT_COMMANDS)
-
-                    if (message.channel.id.longValue != botCommands.id.longValue) {
-                        message.respond(
-                                "Please use ${botCommands.mention} for this command."
-                        ).deleteWithDelay(DELETE_DELAY)
-
+                    if (!message.requireBotChannel(DELETE_DELAY)) {
+                        message.deleteWithDelay(DELETE_DELAY)
                         return@action
                     }
 
@@ -476,13 +468,8 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
                 description = "Get a list of all of the available tags."
 
                 action {
-                    val botCommands = config.getChannel(Channels.BOT_COMMANDS)
-
-                    if (message.channel.id.longValue != botCommands.id.longValue) {
-                        message.respond(
-                                "Please use ${botCommands.mention} for this command."
-                        ).deleteWithDelay(DELETE_DELAY)
-
+                    if (!message.requireBotChannel(DELETE_DELAY)) {
+                        message.deleteWithDelay(DELETE_DELAY)
                         return@action
                     }
 
