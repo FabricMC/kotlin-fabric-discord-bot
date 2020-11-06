@@ -22,6 +22,7 @@ ignoredChannels = [
 [git]
 directory = "./git"
 
+tagsFileUrl = "https://github.com/FabricMC/community/blob/{BRANCH}{PATH}/{NAME}.ytag"
 tagsRepoBranch = "main"
 tagsRepoUrl = "https://github.com/FabricMC/community.git"
 tagsRepoPath = "/tags"

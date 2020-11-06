@@ -10,6 +10,7 @@ import com.uchuhimo.konf.ConfigSpec
 object GitSpec : ConfigSpec() {
     val directory by required<String>()
 
+    val tagsFileUrl by required<String>()
     val tagsRepoBranch by required<String>()
     val tagsRepoUrl by required<String>()
     val tagsRepoPath by required<String>()

@@ -264,6 +264,7 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
                             return@action
                         }
 
+                        val url = config.git.tagsFileUrl.replace("{NAME}", tag.nonLoweredName)
                         val path = "${config.git.tagsRepoPath.removePrefix("/")}/${tag.nonLoweredName}${parser.suffix}"
                         val log = git.log().addPath(path).setMaxCount(1).call()
                         val rev = log.firstOrNull()
@@ -283,6 +284,8 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
 
                                 else -> "This **${tag.data.type} tag** contains no Markdown body."
                             }
+
+                            description += "\n\n:link: [Open tag file in browser]($url)"
 
                             if (rev != null) {
                                 val author = rev.authorIdent
