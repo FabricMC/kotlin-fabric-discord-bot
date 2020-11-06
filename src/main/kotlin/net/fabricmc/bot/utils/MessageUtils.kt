@@ -53,12 +53,15 @@ suspend fun Message.respond(builder: MessageCreateBuilder.() -> Unit): Message {
  * @param delay How long (in milliseconds) to wait before deleting the response message
  * @param role Minimum role required to bypass the channel requirement, defaulting to trainee moderator
  * @param allowDm Whether to consider DM channels as an appropriate context
+ * @param deleteOriginal Whether to delete the original message as well as the response, using the same given delay
+ * (true by default)
  * @return true if the message was posted in an appropriate context, false otherwise
  */
 suspend fun Message.requireBotChannel(
         delay: Long = DELETE_DELAY,
         role: Roles = Roles.TRAINEE_MODERATOR,
-        allowDm: Boolean = true): Boolean {
+        allowDm: Boolean = true,
+        deleteOriginal: Boolean = true): Boolean {
     val botCommands = config.getChannel(Channels.BOT_COMMANDS)
     val roleObj = config.getRole(role)
 
@@ -74,6 +77,10 @@ suspend fun Message.requireBotChannel(
     this.respond(
             "Please use ${botCommands.mention} for this command."
     ).deleteWithDelay(delay)
+
+    if (deleteOriginal) {
+        this.deleteWithDelay(delay)
+    }
 
     return false
 }

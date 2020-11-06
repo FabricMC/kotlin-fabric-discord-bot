@@ -246,7 +246,6 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
 
                 action {
                     if (!message.requireBotChannel(DELETE_DELAY)) {
-                        message.deleteWithDelay(DELETE_DELAY)
                         return@action
                     }
 
@@ -338,7 +337,6 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
 
                 action {
                     if (!message.requireBotChannel(DELETE_DELAY)) {
-                        message.deleteWithDelay(DELETE_DELAY)
                         return@action
                     }
 
@@ -469,7 +467,6 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
 
                 action {
                     if (!message.requireBotChannel(DELETE_DELAY)) {
-                        message.deleteWithDelay(DELETE_DELAY)
                         return@action
                     }
 

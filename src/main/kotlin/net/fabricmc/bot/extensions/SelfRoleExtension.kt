@@ -6,7 +6,6 @@ import com.kotlindiscord.kord.extensions.ExtensibleBot
 import com.kotlindiscord.kord.extensions.extensions.Extension
 import net.fabricmc.bot.conf.config
 import net.fabricmc.bot.constants.Colours
-import net.fabricmc.bot.deleteWithDelay
 import net.fabricmc.bot.enums.Roles
 import net.fabricmc.bot.hasRole
 import net.fabricmc.bot.utils.requireBotChannel
@@ -26,7 +25,6 @@ class SelfRoleExtension(bot: ExtensibleBot) : Extension(bot) {
 
             action {
                 if (!message.requireBotChannel(DELETE_DELAY, allowDm = false)) {
-                    message.deleteWithDelay(DELETE_DELAY)
                     return@action
                 }
 

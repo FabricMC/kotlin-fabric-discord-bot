@@ -58,7 +58,6 @@ class UtilsExtension(bot: ExtensibleBot) : Extension(bot) {
                 with(parse<UtilsUserArgs>()) {
                     runSuspended {
                         if (!message.requireBotChannel(DELETE_DELAY)) {
-                            message.deleteWithDelay(DELETE_DELAY)
                             return@runSuspended
                         }
 
@@ -142,7 +141,6 @@ class UtilsExtension(bot: ExtensibleBot) : Extension(bot) {
 
             action {
                 if (!message.requireBotChannel(DELETE_DELAY)) {
-                    message.deleteWithDelay(DELETE_DELAY)
                     return@action
                 }
 
