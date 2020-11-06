@@ -6,6 +6,7 @@ import com.gitlab.kordlib.core.entity.channel.GuildMessageChannel
 import com.gitlab.kordlib.core.event.gateway.ReadyEvent
 import com.gitlab.kordlib.core.event.message.MessageCreateEvent
 import com.kotlindiscord.kord.extensions.ExtensibleBot
+import com.kotlindiscord.kord.extensions.Paginator
 import com.kotlindiscord.kord.extensions.extensions.Extension
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -30,8 +31,10 @@ import java.time.Instant
 
 private val logger = KotlinLogging.logger {}
 
+private const val CHUNK_SIZE = 10
 private const val DELETE_DELAY = 1000L * 15L  // 15 seconds
 private const val MAX_ERRORS = 5
+private const val PAGE_TIMEOUT = 60_000L  // 60 seconds
 private val SUB_REGEX = "\\{\\{(?<name>.*?)}}".toRegex()
 private const val UPDATE_CHECK_DELAY = 1000L * 30L  // 30 seconds, consider kotlin.time when it's not experimental
 
@@ -42,6 +45,14 @@ private const val UPDATE_CHECK_DELAY = 1000L * 30L  // 30 seconds, consider kotl
  */
 data class TagArgs(
         val tagName: String
+)
+/**
+ * Arguments for tag commands that just want a search query.
+ *
+ * @param query Search query
+ */
+data class TagSearchArgs(
+        val query: List<String> = listOf()
 )
 
 
@@ -217,19 +228,31 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
 
         group {
             name = "tags"
-            aliases = arrayOf("tag", "tricks", "trick")
-            description = "Commands for querying the loaded tags."
+            aliases = arrayOf("tag", "tricks", "trick", "t")
+            description = "Commands for querying the loaded tags.\n\n" +
+                    "To get the content of a tag, use `${config.tagPrefix}<tagname>`. Some tags support " +
+                    "substitutions, which can be supplied as further arguments."
 
             check(::defaultCheck)
 
             command {
                 name = "show"
-                aliases = arrayOf("get")
+                aliases = arrayOf("get", "s", "g")
                 description = "Get basic information about a specific tag."
 
                 signature<TagArgs>()
 
                 action {
+                    val botCommands = config.getChannel(Channels.BOT_COMMANDS)
+
+                    if (message.channel.id.longValue != botCommands.id.longValue) {
+                        message.respond(
+                                "Please use ${botCommands.mention} for this command."
+                        ).deleteWithDelay(DELETE_DELAY)
+
+                        return@action
+                    }
+
                     val parser = this@TagsExtension.parser
 
                     with(parse<TagArgs>()) {
@@ -303,6 +326,217 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
                             }
                         }
                     }
+                }
+            }
+
+            command {
+                name = "search"
+                aliases = arrayOf("find", "f", "s")
+                description = "Search through the tag names and content for a piece of text."
+
+                signature<TagSearchArgs>()
+
+                action {
+                    val botCommands = config.getChannel(Channels.BOT_COMMANDS)
+
+                    if (message.channel.id.longValue != botCommands.id.longValue) {
+                        message.respond(
+                                "Please use ${botCommands.mention} for this command."
+                        ).deleteWithDelay(DELETE_DELAY)
+
+                        return@action
+                    }
+
+                    val parser = this@TagsExtension.parser
+
+                    with(parse<TagSearchArgs>()) {
+                        val queryString = query.joinToString(" ")
+
+                        val aliasTargetMatches = mutableSetOf<Pair<String, String>>()
+                        val embedFieldMatches = mutableSetOf<String>()
+                        val nameMatches = mutableSetOf<String>()
+                        val markdownMatches = mutableSetOf<String>()
+
+                        parser.tags.forEach { (name, tag) ->
+                            if (name.contains(queryString)) {
+                                nameMatches.add(name)
+                            }
+
+                            if (tag.markdown?.contains(queryString) == true) {
+                                markdownMatches.add(name)
+                            }
+
+                            if (tag.data is AliasTag) {
+                                val data = tag.data as AliasTag
+
+                                if (data.target.contains(queryString)) {
+                                    aliasTargetMatches.add(Pair(name, data.target))
+                                }
+                            } else if (tag.data is EmbedTag) {
+                                val data = tag.data as EmbedTag
+
+                                for (field in data.embed.fields) {
+                                    if (field.name.contains(queryString)) {
+                                        embedFieldMatches.add(name)
+                                        break
+                                    }
+
+                                    if (field.value.contains(queryString)) {
+                                        embedFieldMatches.add(name)
+                                        break
+                                    }
+                                }
+                            }
+                        }
+
+                        val totalMatches = aliasTargetMatches.size +
+                                embedFieldMatches.size +
+                                nameMatches.size +
+                                markdownMatches.size
+
+                        if (totalMatches < 1) {
+                            message.channel.createEmbed {
+                                title = "Search: No matches"
+                                description = "We tried our best, but we can't find a tag containing your query. " +
+                                        "Please try again with a different query!"
+                            }
+                        } else {
+                            val pages = mutableListOf<String>()
+
+                            if (nameMatches.isNotEmpty()) {
+                                nameMatches.chunked(CHUNK_SIZE).forEach {
+                                    var page = "__**Name matches**__\n\n"
+
+                                    it.forEach { match ->
+                                        page += "**»** `${match}`\n"
+                                    }
+
+                                    pages.add(page)
+                                }
+                            }
+
+                            if (markdownMatches.isNotEmpty()) {
+                                markdownMatches.chunked(CHUNK_SIZE).forEach {
+                                    var page = "__**Markdown content matches**__\n\n"
+
+                                    it.forEach { match ->
+                                        page += "**»** `${match}`\n"
+                                    }
+
+                                    pages.add(page)
+                                }
+                            }
+
+                            if (embedFieldMatches.isNotEmpty()) {
+                                embedFieldMatches.chunked(CHUNK_SIZE).forEach {
+                                    var page = "__**Embed field matches**__\n\n"
+
+                                    it.forEach { match ->
+                                        page += "**»** `${match}`\n"
+                                    }
+
+                                    pages.add(page)
+                                }
+                            }
+
+                            if (aliasTargetMatches.isNotEmpty()) {
+                                aliasTargetMatches.chunked(CHUNK_SIZE).forEach {
+                                    var page = "__**Alias matches**__\n\n"
+
+                                    it.forEach { pair ->
+                                        page += "`${pair.first}` **»** `${pair.second}`\n"
+                                    }
+
+                                    pages.add(page)
+                                }
+                            }
+
+                            val paginator = Paginator(
+                                    bot,
+                                    message.channel,
+                                    "Search: $totalMatches match" + if (totalMatches > 1) "es" else "",
+                                    pages,
+                                    message.author,
+                                    PAGE_TIMEOUT,
+                                    true
+                            )
+
+                            paginator.send()
+                        }
+                    }
+                }
+            }
+
+            command {
+                name = "list"
+                aliases = arrayOf("l")
+                description = "Get a list of all of the available tags."
+
+                action {
+                    val botCommands = config.getChannel(Channels.BOT_COMMANDS)
+
+                    if (message.channel.id.longValue != botCommands.id.longValue) {
+                        message.respond(
+                                "Please use ${botCommands.mention} for this command."
+                        ).deleteWithDelay(DELETE_DELAY)
+
+                        return@action
+                    }
+
+                    val parser = this@TagsExtension.parser
+
+                    val aliases = mutableListOf<Tag>()
+                    val otherTags = mutableListOf<Tag>()
+
+                    parser.tags.values.forEach {
+                        if (it.data is AliasTag) {
+                            aliases.add(it)
+                        } else {
+                            otherTags.add(it)
+                        }
+                    }
+
+                    val pages = mutableListOf<String>()
+
+                    if (otherTags.isNotEmpty()) {
+                        otherTags.sortBy { it.name }
+                        otherTags.chunked(CHUNK_SIZE).forEach {
+                            var page = "**__Tags__ (${otherTags.size})**\n\n"
+
+                            it.forEach { tag ->
+                                page += "**»** `${tag.name}`\n"
+                            }
+
+                            pages.add(page)
+                        }
+                    }
+
+                    if (aliases.isNotEmpty()) {
+                        aliases.sortBy { it.name }
+                        aliases.chunked(CHUNK_SIZE).forEach {
+                            var page = "**__Aliases__ (${aliases.size})**\n\n"
+
+                            it.forEach { alias ->
+                                val data = alias.data as AliasTag
+
+                                page += "`${alias.name}` **»** `${data.target}`\n"
+                            }
+
+                            pages.add(page)
+                        }
+                    }
+
+                    val paginator = Paginator(
+                            bot,
+                            message.channel,
+                            "All tags (${parser.tags.size})",
+                            pages,
+                            message.author,
+                            PAGE_TIMEOUT,
+                            true
+                    )
+
+                    paginator.send()
                 }
             }
         }
