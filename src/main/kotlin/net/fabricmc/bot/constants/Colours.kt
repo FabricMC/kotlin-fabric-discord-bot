@@ -10,6 +10,9 @@ object Colours {
     val BLURPLE = Color.decode("#7289DA")
 
     /** @suppress **/
+    val FABRIC = Color.decode("#DBD0B4")
+
+    /** @suppress **/
     val NEGATIVE = Color.decode("#e74c3c")
 
     /** @suppress **/
@@ -18,10 +21,11 @@ object Colours {
     /**
      * Given a string name, return the corresponding colour.
      *
-     * @return A Color object, or null if the name doesn't match anything.
+     * @return A [Color] object, or null if the name doesn't match anything.
      */
-    fun fromName(name: String) = when(name) {
+    fun fromName(name: String) = when(name.toLowerCase()) {
         "blurple" -> BLURPLE
+        "fabric" -> FABRIC
         "negative" -> NEGATIVE
         "positive" -> POSITIVE
 
