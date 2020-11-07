@@ -89,7 +89,7 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
                             .joinToString("\n\n") { "**${it.first} »** ${it.second}" }
 
                     if (errors.size > MAX_ERRORS) {
-                        description += "\n\n**...plus ${errors.size - MAX_ERRORS} more."
+                        description += "\n\n**...plus ${errors.size - MAX_ERRORS} more.**"
                     }
 
                     description += "\n\n${parser.tags.size} tags loaded successfully."

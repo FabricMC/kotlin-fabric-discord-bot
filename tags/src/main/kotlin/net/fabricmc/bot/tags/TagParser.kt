@@ -73,13 +73,13 @@ class TagParser(private val rootPath: String) {
                 if (target == null) {
                     badAliases.add(entry.key)
 
-                    errors[entry.key] = "Alias ${entry.key} points to a tag that doesn't exist: ${data.target}"
-                    logger.error { "Alias ${entry.key} points to a tag that doesn't exist: ${data.target}" }
+                    errors[entry.key] = "Alias '${entry.key}' points to a tag that doesn't exist: '${data.target}'"
+                    logger.error { "Alias '${entry.key}' points to a tag that doesn't exist: '${data.target}'" }
                 } else if (target.data is AliasTag) {
                     badAliases.add(entry.key)
 
-                    errors[entry.key] = "Alias ${entry.key} points to another alias: ${data.target}"
-                    logger.error { "Alias ${entry.key} points to another alias: ${data.target}" }
+                    errors[entry.key] = "Alias '${entry.key}' points to another alias: '${data.target}'"
+                    logger.error { "Alias '${entry.key}' points to another alias: '${data.target}'" }
                 }
             }
         }
