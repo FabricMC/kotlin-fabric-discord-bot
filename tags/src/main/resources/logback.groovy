@@ -13,7 +13,7 @@ if (environment == "production") {
 
 appender("CONSOLE", ConsoleAppender) {
     encoder(PatternLayoutEncoder) {
-        pattern = "%d{yyyy-MM-dd HH:mm:ss:SSS Z} | %5level | %40.40logger{40} | %msg%n"
+        pattern = "%5level | %msg%n"
     }
 
     target = ConsoleTarget.SystemErr
