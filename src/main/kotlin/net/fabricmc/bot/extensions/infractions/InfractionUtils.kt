@@ -8,7 +8,7 @@ import java.time.format.DateTimeFormatterBuilder
 import java.time.temporal.ChronoField
 import java.util.*
 
-private val timeFormatter = DateTimeFormatter.ofPattern("dd/MM/uuuu 'at' HH:mm '(UTC)'", Locale.ENGLISH)
+private val timeFormatter = DateTimeFormatter.ofPattern("LLL d, uuuu 'at' HH:mm '(UTC)'", Locale.ENGLISH)
 private val mySqlTimeFormatter = DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm:ss", Locale.ENGLISH)
 
 private val mySqlTimeParser = DateTimeFormatterBuilder()

@@ -18,13 +18,13 @@ import kotlinx.coroutines.flow.toList
 import net.fabricmc.bot.*
 import net.fabricmc.bot.conf.config
 import net.fabricmc.bot.constants.Colours
-import net.fabricmc.bot.enums.Channels
 import net.fabricmc.bot.enums.Emojis
 import net.fabricmc.bot.enums.InfractionTypes
 import net.fabricmc.bot.enums.Roles
 import net.fabricmc.bot.extensions.infractions.getMemberId
 import net.fabricmc.bot.extensions.infractions.instantToDisplay
 import net.fabricmc.bot.utils.getStatusEmoji
+import net.fabricmc.bot.utils.requireBotChannel
 import net.fabricmc.bot.utils.respond
 import java.time.Instant
 
@@ -50,31 +50,18 @@ class UtilsExtension(bot: ExtensibleBot) : Extension(bot) {
 
             description = "Retrieve information about yourself (or, if you're staff, another user)."
 
-            check(
-                    ::defaultCheck,
-                    ::botChannelOrTraineeModerator
-            )
+            check(::defaultCheck)
 
             signature = "[user]"
 
             action {
                 with(parse<UtilsUserArgs>()) {
                     runSuspended {
-                        val inBotChannel = inBotChannel(event)
-                        val isModerator = topRoleHigherOrEqual(config.getRole(Roles.TRAINEE_MODERATOR))(event)
-
-                        if (!inBotChannel && !isModerator) {
-                            val botCommands = config.getChannel(Channels.BOT_COMMANDS)
-
-                            message.deleteWithDelay(DELETE_DELAY)
-
-                            message.respond("Please use ${botCommands.mention} for this command.")
-                                    .deleteWithDelay(DELETE_DELAY)
-
+                        if (!message.requireBotChannel(DELETE_DELAY)) {
                             return@runSuspended
                         }
 
-
+                        val isModerator = topRoleHigherOrEqual(config.getRole(Roles.TRAINEE_MODERATOR))(event)
                         var (memberId, memberMessage) = getMemberId(user, userId)
 
                         if (memberId == null) {
@@ -150,23 +137,10 @@ class UtilsExtension(bot: ExtensibleBot) : Extension(bot) {
 
             description = "Retrieve information about the server."
 
-            check(
-                    ::defaultCheck,
-                    ::botChannelOrTraineeModerator
-            )
+            check(::defaultCheck)
 
             action {
-                val inBotChannel = inBotChannel(event)
-                val isModerator = topRoleHigherOrEqual(config.getRole(Roles.TRAINEE_MODERATOR))(event)
-
-                if (!inBotChannel && !isModerator) {
-                    val botCommands = config.getChannel(Channels.BOT_COMMANDS)
-
-                    message.deleteWithDelay(DELETE_DELAY)
-
-                    message.respond("Please use ${botCommands.mention} for this command.")
-                            .deleteWithDelay(DELETE_DELAY)
-
+                if (!message.requireBotChannel(DELETE_DELAY)) {
                     return@action
                 }
 

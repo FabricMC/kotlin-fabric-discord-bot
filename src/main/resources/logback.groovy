@@ -4,8 +4,11 @@ def environment = System.getenv().getOrDefault("ENVIRONMENT", "production")
 
 def defaultLevel = DEBUG
 
-if (environment == "production" || environment == "spam") {
+if (environment == "production") {
     defaultLevel = INFO
+} else if (environment == "spam") {
+    logger("com.gitlab.kordlib.gateway.DefaultGateway", TRACE)
+    logger("net.fabricmc.bot.tags.TagParser", TRACE)
 } else {
     // Silence warning about missing native PRNG
     logger("io.ktor.util.random", ERROR)
@@ -13,10 +16,14 @@ if (environment == "production" || environment == "spam") {
     // Hikari is quite loud in debug mode
     logger("com.zaxxer.hikari.HikariConfig", INFO)
     logger("com.zaxxer.hikari.pool.HikariPool", INFO)
-}
 
-if (environment == "spam") {
-    logger("com.gitlab.kordlib.gateway.DefaultGateway", TRACE)
+    // JGit too
+    logger("org.eclipse.jgit.internal.storage.file.FileSnapshot", INFO)
+    logger("org.eclipse.jgit.internal.storage.file.PackFile", INFO)
+    logger("org.eclipse.jgit.transport.PacketLineIn", INFO)
+    logger("org.eclipse.jgit.transport.PacketLineOut", INFO)
+    logger("org.eclipse.jgit.util.FS", INFO)
+    logger("org.eclipse.jgit.util.SystemReader", INFO)
 }
 
 appender("CONSOLE", ConsoleAppender) {

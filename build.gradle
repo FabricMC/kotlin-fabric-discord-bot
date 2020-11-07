@@ -33,6 +33,11 @@ repositories {
         name = 'KotDis'
         url = 'https://maven.kotlindiscord.com/repository/maven-snapshots/'
     }
+
+    maven {
+        name = 'Eclipse'
+        url = 'https://repo.eclipse.org/content/groups/releases/'
+    }
 }
 
 dependencies {
@@ -65,12 +70,17 @@ dependencies {
     implementation 'com.zaxxer:HikariCP:3.4.5'
     implementation 'org.mariadb.jdbc:mariadb-java-client:2.6.+'
 
+    // Tags
+    implementation 'org.eclipse.jgit:org.eclipse.jgit:5.9.0.202009080501-r'
+    implementation project(':tags')
+
     // URL Filtering
     implementation 'org.nibor.autolink:autolink:0.10.0'
 
     // HTTP (Already used by kord)
     implementation 'io.ktor:ktor-http:1.4.0'
     implementation 'io.ktor:ktor-client-cio:1.4.0'
+//    implementation 'io.ktor:ktor-client-serialization-jvm:1.4.0'
 }
 
 application {

@@ -19,4 +19,7 @@ object BotSpec : ConfigSpec() {
 
     /** Character/s required before command names. **/
     val commandPrefix by required<String>(name = "prefix", description = "Command prefix character")
+
+    /** Character/s required before tag names. **/
+    val tagPrefix by required<String>(name = "tagPrefix", description = "Tag prefix character")
 }

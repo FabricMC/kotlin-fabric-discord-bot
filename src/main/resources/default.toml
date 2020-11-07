@@ -1,7 +1,8 @@
 [bot]
 emojiGuild = 748444397858717727  # It's actually the modmail server, but I won't tell anyone!
 guild = 507304429255393322
-prefix = "!"
+prefix = "?"
+tagPrefix = "??"
 
 [channels]
 actionLogCategory = 764817953463861288
@@ -17,6 +18,14 @@ ignoredChannels = [
     762016277572747275,  # Alerts
     746875064200462416   # Action Log (System Log)
 ]
+
+[git]
+directory = "./git"
+
+tagsFileUrl = "https://github.com/FabricMC/community/blob/{BRANCH}{PATH}/{NAME}.ytag"
+tagsRepoBranch = "main"
+tagsRepoUrl = "https://github.com/FabricMC/community.git"
+tagsRepoPath = "/tags"
 
 [roles]
 admin = 507304850250268672

@@ -17,6 +17,7 @@ import net.fabricmc.bot.MissingGuildException
 import net.fabricmc.bot.MissingRoleException
 import net.fabricmc.bot.bot
 import net.fabricmc.bot.conf.spec.*
+import net.fabricmc.bot.conf.wrappers.GitConfig
 import net.fabricmc.bot.database.FabricBotDB
 import net.fabricmc.bot.database.infractionTypeAdaptor
 import net.fabricmc.bot.enums.Channels
@@ -42,9 +43,10 @@ class FabricBotConfig {
         addSpec(BotSpec)
         addSpec(ChannelsSpec)
         addSpec(DBSpec)
-        addSpec(RolesSpec)
-        addSpec(LiveUpdatesSpec)
         addSpec(GitHubSpec)
+        addSpec(GitSpec)
+        addSpec(LiveUpdatesSpec)
+        addSpec(RolesSpec)
     }
             .from.enabled(Feature.FAIL_ON_UNKNOWN_PATH).toml.resource("default.toml")
             .from.env()
@@ -57,6 +59,9 @@ class FabricBotConfig {
 
     /** SQLDelight Database instance. **/
     val db by lazy { FabricBotDB(dbDriver, infractionTypeAdaptor) }
+
+    /** Git configuration. **/
+    val git by lazy { GitConfig(config) }
 
     init {
         if (File("config.toml").exists()) {
@@ -82,6 +87,11 @@ class FabricBotConfig {
      * The bot's command prefix.
      */
     val prefix: String get() = config[BotSpec.commandPrefix]
+
+    /**
+     * The bot's tag prefix.
+     */
+    val tagPrefix: String get() = config[BotSpec.tagPrefix]
 
     /**
      * The [Snowflake] object representing the bot's configured primary guild.
