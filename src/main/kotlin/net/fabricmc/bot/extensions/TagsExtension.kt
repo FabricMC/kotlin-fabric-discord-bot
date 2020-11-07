@@ -165,7 +165,7 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
             action {
                 val givenArgs = it.message.content.removePrefix(config.tagPrefix)
 
-                if (givenArgs.isEmpty()) {
+                if (givenArgs.isEmpty() || givenArgs.startsWith(' ')) {
                     return@action
                 }
 
