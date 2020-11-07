@@ -234,6 +234,16 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
                     it.message.channel.createEmbed {
                         Embed(data.embed, bot.kord).apply(this)
 
+                        data.embed.fields.forEach {
+                            // They'll fix this, but for now...
+                            field {
+                                inline = it.inline ?: false
+
+                                name = it.name
+                                value = it.value
+                            }
+                        }
+
                         description = markdown ?: data.embed.description
 
                         if (data.colour != null) {
