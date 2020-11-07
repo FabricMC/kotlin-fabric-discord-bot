@@ -1,6 +1,7 @@
 package net.fabricmc.bot.extensions
 
 import com.gitlab.kordlib.core.behavior.channel.createEmbed
+import com.gitlab.kordlib.core.behavior.channel.createMessage
 import com.gitlab.kordlib.core.entity.Embed
 import com.gitlab.kordlib.core.entity.channel.GuildMessageChannel
 import com.gitlab.kordlib.core.event.gateway.ReadyEvent
@@ -209,7 +210,11 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
                 }
 
                 if (tag.data is TextTag) {
-                    it.message.channel.createMessage(markdown!!)  // If it's a text tag, the markdown is not null
+                    it.message.channel.createMessage {
+                        content = markdown!!  // If it's a text tag, the markdown is not null
+
+                        allowedMentions { }  // Nope
+                    }
                 } else if (tag.data is EmbedTag) {
                     val data = tag.data as EmbedTag
 
