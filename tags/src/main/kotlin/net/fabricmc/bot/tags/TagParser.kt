@@ -7,6 +7,7 @@ import mu.KotlinLogging
 import java.io.File
 import java.nio.file.Path
 
+private val CAPS = "[A-Z]".toRegex()
 private const val SEPARATOR = "\n---\n"
 
 private val format = Yaml(configuration = YamlConfiguration(polymorphismStyle = PolymorphismStyle.Property))
@@ -55,7 +56,7 @@ class TagParser(private val rootPath: String) {
                         logger.debug { "Tag loaded: $tagName" }
                     }
 
-                    tags[tagName.toLowerCase()] = tag!!
+                    tags[tag!!.name] = tag
                 } else {
                     errors[tagName] = error
                 }
@@ -67,13 +68,14 @@ class TagParser(private val rootPath: String) {
         for (entry in tags) {
             if (entry.value.data is AliasTag) {
                 val data = entry.value.data as AliasTag
+                val target = getTag(data.target)
 
-                if (tags[data.target] == null) {
+                if (target == null) {
                     badAliases.add(entry.key)
 
                     errors[entry.key] = "Alias ${entry.key} points to a tag that doesn't exist: ${data.target}"
                     logger.error { "Alias ${entry.key} points to a tag that doesn't exist: ${data.target}" }
-                } else if (tags[data.target]!!.data is AliasTag) {
+                } else if (target.data is AliasTag) {
                     badAliases.add(entry.key)
 
                     errors[entry.key] = "Alias ${entry.key} points to another alias: ${data.target}"
@@ -108,6 +110,14 @@ class TagParser(private val rootPath: String) {
             return Pair(null, "Tag '$name' does not exist.")
         }
 
+        if (name.contains('_')) {
+            logger.warn { "Tag '$name' contains an underscore - this should be replaced with a dash." }
+        }
+
+        if (name.contains(CAPS)) {
+            logger.warn { "Tag '$name' contains at least one uppercase letter - tags should be completely lowercase." }
+        }
+
         val content = file.readText().replace("\r", "")
 
         var yaml: String = ""
@@ -137,7 +147,7 @@ class TagParser(private val rootPath: String) {
             }
         }
 
-        val tag = Tag(name.toLowerCase(), name, tagData, markdown)
+        val tag = Tag(normalise(name), name, tagData, markdown)
 
         return Pair(tag, null)
     }
@@ -147,7 +157,7 @@ class TagParser(private val rootPath: String) {
      *
      * @return Tag object, if it exists - null otherwise
      */
-    fun getTag(name: String) = tags[name.toLowerCase()]
+    fun getTag(name: String) = tags[normalise(name)]
 
     /**
      * Get a set of loaded tags from the cache, matching a given name.
@@ -170,8 +180,18 @@ class TagParser(private val rootPath: String) {
      * @return True if the tag existed (and thus was removed), False otherwise
      */
     fun removeTag(name: String): Boolean {
-        tags.remove(name.toLowerCase()) ?: return false
+        tags.remove(normalise(name)) ?: return false
 
         return true
     }
+
+    /**
+     * Given a string tag name, normalise it.
+     *
+     * This currently ensures that the name is lowercase and that all underscores are replaced with dashes.
+     *
+     * @param name The name to normalise
+     * @return Normalised tag name
+     */
+    fun normalise(name: String): String = name.toLowerCase().replace("_", "-")
 }

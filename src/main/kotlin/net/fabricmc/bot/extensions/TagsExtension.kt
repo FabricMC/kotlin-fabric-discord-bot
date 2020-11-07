@@ -278,8 +278,8 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
                             return@action
                         }
 
-                        val url = config.git.tagsFileUrl.replace("{NAME}", tag.nonLoweredName)
-                        val path = "${config.git.tagsRepoPath.removePrefix("/")}/${tag.nonLoweredName}${parser.suffix}"
+                        val url = config.git.tagsFileUrl.replace("{NAME}", tag.suppliedName)
+                        val path = "${config.git.tagsRepoPath.removePrefix("/")}/${tag.suppliedName}${parser.suffix}"
                         val log = git.log().addPath(path).setMaxCount(1).call()
                         val rev = log.firstOrNull()
 
