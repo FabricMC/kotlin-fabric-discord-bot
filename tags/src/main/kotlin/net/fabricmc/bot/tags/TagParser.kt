@@ -188,13 +188,15 @@ class TagParser(private val rootPath: String) {
      * @return List of matching Tag objects
      */
     fun getTags(name: String): List<Tag> {
-        val matchingTag = getTag(name)
+        val fixedName = normalise(name)
+
+        val matchingTag = getTag(fixedName)
 
         if (matchingTag != null) {
             return listOf(matchingTag)
         }
 
-        return tags.filter { it.key.endsWith("/$name") }.values.toList().sortedBy { it.name }
+        return tags.filter { it.key.endsWith("/$fixedName") }.values.toList().sortedBy { it.name }
     }
 
     /**
