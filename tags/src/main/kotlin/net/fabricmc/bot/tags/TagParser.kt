@@ -62,6 +62,24 @@ class TagParser(private val rootPath: String) {
             }
         }
 
+        val badAliases = mutableListOf<String>()
+
+        for (entry in tags) {
+            if (entry.value.data is AliasTag) {
+                val data = entry.value.data as AliasTag
+
+                if (tags[data.target] == null) {
+                    badAliases.add(entry.key)
+                    logger.error { "Alias ${entry.key} points to a tag that doesn't exist: ${data.target}" }
+                } else if (tags[data.target]!!.data is AliasTag) {
+                    badAliases.add(entry.key)
+                    logger.error { "Alias ${entry.key} points to another alias: ${data.target}" }
+                }
+            }
+        }
+
+        badAliases.forEach { tags.remove(it) }
+
         logger.info { "${tags.size} tags loaded." }
 
         logger.trace {

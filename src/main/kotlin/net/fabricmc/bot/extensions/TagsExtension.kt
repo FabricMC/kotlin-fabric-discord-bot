@@ -96,7 +96,9 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
 
                     (config.getChannel(Channels.ALERTS) as GuildMessageChannel).createEmbed {
                         color = Colours.NEGATIVE
-                        title = "Failed to load tags"
+                        title = "Tag-loading errors"
+
+                        this.description = description
                     }
                 }
 
@@ -197,7 +199,18 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
                     tag = parser.getTag(data.target)
 
                     if (tag == null) {
-                        it.message.respond("No such alias target: `$tagName` -> `${data.target}`")
+                        it.message.respond(
+                                "Invalid alias - no such alias target: " +
+                                        "`$tagName` -> `${data.target}`"
+                        )
+                        return@action
+                    }
+
+                    if (tag.data is AliasTag) {
+                        it.message.respond(
+                                "Invalid alias - this alias points to another alias: " +
+                                        "`$tagName` -> `${data.target}`"
+                        )
                         return@action
                     }
                 }
