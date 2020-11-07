@@ -46,6 +46,6 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.CR_PAT }}
 
-      - run: docker build -t ghcr.io/fabricmc/fabric-discord-bot-tags:latest -t ghcr.io/fabricmc/fabric-discord-bot-tags:${GITHUB_SHA} tags/
-      - run: docker push ghcr.io/fabricmc/fabric-discord-bot-tags:latest
-      - run: docker push ghcr.io/fabricmc/fabric-discord-bot-tags:${GITHUB_SHA}
+      - run: docker build -t ghcr.io/fabricmc/fabric-discord-bot:tags-latest -t ghcr.io/fabricmc/fabric-discord-bot:tags-${GITHUB_SHA} tags/
+      - run: docker push ghcr.io/fabricmc/fabric-discord-bot:tags-latest
+      - run: docker push ghcr.io/fabricmc/fabric-discord-bot:tags-${GITHUB_SHA}
