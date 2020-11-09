@@ -13,6 +13,12 @@ import java.io.File
  * @param branch The name of the branch, or null to use the default for this repo
  */
 fun ensureRepo(directoryName: String, url: String, branch: String?): Git {
+    val baseDir = File(config.git.directory)
+
+    if (!baseDir.exists()) {
+        baseDir.mkdirs()
+    }
+
     val gitDir = File(config.git.directory, directoryName)
 
     return if (!gitDir.exists()) {
