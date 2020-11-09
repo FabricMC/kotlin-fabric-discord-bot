@@ -27,6 +27,12 @@ tagsRepoBranch = "main"
 tagsRepoUrl = "https://github.com/FabricMC/community.git"
 tagsRepoPath = "/tags"
 
+[mappings]
+directory = "./data/mappings"
+
+mavenUrl = "https://maven.fabricmc.net/net/fabricmc/yarn/{VERSION}/yarn-{VERSION}-mergedv2.jar"
+yarnUrl = "https://meta.fabricmc.net/v2/versions/yarn/{VERSION}?limit=1"
+
 [roles]
 admin = 507304850250268672
 mod = 521758400980320278

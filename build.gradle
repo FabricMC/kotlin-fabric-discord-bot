@@ -30,6 +30,11 @@ repositories {
     }
 
     maven {
+        name = 'Fabric'
+        url = 'https://maven.fabricmc.net/'
+    }
+
+    maven {
         name = 'KotDis'
         url = 'https://maven.kotlindiscord.com/repository/maven-snapshots/'
     }
@@ -76,6 +81,9 @@ dependencies {
 
     // URL Filtering
     implementation 'org.nibor.autolink:autolink:0.10.0'
+
+    // Mappings
+    implementation 'net.fabricmc:tiny-mappings-parser:+'
 
     // HTTP (Already used by kord)
     implementation 'io.ktor:ktor-http:1.4.0'

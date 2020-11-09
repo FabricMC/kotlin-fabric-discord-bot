@@ -1,0 +1,298 @@
+package net.fabricmc.bot.extensions
+
+import com.kotlindiscord.kord.extensions.ExtensibleBot
+import com.kotlindiscord.kord.extensions.Paginator
+import com.kotlindiscord.kord.extensions.commands.CommandContext
+import com.kotlindiscord.kord.extensions.extensions.Extension
+import net.fabricmc.bot.conf.config
+import net.fabricmc.bot.defaultCheck
+import net.fabricmc.bot.extensions.mappings.*
+import net.fabricmc.bot.utils.requireBotChannel
+import net.fabricmc.bot.utils.respond
+import net.fabricmc.mapping.tree.MethodDef
+
+private const val DELETE_DELAY = 1000L * 15L // 15 seconds
+private const val PAGE_TIMEOUT = 1000L * 60L * 5L  // 5 minutes
+private val VERSION_REGEX = "[a-z0-9.]+".toRegex(RegexOption.IGNORE_CASE)
+
+/** Data class representing arguments for class-retrieval commands.
+ *
+ * @param class Class name to retrieve mappings for
+ * @param version Optional Minecraft version to retrieve mappings for
+ */
+@Suppress("ConstructorParameterNaming")  // Makes for nicer command output
+data class MappingsClassArgs(
+        val `class`: String,
+        val version: String? = null
+)
+
+/** Data class representing arguments for field-retrieval commands.
+ *
+ * @param field Field name to retrieve mappings for
+ * @param version Optional Minecraft version to retrieve mappings for
+ */
+data class MappingsFieldArgs(
+        val field: String,
+        val version: String? = null
+)
+
+/** Data class representing arguments for method-retrieval commands.
+ *
+ * @param method Method name to retrieve mappings for
+ * @param version Optional Minecraft version to retrieve mappings for
+ */
+data class MappingsMethodArgs(
+        val method: String,
+        val version: String? = null
+)
+
+/**
+ * Extension that handles retrieval and querying of mappings data.
+ */
+class MappingsExtension(bot: ExtensibleBot) : Extension(bot) {
+    override val name = "mappings"
+
+    private val mappings = MappingsManager()
+
+    private val versionsExtension get() = bot.extensions["version check"] as VersionCheckExtension
+
+    override suspend fun setup() {
+        config.mappings.defaultVersions.forEach { version ->
+            mappings.openMappings(version)
+        }
+
+        command {
+            name = "class"
+            aliases = arrayOf("yc", "yarnclass", "yarn-class")
+            description = "Retrieve mappings for a given class name.\n\n" +
+                    "You may specify the Minecraft version as the second parameter - omit it to default to the " +
+                    "latest release. You can also provide `release` or `snapshot` for the latest release or snapshot " +
+                    "version respectively."
+
+            check(::defaultCheck)
+            signature<MappingsClassArgs>()
+
+            action {
+                if (!message.requireBotChannel(DELETE_DELAY)) {
+                    return@action
+                }
+
+                with(parse<MappingsClassArgs>()) {
+                    val mcVersion = when (version?.toLowerCase()) {
+                        null -> versionsExtension.latestRelease
+
+                        "release" -> versionsExtension.latestRelease
+                        "snapshot" -> versionsExtension.latestSnapshot
+
+                        else -> version
+                    }
+
+                    if (mcVersion == null) {
+                        message.respond(
+                                "I'm still loading up the latest Minecraft version information - " +
+                                        "try again later!"
+                        )
+
+                        return@action
+                    }
+
+                    if (!VERSION_REGEX.matches(mcVersion)) {
+                        message.respond(
+                                "Invalid Minecraft version specified: `$mcVersion`"
+                        )
+
+                        return@action
+                    }
+
+                    val mappingsData = mappings.getClassMappings(mcVersion, `class`)
+
+                    if (mappingsData == null) {
+                        message.respond(
+                                "Unable to find Yarn mappings for Minecraft `$mcVersion`."
+                        )
+
+                        return@action
+                    } else if (mappingsData.isEmpty()) {
+                        message.respond(
+                                "Unable to find any matching class names."
+                        )
+
+                        return@action
+                    }
+
+                    paginate(this@action, mcVersion, mappingsData)
+                }
+            }
+        }
+
+        command {
+            name = "field"
+            aliases = arrayOf("yf", "yarnfield", "yarn-field")
+            description = "Retrieve mappings for a given field name.\n\n" +
+                    "You may specify the Minecraft version as the second parameter - omit it to default to the " +
+                    "latest release. You can also provide `release` or `snapshot` for the latest release or snapshot " +
+                    "version respectively."
+
+            check(::defaultCheck)
+            signature<MappingsFieldArgs>()
+
+            action {
+                if (!message.requireBotChannel(DELETE_DELAY)) {
+                    return@action
+                }
+
+                with(parse<MappingsFieldArgs>()) {
+                    val mcVersion = when (version?.toLowerCase()) {
+                        null -> versionsExtension.latestRelease
+
+                        "release" -> versionsExtension.latestRelease
+                        "snapshot" -> versionsExtension.latestSnapshot
+
+                        else -> version
+                    }
+
+                    if (mcVersion == null) {
+                        message.respond(
+                                "I'm still loading up the latest Minecraft version information - " +
+                                        "try again later!"
+                        )
+
+                        return@action
+                    }
+
+                    if (!VERSION_REGEX.matches(mcVersion)) {
+                        message.respond(
+                                "Invalid Minecraft version specified: `$mcVersion`"
+                        )
+
+                        return@action
+                    }
+
+                    val mappingsData = mappings.getFieldMappings(mcVersion, field)
+
+                    if (mappingsData == null) {
+                        message.respond(
+                                "Unable to find Yarn mappings for Minecraft `$mcVersion`."
+                        )
+
+                        return@action
+                    } else if (mappingsData.isEmpty()) {
+                        message.respond(
+                                "Unable to find any matching field names."
+                        )
+
+                        return@action
+                    }
+
+                    paginate(this@action, mcVersion, mappingsData)
+                }
+            }
+        }
+
+        command {
+            name = "method"
+            aliases = arrayOf("ym", "yarnmethod", "yarn-method")
+            description = "Retrieve mappings for a given method name.\n\n" +
+                    "You may specify the Minecraft version as the second parameter - omit it to default to the " +
+                    "latest release. You can also provide `release` or `snapshot` for the latest release or snapshot " +
+                    "version respectively."
+
+            check(::defaultCheck)
+            signature<MappingsMethodArgs>()
+
+            action {
+                if (!message.requireBotChannel(DELETE_DELAY)) {
+                    return@action
+                }
+
+                with(parse<MappingsMethodArgs>()) {
+                    val mcVersion = when (version?.toLowerCase()) {
+                        null -> versionsExtension.latestRelease
+
+                        "release" -> versionsExtension.latestRelease
+                        "snapshot" -> versionsExtension.latestSnapshot
+
+                        else -> version
+                    }
+
+                    if (mcVersion == null) {
+                        message.respond(
+                                "I'm still loading up the latest Minecraft version information - " +
+                                        "try again later!"
+                        )
+
+                        return@action
+                    }
+
+                    if (!VERSION_REGEX.matches(mcVersion)) {
+                        message.respond(
+                                "Invalid Minecraft version specified: `$mcVersion`"
+                        )
+
+                        return@action
+                    }
+
+                    val mappingsData = mappings.getMethodMappings(mcVersion, method)
+
+                    if (mappingsData == null) {
+                        message.respond(
+                                "Unable to find Yarn mappings for Minecraft `$mcVersion`."
+                        )
+
+                        return@action
+                    } else if (mappingsData.isEmpty()) {
+                        message.respond(
+                                "Unable to find any matching method names."
+                        )
+
+                        return@action
+                    }
+
+                    paginate(this@action, mcVersion, mappingsData)
+                }
+            }
+        }
+    }
+
+    private suspend fun paginate(context: CommandContext, version: String, results: List<MappingsResult>) {
+        val pages = results.map {
+            var page = ""
+
+            val classDef = it.classDef
+            val member = it.member
+
+            // The extra spacing in these strings is just to make things easier to read - it doesn't show on Discord
+            page += "__**Class names**__\n\n"
+            page += "Official     **»** `${classDef.getName(NS_OFFICIAL)}`\n"
+            page += "Intermediary **»** `${classDef.getName(NS_INTERMEDIARY)}`\n"
+            page += "Yarn         **»** `${classDef.getName(NS_NAMED)}`\n\n"
+
+            if (member == null) {
+                page += "__**Access widener**__\n\n"
+                page += "```accessible\tclass\t${classDef.getName(NS_NAMED)}```"
+            } else {
+                page += "__**Names**__\n\n"
+                page += "Official     **»** `${member.getName(NS_OFFICIAL)}`\n"
+                page += "Intermediary **»** `${member.getName(NS_INTERMEDIARY)}`\n"
+                page += "Yarn         **»** `${member.getName(NS_NAMED)}`\n\n"
+
+                val type = if (member is MethodDef) "method" else "field"
+
+                page += "__**Access Widener**__\n\n"
+                page += "```accessible\t$type\t${classDef.getName(NS_NAMED)}```"
+            }
+
+            page
+        }.toList()
+
+        Paginator(
+                bot,
+                context.message.channel,
+                "Minecraft $version / ${results.size} result" + if (results.size > 1) "s" else "",
+                pages,
+                context.message.author,
+                PAGE_TIMEOUT,
+                true
+        ).send()
+    }
+}

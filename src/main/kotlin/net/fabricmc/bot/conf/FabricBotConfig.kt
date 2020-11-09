@@ -18,6 +18,7 @@ import net.fabricmc.bot.MissingRoleException
 import net.fabricmc.bot.bot
 import net.fabricmc.bot.conf.spec.*
 import net.fabricmc.bot.conf.wrappers.GitConfig
+import net.fabricmc.bot.conf.wrappers.MappingsConfig
 import net.fabricmc.bot.database.FabricBotDB
 import net.fabricmc.bot.database.infractionTypeAdaptor
 import net.fabricmc.bot.enums.Channels
@@ -46,6 +47,7 @@ class FabricBotConfig {
         addSpec(GitHubSpec)
         addSpec(GitSpec)
         addSpec(LiveUpdatesSpec)
+        addSpec(MappingsSpec)
         addSpec(RolesSpec)
     }
             .from.enabled(Feature.FAIL_ON_UNKNOWN_PATH).toml.resource("default.toml")
@@ -62,6 +64,9 @@ class FabricBotConfig {
 
     /** Git configuration. **/
     val git by lazy { GitConfig(config) }
+
+    /** Mappings configuration. **/
+    val mappings by lazy { MappingsConfig(config) }
 
     init {
         if (File("config.toml").exists()) {

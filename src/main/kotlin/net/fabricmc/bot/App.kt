@@ -39,6 +39,7 @@ suspend fun main() {
     bot.addExtension(GitHubExtension::class)
     bot.addExtension(InfractionsExtension::class)
     bot.addExtension(LoggingExtension::class)
+    bot.addExtension(MappingsExtension::class)
     bot.addExtension(ModerationExtension::class)
     bot.addExtension(SelfRoleExtension::class)
     bot.addExtension(SyncExtension::class)
