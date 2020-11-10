@@ -20,6 +20,7 @@ import net.fabricmc.bot.defaultCheck
 import net.fabricmc.bot.enums.Channels
 import net.fabricmc.bot.enums.Roles
 import net.fabricmc.bot.utils.modLog
+import net.fabricmc.bot.utils.requireGuildChannel
 import net.fabricmc.bot.utils.respond
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
@@ -99,6 +100,10 @@ class ActionLogExtension(bot: ExtensibleBot) : Extension(bot) {
             )
 
             action {
+                if (!message.requireGuildChannel(Roles.ADMIN)) {
+                    return@action
+                }
+
                 if (currentlyPopulating) {
                     message.respond("A rotation check is currently running, try again later.")
                     return@action
@@ -119,6 +124,7 @@ class ActionLogExtension(bot: ExtensibleBot) : Extension(bot) {
             // This is for debugging, don't load it otherwise.
 
             command {
+
                 name = "alert-debug-offset"
                 description = "Change the current week offset for debugging."
                 aliases = arrayOf("actiondebug-offset", "action-debugoffset", "actiondebugoffset", "ado")
@@ -131,6 +137,10 @@ class ActionLogExtension(bot: ExtensibleBot) : Extension(bot) {
                 )
 
                 action {
+                    if (!message.requireGuildChannel(Roles.ADMIN)) {
+                        return@action
+                    }
+
                     with(parse<ActionLogDebugArgs>()) {
                         debugOffset = weeks
 

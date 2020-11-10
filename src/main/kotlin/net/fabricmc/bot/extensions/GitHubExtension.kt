@@ -15,6 +15,7 @@ import net.fabricmc.bot.conf.config
 import net.fabricmc.bot.constants.Colours
 import net.fabricmc.bot.defaultCheck
 import net.fabricmc.bot.enums.Roles
+import net.fabricmc.bot.utils.requireGuildChannel
 
 /**
  * GitHub extension, containing commands for moderating users on GitHub, from discord.
@@ -48,6 +49,10 @@ class GitHubExtension(bot: ExtensibleBot) : Extension(bot) {
                 signature<BlockArgs>()
 
                 action {
+                    if (!message.requireGuildChannel(Roles.ADMIN)) {
+                        return@action
+                    }
+
                     with(parse<BlockArgs>()) {
                         if (isBlocked(user)) {
                             message.channel.createEmbed {
@@ -75,6 +80,10 @@ class GitHubExtension(bot: ExtensibleBot) : Extension(bot) {
                 signature<BlockArgs>()
 
                 action {
+                    if (!message.requireGuildChannel(Roles.ADMIN)) {
+                        return@action
+                    }
+
                     with(parse<BlockArgs>()) {
                         if (!isBlocked(user)) {
                             message.channel.createEmbed {

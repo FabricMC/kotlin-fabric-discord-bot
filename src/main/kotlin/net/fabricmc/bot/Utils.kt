@@ -117,7 +117,7 @@ fun Message.deleteWithDelay(millis: Long, retry: Boolean = true): Job {
 
 /** Check if the user has the provided [role]. **/
 suspend fun Member.hasRole(role: Role): Boolean =
-    this.roles.toList().contains(role)
+        this.roles.toList().contains(role)
 
 /**
  * Convert a Time4J Duration object to seconds.

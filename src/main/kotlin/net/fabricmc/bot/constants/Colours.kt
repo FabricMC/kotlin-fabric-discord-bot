@@ -23,7 +23,7 @@ object Colours {
      *
      * @return A [Color] object, or null if the name doesn't match anything.
      */
-    fun fromName(name: String) = when(name.toLowerCase()) {
+    fun fromName(name: String) = when (name.toLowerCase()) {
         "blurple" -> BLURPLE
         "fabric" -> FABRIC
         "negative" -> NEGATIVE

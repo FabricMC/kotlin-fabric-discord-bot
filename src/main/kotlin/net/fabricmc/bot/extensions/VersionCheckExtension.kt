@@ -22,6 +22,7 @@ import net.fabricmc.bot.defaultCheck
 import net.fabricmc.bot.enums.Roles
 import net.fabricmc.bot.events.LatestMinecraftVersionsRetrieved
 import net.fabricmc.bot.utils.alert
+import net.fabricmc.bot.utils.requireGuildChannel
 import net.fabricmc.bot.utils.respond
 
 private const val UPDATE_CHECK_DELAY = 1000L * 30L  // 30 seconds, consider kotlin.time when it's not experimental
@@ -118,6 +119,10 @@ class VersionCheckExtension(bot: ExtensibleBot) : Extension(bot) {
             )
 
             action {
+                if (!message.requireGuildChannel(Roles.ADMIN)) {
+                    return@action
+                }
+
                 if (currentlyChecking) {
                     message.respond("A version check is already running - try again later!")
 

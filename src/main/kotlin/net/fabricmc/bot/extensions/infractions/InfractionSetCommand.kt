@@ -21,6 +21,7 @@ import net.fabricmc.bot.enums.Roles
 import net.fabricmc.bot.runSuspended
 import net.fabricmc.bot.utils.dm
 import net.fabricmc.bot.utils.modLog
+import net.fabricmc.bot.utils.requireGuildChannel
 import java.time.Duration
 import java.time.Instant
 
@@ -75,26 +76,28 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
     private val queries = config.db.infractionQueries
 
     private val commandBody: suspend CommandContext.() -> Unit = {
-        if (type.expires) {
-            val args = parse<InfractionSetExpiringCommandArgs>()
+        if (message.requireGuildChannel(null)) {
+            if (type.expires) {
+                val args = parse<InfractionSetExpiringCommandArgs>()
 
-            applyInfraction(
-                    args.member,
-                    args.memberLong,
-                    args.duration,
-                    args.reason.joinToString(" "),
-                    message
-            )
-        } else {
-            val args = parse<InfractionSetNonExpiringCommandArgs>()
+                applyInfraction(
+                        args.member,
+                        args.memberLong,
+                        args.duration,
+                        args.reason.joinToString(" "),
+                        message
+                )
+            } else {
+                val args = parse<InfractionSetNonExpiringCommandArgs>()
 
-            applyInfraction(
-                    args.member,
-                    args.memberLong,
-                    null,
-                    args.reason.joinToString(" "),
-                    message
-            )
+                applyInfraction(
+                        args.member,
+                        args.memberLong,
+                        null,
+                        args.reason.joinToString(" "),
+                        message
+                )
+            }
         }
     }
 

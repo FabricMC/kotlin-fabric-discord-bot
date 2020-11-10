@@ -45,7 +45,9 @@ class MappingsManager {
         }
     }
 
-    init { Files.createDirectories(cacheDir) }
+    init {
+        Files.createDirectories(cacheDir)
+    }
 
     // TODO: Modmuss says there's probably better ways to do this.
     private fun exactMatches(mapped: Mapped, query: String): Boolean =
@@ -174,7 +176,7 @@ class MappingsManager {
      * @param minecraftVersion Minecraft version to retrieve mappings for
      */
     suspend fun openMappings(minecraftVersion: String): TinyTree? {
-        if (versionCache.containsKey(minecraftVersion)){
+        if (versionCache.containsKey(minecraftVersion)) {
             return versionCache[minecraftVersion]
         }
 

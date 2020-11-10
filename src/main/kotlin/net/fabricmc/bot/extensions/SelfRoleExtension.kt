@@ -28,7 +28,7 @@ class SelfRoleExtension(bot: ExtensibleBot) : Extension(bot) {
                     return@action
                 }
 
-                val member = message.getAuthorAsMember() ?: return@action
+                val member = config.getGuild().getMemberOrNull(message.author!!.id) ?: return@action
                 val devLife = config.getRole(Roles.DEV_LIFE)
                 val alreadyLivingTheDevLife = member.hasRole(devLife)
                 val confirmation: EmbedBuilder.() -> Unit

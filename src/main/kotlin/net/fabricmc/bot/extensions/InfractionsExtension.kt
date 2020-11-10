@@ -27,6 +27,7 @@ import net.fabricmc.bot.runSuspended
 import net.fabricmc.bot.utils.deltas.MemberDelta
 import net.fabricmc.bot.utils.dm
 import net.fabricmc.bot.utils.modLog
+import net.fabricmc.bot.utils.requireGuildChannel
 import net.fabricmc.bot.utils.respond
 import java.time.Instant
 
@@ -216,6 +217,10 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
             )
 
             action {
+                if (!message.requireGuildChannel(null)) {
+                    return@action
+                }
+
                 with(parse<InfractionNickCommandArgs>()) {
                     if (target != null && targetId != null) {
                         message.respond("Please specify a user mention or user ID - not both.")
@@ -322,6 +327,10 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                 signature<InfractionIDCommandArgs>()
 
                 action {
+                    if (!message.requireGuildChannel(null)) {
+                        return@action
+                    }
+
                     runSuspended {
                         with(parse<InfractionIDCommandArgs>()) {
                             val inf = infQ.getInfraction(id).executeAsOneOrNull()
@@ -354,6 +363,10 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                 signature<InfractionIDCommandArgs>()
 
                 action {
+                    if (!message.requireGuildChannel(null)) {
+                        return@action
+                    }
+
                     runSuspended {
                         with(parse<InfractionIDCommandArgs>()) {
                             val inf = infQ.getInfraction(id).executeAsOneOrNull()
@@ -411,6 +424,10 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                 signature<InfractionIDCommandArgs>()
 
                 action {
+                    if (!message.requireGuildChannel(null)) {
+                        return@action
+                    }
+
                     runSuspended {
                         with(parse<InfractionIDCommandArgs>()) {
                             val inf = infQ.getInfraction(id).executeAsOneOrNull()
@@ -480,6 +497,10 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                 signature<InfractionReasonCommandArgs>()
 
                 action {
+                    if (!message.requireGuildChannel(null)) {
+                        return@action
+                    }
+
                     runSuspended {
                         with(parse<InfractionReasonCommandArgs>()) {
                             val inf = infQ.getInfraction(id).executeAsOneOrNull()
@@ -540,6 +561,10 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                 signature = "<filter> [filter ...]"
 
                 action {
+                    if (!message.requireGuildChannel(null)) {
+                        return@action
+                    }
+
                     runSuspended {
                         with(parse<InfractionSearchCommandArgs>()) {
                             val author = message.author!!

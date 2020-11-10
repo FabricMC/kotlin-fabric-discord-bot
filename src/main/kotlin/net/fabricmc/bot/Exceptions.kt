@@ -33,6 +33,6 @@ class MissingChannelException(id: Long) : MissingObjectException(id) {
  * @param current Current number of arguments provided.
  * @param total Total number of required arguments.
  */
-class TagMissingArgumentException(val current: Int, val total: Int): FabricBotException() {
+class TagMissingArgumentException(val current: Int, val total: Int) : FabricBotException() {
     override fun toString(): String = "This tag requires **$total** argument/s, **$current** provided."
 }

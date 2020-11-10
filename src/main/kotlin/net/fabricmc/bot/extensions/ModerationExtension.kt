@@ -15,6 +15,7 @@ import net.fabricmc.bot.defaultCheck
 import net.fabricmc.bot.enums.Roles
 import net.fabricmc.bot.toHuman
 import net.fabricmc.bot.utils.modLog
+import net.fabricmc.bot.utils.requireGuildChannel
 import java.time.Duration
 import java.time.Instant
 import java.time.temporal.ChronoUnit
@@ -83,6 +84,10 @@ class ModerationExtension(bot: ExtensibleBot) : Extension(bot) {
             )
 
             action {
+                if (!message.requireGuildChannel(null)) {
+                    return@action
+                }
+
                 with(parse<DurationChannelCommandArgs>()) {
                     val author = message.author!!
                     val channelObj = (channel ?: message.channel).asChannel() as GuildChannel
@@ -170,6 +175,10 @@ class ModerationExtension(bot: ExtensibleBot) : Extension(bot) {
             )
 
             action {
+                if (!message.requireGuildChannel(null)) {
+                    return@action
+                }
+
                 with(parse<UnlockArgs>()) {
                     val author = message.author!!
                     val channelObj = (channel ?: message.channel).asChannel() as GuildChannel
@@ -238,6 +247,10 @@ class ModerationExtension(bot: ExtensibleBot) : Extension(bot) {
             )
 
             action {
+                if (!message.requireGuildChannel(null)) {
+                    return@action
+                }
+
                 with(parse<DurationChannelCommandArgs>()) {
                     val author = message.author!!
 

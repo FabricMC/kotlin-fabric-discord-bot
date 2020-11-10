@@ -1,5 +1,6 @@
 package net.fabricmc.bot
 
+import com.gitlab.kordlib.core.entity.channel.DmChannel
 import com.gitlab.kordlib.core.event.Event
 import com.kotlindiscord.kord.extensions.checks.*
 import mu.KotlinLogging
@@ -28,11 +29,6 @@ suspend fun defaultCheck(event: Event): Boolean {
             false
         }
 
-        message.getGuildOrNull()?.id != config.getGuild().id -> {
-            logger.debug { "Failing check: Not in the correct guild" }
-            false
-        }
-
         message.author == null -> {
             logger.debug { "Failing check: Message sent by a webhook or system message" }
             false
@@ -45,6 +41,16 @@ suspend fun defaultCheck(event: Event): Boolean {
 
         message.author!!.isBot == true -> {
             logger.debug { "Failing check: This message was sent by another bot" }
+            false
+        }
+
+        message.getChannelOrNull() is DmChannel -> {
+            logger.debug { "Passing check: This message was sent in a DM" }
+            true
+        }
+
+        message.getGuildOrNull()?.id != config.getGuild().id -> {
+            logger.debug { "Failing check: Not in the correct guild" }
             false
         }
 

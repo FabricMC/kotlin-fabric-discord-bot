@@ -16,6 +16,7 @@ import net.fabricmc.bot.conf.config
 import net.fabricmc.bot.constants.Colours
 import net.fabricmc.bot.enums.Roles
 import net.fabricmc.bot.utils.modLog
+import net.fabricmc.bot.utils.requireGuildChannel
 import net.fabricmc.bot.utils.respond
 import java.time.Instant
 
@@ -107,6 +108,10 @@ class CleanExtension(bot: ExtensibleBot) : Extension(bot) {
             hidden = true
 
             action {
+                if (!message.requireGuildChannel(null)) {
+                    return@action
+                }
+
                 if (args.isEmpty()) {
                     message.channel.createMessage(
                             ":x: Please provide at least one filter"

@@ -21,6 +21,7 @@ import net.fabricmc.bot.enums.Roles
 import net.fabricmc.bot.runSuspended
 import net.fabricmc.bot.utils.dm
 import net.fabricmc.bot.utils.modLog
+import net.fabricmc.bot.utils.requireGuildChannel
 import java.time.Instant
 import java.util.*
 
@@ -59,13 +60,15 @@ class InfractionUnsetCommand(extension: Extension, private val type: InfractionT
     private val queries = config.db.infractionQueries
 
     private val commandBody: suspend CommandContext.() -> Unit = {
-        val args = parse<InfractionUnsetCommandArgs>()
+        if (message.requireGuildChannel(null)) {
+            val args = parse<InfractionUnsetCommandArgs>()
 
-        undoInfraction(
-                args.member,
-                args.memberLong,
-                message
-        )
+            undoInfraction(
+                    args.member,
+                    args.memberLong,
+                    message
+            )
+        }
     }
 
     private fun getInfractionMessage(public: Boolean, infraction: Infraction, showReason: Boolean = false): String {
