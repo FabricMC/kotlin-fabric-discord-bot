@@ -10,4 +10,4 @@ COPY --from=BUILD /home/gradle/build/libs/discord-bot-*-all.jar /usr/local/lib/d
 RUN mkdir /git
 ENV BOT_GIT_DIRECTORY /git
 
-ENTRYPOINT ["java", "-jar", "/usr/local/lib/discord-bot.jar"]
+ENTRYPOINT ["java", "-Xms2G", "-Xmx2G", "-jar", "/usr/local/lib/discord-bot.jar"]

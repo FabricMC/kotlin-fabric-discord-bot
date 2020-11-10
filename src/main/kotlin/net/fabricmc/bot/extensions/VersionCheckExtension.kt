@@ -20,6 +20,7 @@ import net.fabricmc.bot.conf.config
 import net.fabricmc.bot.constants.Colours
 import net.fabricmc.bot.defaultCheck
 import net.fabricmc.bot.enums.Roles
+import net.fabricmc.bot.events.LatestMinecraftVersionsRetrieved
 import net.fabricmc.bot.utils.alert
 import net.fabricmc.bot.utils.respond
 
@@ -55,6 +56,14 @@ class VersionCheckExtension(bot: ExtensibleBot) : Extension(bot) {
     private var jiraVersions = listOf<JiraVersion>()
     private var checkJob: Job? = null
     private var currentlyChecking = false
+
+    private var latestVersion: MinecraftLatest? = null
+
+    /** The latest Minecraft release, if we've had a chance to get it. **/
+    val latestRelease get() = latestVersion?.release
+
+    /** The latest Minecraft snapshot, if we've had a chance to get it. **/
+    val latestSnapshot get() = latestVersion?.snapshot
 
     override suspend fun setup() {
         val environment = System.getenv().getOrDefault("ENVIRONMENT", "production")
@@ -310,6 +319,10 @@ class VersionCheckExtension(bot: ExtensibleBot) : Extension(bot) {
     private suspend fun getMinecraftVersions(): List<MinecraftVersion> {
         val response = client.get<LauncherMetaResponse>(MINECRAFT_URL)
 
+        latestVersion = response.latest
+
+        bot.send(LatestMinecraftVersionsRetrieved(bot, response.latest))
+
         logger.debug { "Minecraft | Latest release: " + response.latest.release }
         logger.debug { "Minecraft | Latest snapshot: " + response.latest.snapshot }
 
@@ -324,8 +337,14 @@ private data class MinecraftVersion(
         val type: String,
 )
 
+/**
+ * Data class representing the latest versions for Minecraft.
+ *
+ * @param release Latest release version
+ * @param snapshot Latest snapshot version
+ */
 @Serializable
-private data class MinecraftLatest(
+data class MinecraftLatest(
         val release: String,
         val snapshot: String,
 )
