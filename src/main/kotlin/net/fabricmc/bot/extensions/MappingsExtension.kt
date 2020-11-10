@@ -298,7 +298,13 @@ class MappingsExtension(bot: ExtensibleBot) : Extension(bot) {
                 page += "```${member.getDescriptor(NS_NAMED)}```\n\n"
 
                 page += "__**Access Widener**__\n\n"
-                page += "```accessible\t$type\t${classDef.getName(NS_NAMED)}```"
+                page += "```" +
+                        "accessible\t" +
+                        "$type\t" +
+                        "${classDef.getName(NS_NAMED)}\t" +
+                        "${member.getName(NS_NAMED)}\t" +
+                        member.getDescriptor(NS_NAMED) +
+                        "```"
             }
 
             page
