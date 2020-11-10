@@ -6,6 +6,7 @@ import io.ktor.client.features.json.serializer.KotlinxSerializer
 import io.ktor.client.request.get
 import io.ktor.client.request.request
 import kotlinx.serialization.json.Json
+import mu.KotlinLogging
 import net.fabricmc.bot.conf.config
 import net.fabricmc.bot.runSuspended
 import net.fabricmc.mapping.tree.*
@@ -25,12 +26,16 @@ const val NS_INTERMEDIARY = "intermediary"
 /** Namespace for yarn names. **/
 const val NS_NAMED = "named"
 
+private val logger = KotlinLogging.logger {}
+
 /**
  * Class in charge of downloading and querying Yarn mappings.
  */
 class MappingsManager {
     // TODO: Consider in-memory caching (although note that mappings take up like 250MiB of memory or so)
     private val cacheDir = Path.of(config.mappings.directory)
+    private val versionCache: MutableMap<String, TinyTree?> = mutableMapOf()
+    private val versionNames: MutableMap<String, String> = mutableMapOf()
 
     private val client = HttpClient {
         install(JsonFeature) {
@@ -110,11 +115,69 @@ class MappingsManager {
     }.toList()
 
     /**
+     * Wipe the mappings cache and add mappings for two versions of MC to the cleared cache.
+     *
+     * @param release Release version to cache
+     * @param snapshot Snapshot version to cache
+     */
+    suspend fun cacheMappings(release: String, snapshot: String) {
+        if (versionCache.containsKey(release) && versionCache.containsKey(snapshot)) {
+            logger.debug { "Both keys hit the cache, not clearing." }
+            return
+        }
+
+        if (versionNames.isEmpty()) {
+            versionNames["release"] = release
+            versionNames["snapshot"] = snapshot
+        }
+
+        if (!versionCache.containsKey(release)) {
+            logger.debug { "Caching release version: $release." }
+
+            var releaseVersion = openMappings(release)
+
+            if (releaseVersion == null) {
+                logger.warn { "No mappings found for release version: $release" }
+            } else {
+                versionCache.remove(versionNames["release"])
+                versionCache[release] = releaseVersion
+
+                versionNames["release"] = release
+                releaseVersion = null
+
+                logger.info { "Cached release version: $release" }
+            }
+        }
+
+        if (!versionCache.containsKey(snapshot)) {
+            logger.debug { "Caching snapshot version: $snapshot." }
+
+            var snapshotVersion = openMappings(snapshot)
+
+            if (snapshotVersion == null) {
+                logger.warn { "No mappings found for snapshot version: $snapshot" }
+            } else {
+                versionCache.remove(versionNames["snapshot"])
+                versionCache[snapshot] = snapshotVersion
+
+                versionNames["snapshot"] = release
+                snapshotVersion = null
+
+                logger.info { "Cached snapshot version: $snapshot" }
+            }
+        }
+    }
+
+    /**
      * Given a Minecraft version attempt to open a set of mappings - downloading them if required.
      *
      * @param minecraftVersion Minecraft version to retrieve mappings for
      */
     suspend fun openMappings(minecraftVersion: String): TinyTree? {
+        if (versionCache.containsKey(minecraftVersion)){
+            return versionCache[minecraftVersion]
+        }
+
         val latestVersion = getLatestYarnVersion(minecraftVersion) ?: return null
 
         val tinyPath = cacheDir.resolve("$latestVersion.tiny")

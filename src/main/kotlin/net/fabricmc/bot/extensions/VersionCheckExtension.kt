@@ -20,6 +20,7 @@ import net.fabricmc.bot.conf.config
 import net.fabricmc.bot.constants.Colours
 import net.fabricmc.bot.defaultCheck
 import net.fabricmc.bot.enums.Roles
+import net.fabricmc.bot.events.LatestMinecraftVersionsRetrieved
 import net.fabricmc.bot.utils.alert
 import net.fabricmc.bot.utils.respond
 
@@ -319,6 +320,8 @@ class VersionCheckExtension(bot: ExtensibleBot) : Extension(bot) {
         val response = client.get<LauncherMetaResponse>(MINECRAFT_URL)
 
         latestVersion = response.latest
+
+        bot.send(LatestMinecraftVersionsRetrieved(bot, response.latest))
 
         logger.debug { "Minecraft | Latest release: " + response.latest.release }
         logger.debug { "Minecraft | Latest snapshot: " + response.latest.snapshot }

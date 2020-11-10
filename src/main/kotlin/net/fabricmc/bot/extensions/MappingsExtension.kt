@@ -4,8 +4,10 @@ import com.kotlindiscord.kord.extensions.ExtensibleBot
 import com.kotlindiscord.kord.extensions.Paginator
 import com.kotlindiscord.kord.extensions.commands.CommandContext
 import com.kotlindiscord.kord.extensions.extensions.Extension
+import mu.KotlinLogging
 import net.fabricmc.bot.conf.config
 import net.fabricmc.bot.defaultCheck
+import net.fabricmc.bot.events.LatestMinecraftVersionsRetrieved
 import net.fabricmc.bot.extensions.mappings.*
 import net.fabricmc.bot.utils.requireBotChannel
 import net.fabricmc.bot.utils.respond
@@ -14,6 +16,8 @@ import net.fabricmc.mapping.tree.MethodDef
 private const val DELETE_DELAY = 1000L * 15L // 15 seconds
 private const val PAGE_TIMEOUT = 1000L * 60L * 5L  // 5 minutes
 private val VERSION_REGEX = "[a-z0-9.]+".toRegex(RegexOption.IGNORE_CASE)
+
+private val logger = KotlinLogging.logger {}
 
 /** Data class representing arguments for class-retrieval commands.
  *
@@ -53,12 +57,19 @@ class MappingsExtension(bot: ExtensibleBot) : Extension(bot) {
     override val name = "mappings"
 
     private val mappings = MappingsManager()
-
     private val versionsExtension get() = bot.extensions["version check"] as VersionCheckExtension
 
     override suspend fun setup() {
         config.mappings.defaultVersions.forEach { version ->
             mappings.openMappings(version)
+        }
+
+        event<LatestMinecraftVersionsRetrieved> {
+            action {
+                logger.info { "Caching latest versions: ${it.versions.release} / ${it.versions.snapshot}" }
+
+                mappings.cacheMappings(it.versions.release, it.versions.snapshot)
+            }
         }
 
         command {
@@ -271,12 +282,15 @@ class MappingsExtension(bot: ExtensibleBot) : Extension(bot) {
                 page += "__**Access widener**__\n\n"
                 page += "```accessible\tclass\t${classDef.getName(NS_NAMED)}```"
             } else {
-                page += "__**Names**__\n\n"
+                page += "__**Member Names**__\n\n"
                 page += "Official     **»** `${member.getName(NS_OFFICIAL)}`\n"
                 page += "Intermediary **»** `${member.getName(NS_INTERMEDIARY)}`\n"
                 page += "Yarn         **»** `${member.getName(NS_NAMED)}`\n\n"
 
                 val type = if (member is MethodDef) "method" else "field"
+
+                page += "__**Descriptor**__\n\n"
+                page += "```${member.getDescriptor(NS_NAMED)}```\n\n"
 
                 page += "__**Access Widener**__\n\n"
                 page += "```accessible\t$type\t${classDef.getName(NS_NAMED)}```"

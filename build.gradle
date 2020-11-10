@@ -43,6 +43,11 @@ repositories {
         name = 'Eclipse'
         url = 'https://repo.eclipse.org/content/groups/releases/'
     }
+
+    maven {
+        name = 'JitPack'
+        url = 'https://jitpack.io'
+    }
 }
 
 dependencies {
@@ -88,7 +93,9 @@ dependencies {
     // HTTP (Already used by kord)
     implementation 'io.ktor:ktor-http:1.4.0'
     implementation 'io.ktor:ktor-client-cio:1.4.0'
-//    implementation 'io.ktor:ktor-client-serialization-jvm:1.4.0'
+
+    // Memoization
+    implementation 'com.github.aballano:mnemonik:2.0.1'
 }
 
 application {
