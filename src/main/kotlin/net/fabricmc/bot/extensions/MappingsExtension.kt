@@ -97,8 +97,8 @@ class MappingsExtension(bot: ExtensibleBot) : Extension(bot) {
                     val mcVersion = when (version?.toLowerCase()) {
                         null -> versionsExtension.latestRelease
 
-                        "release" -> versionsExtension.latestRelease
-                        "snapshot" -> versionsExtension.latestSnapshot
+                        "release" -> mappings.versionNames[version.toLowerCase()] ?: versionsExtension.latestRelease
+                        "snapshot" -> mappings.versionNames[version.toLowerCase()] ?: versionsExtension.latestSnapshot
 
                         else -> version
                     }

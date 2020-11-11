@@ -35,7 +35,9 @@ class MappingsManager {
     // TODO: Consider in-memory caching (although note that mappings take up like 250MiB of memory or so)
     private val cacheDir = Path.of(config.mappings.directory)
     private val versionCache: MutableMap<String, TinyTree?> = mutableMapOf()
-    private val versionNames: MutableMap<String, String> = mutableMapOf()
+
+    /** Maps "snapshot" and "release" to actual MC versions. **/
+    val versionNames: MutableMap<String, String> = mutableMapOf()
 
     private val client = HttpClient {
         install(JsonFeature) {
