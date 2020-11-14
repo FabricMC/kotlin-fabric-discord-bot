@@ -8,7 +8,10 @@ import com.gitlab.kordlib.core.entity.channel.TextChannel
 import com.gitlab.kordlib.core.event.gateway.ReadyEvent
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import com.kotlindiscord.kord.extensions.checks.topRoleHigherOrEqual
+import com.kotlindiscord.kord.extensions.commands.converters.defaultingNumber
+import com.kotlindiscord.kord.extensions.commands.parser.Arguments
 import com.kotlindiscord.kord.extensions.extensions.Extension
+import com.kotlindiscord.kord.extensions.utils.respond
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.toList
@@ -20,8 +23,7 @@ import net.fabricmc.bot.defaultCheck
 import net.fabricmc.bot.enums.Channels
 import net.fabricmc.bot.enums.Roles
 import net.fabricmc.bot.utils.modLog
-import net.fabricmc.bot.utils.requireGuildChannel
-import net.fabricmc.bot.utils.respond
+import net.fabricmc.bot.utils.requireMainGuild
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.time.temporal.ChronoField
@@ -34,12 +36,6 @@ private const val WEEK_DIFFERENCE = 5L  // 5 weeksA year of weeks, plus the diff
 private const val CHECK_DELAY = 1000L * 60L * 30L  // 30 minutes
 
 private val NAME_REGEX = Regex("action-log-(\\d{4})-(\\d{2})")
-
-/** @suppress **/
-@Suppress("UndocumentedPublicProperty")
-data class ActionLogDebugArgs(
-        val weeks: Long = 1L
-)
 
 /**
  * Extension for rotating action log channels.
@@ -100,7 +96,7 @@ class ActionLogExtension(bot: ExtensibleBot) : Extension(bot) {
             )
 
             action {
-                if (!message.requireGuildChannel(Roles.ADMIN)) {
+                if (!message.requireMainGuild(Roles.ADMIN)) {
                     return@action
                 }
 
@@ -129,7 +125,7 @@ class ActionLogExtension(bot: ExtensibleBot) : Extension(bot) {
                 description = "Change the current week offset for debugging."
                 aliases = arrayOf("actiondebug-offset", "action-debugoffset", "actiondebugoffset", "ado")
 
-                signature<ActionLogDebugArgs>()
+                signature(::ActionLogDebugArgs)
 
                 check(
                         ::defaultCheck,
@@ -137,11 +133,11 @@ class ActionLogExtension(bot: ExtensibleBot) : Extension(bot) {
                 )
 
                 action {
-                    if (!message.requireGuildChannel(Roles.ADMIN)) {
+                    if (!message.requireMainGuild(Roles.ADMIN)) {
                         return@action
                     }
 
-                    with(parse<ActionLogDebugArgs>()) {
+                    with(parse(::ActionLogDebugArgs)) {
                         debugOffset = weeks
 
                         message.respond(
@@ -307,5 +303,11 @@ class ActionLogExtension(bot: ExtensibleBot) : Extension(bot) {
         color = Colours.NEGATIVE
 
         description = "Channel removed: **#${channel.name} (`${channel.id.longValue}`)**"
+    }
+
+    /** @suppress **/
+    class ActionLogDebugArgs : Arguments() {
+        /** @suppress **/
+        val weeks by defaultingNumber("weeks", 1L)
     }
 }

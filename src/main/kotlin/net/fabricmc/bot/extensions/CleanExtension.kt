@@ -4,20 +4,20 @@ import com.gitlab.kordlib.cache.api.query
 import com.gitlab.kordlib.common.entity.Snowflake
 import com.gitlab.kordlib.core.cache.data.MessageData
 import com.gitlab.kordlib.core.entity.Message
-import com.gitlab.kordlib.core.entity.User
-import com.gitlab.kordlib.core.entity.channel.Channel
 import com.gitlab.kordlib.core.entity.channel.GuildMessageChannel
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import com.kotlindiscord.kord.extensions.checks.topRoleHigherOrEqual
+import com.kotlindiscord.kord.extensions.commands.converters.*
+import com.kotlindiscord.kord.extensions.commands.parser.Arguments
 import com.kotlindiscord.kord.extensions.extensions.Extension
+import com.kotlindiscord.kord.extensions.utils.*
 import mu.KotlinLogging
 import net.fabricmc.bot.*
 import net.fabricmc.bot.conf.config
 import net.fabricmc.bot.constants.Colours
 import net.fabricmc.bot.enums.Roles
 import net.fabricmc.bot.utils.modLog
-import net.fabricmc.bot.utils.requireGuildChannel
-import net.fabricmc.bot.utils.respond
+import net.fabricmc.bot.utils.requireMainGuild
 import java.time.Instant
 
 /** Maximum number of deleted messages allowed without the force flag. **/
@@ -68,22 +68,6 @@ private const val HELP =
                 "**Force:** `force`, specify `true` to override the $MAX_DELETION_SIZE messages soft limit. Only " +
                 "available to admins."
 
-
-/**
- * Arguments for the clean command.
- */
-@Suppress("ConstructorParameterNaming", "UndocumentedPublicProperty")
-data class CleanArguments(
-        val user: List<User>? = null,
-        val regex: List<Regex>? = null,
-        val `in`: List<Channel>? = null,
-        val since: Message? = null,
-        val botOnly: Boolean = false,
-        val count: Int = -1,
-        val force: Boolean = false,
-        val dryRun: Boolean = false
-)
-
 /**
  * Extension providing a bulk message deletion command for mods+.
  *
@@ -103,12 +87,12 @@ class CleanExtension(bot: ExtensibleBot) : Extension(bot) {
 
             check(::defaultCheck)
             check(topRoleHigherOrEqual(config.getRole(Roles.MODERATOR)))
-            signature = "<filter> [filter ...] [dryRun=false] [force=false]"
+            signature(::CleanArguments)
 
             hidden = true
 
             action {
-                if (!message.requireGuildChannel(null)) {
+                if (!message.requireMainGuild()) {
                     return@action
                 }
 
@@ -119,15 +103,17 @@ class CleanExtension(bot: ExtensibleBot) : Extension(bot) {
 
                     return@action
                 }
-                with(parse<CleanArguments>()) {
+                with(parse(::CleanArguments)) {
                     val cleanNotice = """
                         Cleaning with :
-                        Users: ${user?.joinToString(", ") { "${it.username}#${it.discriminator}" }}
-                        Regex: ${regex?.joinToString(", ")}
+                        Users: ${users.joinToString(", ") { "${it.username}#${it.discriminator}" }}
+                        Regex: ${regexes.joinToString(", ")}
                         Channels: ${
-                        `in`?.joinToString(", ") {
-                            it.id.longValue.toString()
-                        } ?: message.channelId.longValue
+                        if (channels.isNotEmpty()) {
+                            channels.joinToString(", ") { it.id.longValue.toString() }
+                        } else {
+                            message.channelId.longValue
+                        }
                     }
                         Since: ${since?.id?.longValue}
                         Bot-only: $botOnly
@@ -137,19 +123,19 @@ class CleanExtension(bot: ExtensibleBot) : Extension(bot) {
 
                     val channels = when {
                         since != null -> {
-                            if (!`in`.isNullOrEmpty()) {
+                            if (!channels.isNullOrEmpty()) {
                                 message.channel.createMessage(":x: Cannot use the `in` and `since` options together")
                                 return@action
                             }
 
-                            listOf(since.channelId.longValue)
+                            listOf(since!!.channelId.longValue)
                         }
 
-                        `in`.isNullOrEmpty() -> listOf(message.channelId.longValue)
-                        else -> `in`.map { it.id.longValue }
+                        channels.isNullOrEmpty() -> listOf(message.channelId.longValue)
+                        else -> channels.map { it.id.longValue }
                     }
 
-                    val userIds = user?.map { it.id.longValue }
+                    val userIds = users.map { it.id.longValue }
                     val sinceTimestamp = since?.timestamp?.minusMillis(SINCE_OFFSET)
 
                     logger.debug { cleanNotice }
@@ -160,7 +146,7 @@ class CleanExtension(bot: ExtensibleBot) : Extension(bot) {
                         var query = bot.kord.cache.query<MessageData> {
                             MessageData::channelId eq channelId
 
-                            if (!userIds.isNullOrEmpty()) {
+                            if (userIds.isNotEmpty()) {
                                 run {
                                     MessageData::authorId `in` userIds
                                 }
@@ -172,10 +158,10 @@ class CleanExtension(bot: ExtensibleBot) : Extension(bot) {
                                 }
                             }
 
-                            if (!regex.isNullOrEmpty()) {
+                            if (regexes.isNotEmpty()) {
                                 run {
                                     MessageData::content predicate {
-                                        regex.all { regex ->
+                                        regexes.all { regex ->
                                             regex.matches(it)
                                         }
                                     }
@@ -192,7 +178,7 @@ class CleanExtension(bot: ExtensibleBot) : Extension(bot) {
                         }.toCollection()
 
                         if (count > 0) {
-                            query = query.sortedBy { Instant.parse(it.timestamp) }.reversed().slice(0..count)
+                            query = query.sortedBy { Instant.parse(it.timestamp) }.reversed().slice(0..count.toInt())
                         }
 
                         if (query.size > MAX_DELETION_SIZE && !dryRun) {
@@ -265,12 +251,12 @@ class CleanExtension(bot: ExtensibleBot) : Extension(bot) {
                 }
             }
 
-            if (args.`in` != null && args.`in`.isNotEmpty()) {
+            if (args.channels.isNotEmpty()) {
                 field {
                     name = "Channels"
                     inline = true
 
-                    value = args.`in`.joinToString(", ") {
+                    value = args.channels.joinToString(", ") {
                         "${it.mention} (`${it.id.longValue}`)"
                     }
                 }
@@ -298,12 +284,12 @@ class CleanExtension(bot: ExtensibleBot) : Extension(bot) {
                 }
             }
 
-            if (args.regex != null && args.regex.isNotEmpty()) {
+            if (args.regexes.isNotEmpty()) {
                 field {
                     name = "Regex"
                     inline = true
 
-                    value = args.regex.joinToString(", ") { "`$it`" }
+                    value = args.regexes.joinToString(", ") { "`$it`" }
                 }
             }
 
@@ -312,7 +298,7 @@ class CleanExtension(bot: ExtensibleBot) : Extension(bot) {
                     name = "Since"
                     inline = true
 
-                    value = args.since.getUrl()
+                    value = args.since!!.getUrl()
                 }
             }
 
@@ -323,16 +309,29 @@ class CleanExtension(bot: ExtensibleBot) : Extension(bot) {
                 value = total.toString()
             }
 
-            if (args.user != null && args.user.isNotEmpty()) {
+            if (args.users.isNotEmpty()) {
                 field {
                     name = "Users"
                     inline = true
 
-                    value = args.user.joinToString(", ") {
+                    value = args.users.joinToString(", ") {
                         "${it.mention} (${it.tag} / ${it.id.longValue})"
                     }
                 }
             }
         }
+    }
+
+    @Suppress("UndocumentedPublicProperty")
+    /** @suppress **/
+    class CleanArguments : Arguments() {
+        val users by userList("users", false)
+        val regexes by regexList("regex", false)
+        val channels by channelList("in", false)
+        val since by optionalMessage("since")
+        val botOnly by defaultingBoolean("bot-only", false)
+        val count by defaultingNumber("count", -1L)
+        val force by defaultingBoolean("force", false)
+        val dryRun by defaultingBoolean("dry-run", false)
     }
 }
