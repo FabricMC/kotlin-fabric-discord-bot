@@ -3,6 +3,7 @@ package net.fabricmc.bot.extensions
 import com.gitlab.kordlib.core.behavior.channel.createEmbed
 import com.gitlab.kordlib.core.behavior.channel.createMessage
 import com.gitlab.kordlib.core.entity.Embed
+import com.gitlab.kordlib.core.entity.Message
 import com.gitlab.kordlib.core.entity.channel.GuildMessageChannel
 import com.gitlab.kordlib.core.event.gateway.ReadyEvent
 import com.gitlab.kordlib.core.event.message.MessageCreateEvent
@@ -25,7 +26,11 @@ import net.fabricmc.bot.constants.Colours
 import net.fabricmc.bot.defaultCheck
 import net.fabricmc.bot.enums.Channels
 import net.fabricmc.bot.extensions.infractions.instantToDisplay
-import net.fabricmc.bot.tags.*
+import net.fabricmc.bot.tags.AliasTag
+import net.fabricmc.bot.tags.EmbedTag
+import net.fabricmc.bot.tags.Tag
+import net.fabricmc.bot.tags.TagParser
+import net.fabricmc.bot.tags.TextTag
 import net.fabricmc.bot.utils.ensureRepo
 import net.fabricmc.bot.utils.requireBotChannel
 import org.eclipse.jgit.api.MergeResult
@@ -178,68 +183,9 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
                     return@action
                 }
 
-                var tag: Tag? = tags[tags.firstKey()]
+                val tag: Tag? = tags[tags.firstKey()]
 
-                if (tag!!.data is AliasTag) {
-                    val data = tag.data as AliasTag
-
-                    tag = parser.getTag(data.target)
-
-                    if (tag == null) {
-                        it.message.respond(
-                                "Invalid alias - no such alias target: " +
-                                        "`$tagName` -> `${data.target}`"
-                        )
-                        return@action
-                    }
-
-                    if (tag.data is AliasTag) {
-                        it.message.respond(
-                                "Invalid alias - this alias points to another alias: " +
-                                        "`$tagName` -> `${data.target}`"
-                        )
-                        return@action
-                    }
-                }
-
-                val markdown = try {
-                    substitute(tag.markdown, args)
-                } catch (e: TagMissingArgumentException) {
-                    it.message.respond(e.toString())
-                    return@action
-                }
-
-                if (tag.data is TextTag) {
-                    it.message.channel.createMessage {
-                        content = markdown!!  // If it's a text tag, the markdown is not null
-
-                        allowedMentions { }  // Nope
-                    }
-                } else if (tag.data is EmbedTag) {
-                    val data = tag.data as EmbedTag
-
-                    it.message.channel.createEmbed {
-                        Embed(data.embed, bot.kord).apply(this)
-
-                        data.embed.fields.forEach {
-                            // They'll fix this, but for now...
-                            field {
-                                inline = it.inline ?: false
-
-                                name = it.name
-                                value = it.value
-                            }
-                        }
-
-                        description = markdown ?: data.embed.description
-
-                        if (data.colour != null) {
-                            val colourString = data.colour!!.toLowerCase()
-
-                            color = Colours.fromName(colourString) ?: Color.decode(colourString)
-                        }
-                    }
-                }
+                sendTag(it.message, tag, args)
             }
         }
 
@@ -537,6 +483,49 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
                     paginator.send()
                 }
             }
+
+            command {
+                name = "test"
+                description = "Test a tag given the content of the file."
+                signature(::TagTestArgs)
+
+                action {
+                    with(parse(::TagTestArgs)) {
+                        if (!message.requireBotChannel(delay = DELETE_DELAY)) {
+                            return@action
+                        }
+                        val parser = this@TagsExtension.parser
+
+                        val (tag, errors) = parser.createTag(content!!)
+
+                        if (errors.isNotEmpty()) {
+                            var description = "The following errors were encountered.\n\n"
+
+                            description += errors.toList()
+                                .take(MAX_ERRORS)
+                                .joinToString(
+                                    prefix = "The tag ",
+                                    separator = "\n\n",
+                                    truncated = "\n\n**...plus ${errors.size - MAX_ERRORS} more.**")
+
+
+                            message.respond {
+                                content = "" // FIXME: This is nullable, but null turns into "null", not ""
+                                embed {
+                                    color = Colours.NEGATIVE
+                                    title = "Tag-loading errors"
+
+                                    this.description = description
+                                }
+                            }
+                        } else {
+                            sendTag(message, tag, listOf()) //FIXME: Argument parsing
+                        }
+
+
+                    }
+                }
+            }
         }
     }
 
@@ -601,6 +590,76 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
     }
 
     /**
+     * Send a message from a tag.
+     *
+     * @param msg Message this is in response to
+     * @param initialTag Tag to be sent
+     * @param args Arguments to the tag
+     */
+    suspend fun sendTag(msg: Message, initialTag: Tag?, args: List<String>) {
+        var tag = initialTag
+        if (tag!!.data is AliasTag) {
+            val data = tag.data as AliasTag
+
+            tag = this@TagsExtension.parser.getTag(data.target)
+
+            if (tag == null) {
+                msg.respond(
+                    "Invalid alias - no such alias target: `${data.target}`"
+                )
+                return
+            }
+
+            if (tag.data is AliasTag) {
+                msg.respond(
+                    "Invalid alias - this alias points to another alias: ${data.target}`"
+                )
+                return
+            }
+        }
+
+        val markdown = try {
+            substitute(tag.markdown, args)
+        } catch (e: TagMissingArgumentException) {
+            msg.respond(e.toString())
+            return
+        }
+
+        if (tag.data is TextTag) {
+            msg.channel.createMessage {
+                content = markdown!!  // If it's a text tag, the markdown is not null
+
+                allowedMentions { }  // Nope
+            }
+        } else if (tag.data is EmbedTag) {
+            val data = tag.data as EmbedTag
+
+            msg.channel.createEmbed {
+                Embed(data.embed, bot.kord).apply(this)
+
+                data.embed.fields.forEach {
+                    // They'll fix this, but for now...
+                    field {
+                        inline = it.inline ?: false
+
+                        name = it.name
+                        value = it.value
+                    }
+                }
+
+                description = markdown ?: data.embed.description
+
+                if (data.colour != null) {
+                    val colourString = data.colour!!.toLowerCase()
+
+                    color = Colours.fromName(colourString) ?: Color.decode(colourString)
+                }
+            }
+        }
+
+    }
+
+    /**
      * Arguments for commands that just want a tag name.
      *
      * @property tagName Name of the tag
@@ -618,5 +677,15 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
     @Suppress("UndocumentedPublicProperty")
     class TagSearchArgs : Arguments() {
         val query by coalescedString("query")
+    }
+
+    /**
+     * Arguments for the tag test command.
+     *
+     * @property content Content of the tag
+     */
+    @Suppress("UndocumentedPublicProperty")
+    class TagTestArgs : Arguments() {
+        val content by coalescedString("tag")
     }
 }
