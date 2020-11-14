@@ -22,7 +22,7 @@ private val logger = KotlinLogging.logger {}
  * @param rootPath Root path containing all of the tags.
  */
 class TagParser(private val rootPath: String) {
-    /** Mapping of all loaded tags. Names are not normalized.**/
+    /** Mapping of all loaded tags. Names are not normalised.**/
     val tags: MutableMap<String, Tag> = mutableMapOf()
 
     /** Suffix for all tag files. **/
@@ -31,14 +31,14 @@ class TagParser(private val rootPath: String) {
     /**
      * Load all tags up from the root path. Overwrites any already-loaded tags.
      *
-     * @return A map of tag name to error, if any errors happened while tags were being loaded.
+     * @return A map of tag name to errors, if any errors happened while tags were being loaded.
      */
-    fun loadAll(infoLogging: Boolean = false): MutableMap<String, String> {
+    fun loadAll(infoLogging: Boolean = false): MutableMap<String, out List<String>> {
         tags.clear()
 
         val root = File(rootPath)
         val rootPathNormalised = root.toString()
-        val errors: MutableMap<String, String> = mutableMapOf()
+        val errors: MutableMap<String, MutableList<String>> = mutableMapOf()
 
         logger.debug { "Loading tags from $rootPathNormalised" }
 
@@ -48,9 +48,9 @@ class TagParser(private val rootPath: String) {
             if (path.endsWith(suffix)) {
                 val tagName = path.substring(1).substringBeforeLast(".")
 
-                val (tag, error) = loadTag(tagName)
+                val (tag, currentErrors) = loadTag(tagName)
 
-                if (error == null) {
+                if (currentErrors.isEmpty()) {
                     if (infoLogging) {
                         logger.info { "Tag loaded: $tagName" }
                     } else {
@@ -59,7 +59,13 @@ class TagParser(private val rootPath: String) {
 
                     tags[tagName] = tag!!
                 } else {
-                    errors[tagName] = error
+                    currentErrors.forEach {
+                        logger.error {
+                            "Tag $tagName $it"
+                        }
+                    }
+
+                    errors[tagName] = currentErrors
                 }
             }
         }
@@ -74,12 +80,12 @@ class TagParser(private val rootPath: String) {
                 if (target == null) {
                     badAliases.add(entry.key)
 
-                    errors[entry.key] = "Alias '${entry.key}' points to a tag that doesn't exist: '${data.target}'"
+                    errors[entry.key]?.add("Alias '${entry.key}' points to a tag that doesn't exist: '${data.target}'")
                     logger.error { "Alias '${entry.key}' points to a tag that doesn't exist: '${data.target}'" }
                 } else if (target.data is AliasTag) {
                     badAliases.add(entry.key)
 
-                    errors[entry.key] = "Alias '${entry.key}' points to another alias: '${data.target}'"
+                    errors[entry.key]?.add("Alias '${entry.key}' points to another alias: '${data.target}'")
                     logger.error { "Alias '${entry.key}' points to another alias: '${data.target}'" }
                 }
             }
@@ -102,35 +108,7 @@ class TagParser(private val rootPath: String) {
      *
      * @return Pair of Tag object (if it parsed properly) and list of error strings.
      */
-    //fun createTag(from: String): Pair<Tag?, String?> {
-//
- //   }
-
-    /**
-     * Load a specific tag by name.
-     *
-     * @return Pair of Tag object (if it loaded properly) and error string (if it failed to load).
-     */
-    fun loadTag(name: String): Pair<Tag?, String?> {
-        val file = Path.of(rootPath).resolve("$name$suffix").toFile()
-
-        logger.debug { "Loading tag: $name" }
-
-        if (!file.exists()) {
-            logger.error { "Tag '$name' does not exist." }
-            return Pair(null, "Tag '$name' does not exist.")
-        }
-
-        if (name.contains('_')) {
-            logger.warn { "Tag '$name' contains an underscore - this should be replaced with a dash." }
-        }
-
-        if (name.contains(CAPS)) {
-            logger.warn { "Tag '$name' contains at least one uppercase letter - tags should be completely lowercase." }
-        }
-
-        val content = file.readText().replace("\r", "")
-
+    fun createTag(content: String): Pair<Tag?, MutableList<String>> {
         var yaml: String = ""
         var markdown: String? = null
 
@@ -141,49 +119,79 @@ class TagParser(private val rootPath: String) {
             markdown = content.substringAfter(SEPARATOR).trim()
         }
 
+        val errors = mutableListOf<String>()
+
         @Suppress("TooGenericExceptionCaught")
         val tagData = try {
             format.decodeFromString(TagData.serializer(), yaml)
         } catch (t: Throwable) {
-            logger.error(t) { "Tag '$name' does not contain a valid YAML front matter." }
-            return Pair(null, "Tag '$name' does not contain a valid YAML front matter.")
+            errors.add("does not contain a valid YAML front matter.")
+            return Pair(null, errors)
         }
 
         if (tagData !is AliasTag && markdown == null) {
-            logger.error { "Tag '$name' requires Markdown content - is it separated with '---'?" }
-            return Pair(null, "Tag '$name' requires Markdown content - is it separated with '---'?")
+            errors.add("does not contain Markdown content - is it separated with '---'?")
+            return Pair(null, errors)
         } else if (tagData is AliasTag && markdown != null) {
-            logger.warn {
-                "Tag '$name' is an alias tag, but it contains Markdown content. Please consider removing it."
-            }
+            errors.add(
+                "contains Markdown content, despite being an alias. Please consider removing it."
+            )
         } else if (tagData is EmbedTag) {
             if (tagData.embed.color != null) {
-                logger.error {
-                    "Embed tag '$name' has the colour property set in the embed object. Set it at root level instead."
-                }
+                errors.add(
+                    "has the colour property set in the embed object. Set it at root level instead."
+                )
                 return Pair(
-                        null,
-                        "Embed tag '$name' has the colour property set in the embed object. " +
-                                "Set it at root level instead."
+                    null,
+                    errors
                 )
             }
 
             if (tagData.embed.description != null) {
-                logger.error {
-                    "Embed tag '$name' has the description property set in the embed object. " +
+                errors.add(
+                    "has the description property set in the embed object. " +
                             "Markdown content should instead be provided after the separator, '---'."
-                }
+                )
                 return Pair(
-                        null,
-                        "Embed tag '$name' has the description property set in the embed object. " +
-                                "Markdown content should instead be provided after the separator, '---'."
+                    null,
+                    errors
                 )
             }
         }
 
         val tag = Tag(tagData, markdown)
 
-        return Pair(tag, null)
+        return Pair(tag, errors)
+
+    }
+
+    /**
+     * Load a specific tag by name.
+     *
+     * @return Pair of Tag object (if it loaded properly) and error string (if it failed to load).
+     */
+    fun loadTag(name: String): Pair<Tag?, MutableList<String>> {
+        logger.debug { "Loading tag: $name" }
+
+        val file = Path.of(rootPath).resolve("$name$suffix").toFile()
+        val content = file.readText().replace("\r", "")
+
+        if (!file.exists()) {
+            return Pair(null, mutableListOf("does not exist."))
+        }
+
+        val (tag, errors) = createTag(content)
+
+        if (name.contains('_')) {
+            errors.add("contains an underscore - this should be replaced with a dash.")
+        }
+
+        if (name.contains(CAPS)) {
+            errors.add("contains at least one uppercase letter - tags should be completely lowercase.")
+        }
+
+        return Pair(tag, errors)
+
     }
 
     /**
