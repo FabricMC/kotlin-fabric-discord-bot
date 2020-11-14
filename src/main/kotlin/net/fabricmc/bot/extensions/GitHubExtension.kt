@@ -3,6 +3,8 @@ package net.fabricmc.bot.extensions
 import com.gitlab.kordlib.core.behavior.channel.createEmbed
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import com.kotlindiscord.kord.extensions.checks.topRoleHigherOrEqual
+import com.kotlindiscord.kord.extensions.commands.converters.string
+import com.kotlindiscord.kord.extensions.commands.parser.Arguments
 import com.kotlindiscord.kord.extensions.extensions.Extension
 import io.ktor.client.HttpClient
 import io.ktor.client.features.defaultRequest
@@ -15,7 +17,7 @@ import net.fabricmc.bot.conf.config
 import net.fabricmc.bot.constants.Colours
 import net.fabricmc.bot.defaultCheck
 import net.fabricmc.bot.enums.Roles
-import net.fabricmc.bot.utils.requireGuildChannel
+import net.fabricmc.bot.utils.requireMainGuild
 
 /**
  * GitHub extension, containing commands for moderating users on GitHub, from discord.
@@ -25,12 +27,11 @@ class GitHubExtension(bot: ExtensibleBot) : Extension(bot) {
 
     /**
      * Arguments for the !github (un)block commands.
-     *
-     * @param user the GitHub username to act on.
      */
-    data class BlockArgs(
-            val user: String,
-    )
+    class GithubUserArgs : Arguments() {
+        /** The GitHub username to act on. **/
+        val user by string("user")
+    }
 
     override suspend fun setup() {
         group {
@@ -46,23 +47,25 @@ class GitHubExtension(bot: ExtensibleBot) : Extension(bot) {
                 name = "block"
                 aliases = arrayOf("ban")
                 description = "Block a user from the ${config.githubOrganization} GitHub organization."
-                signature<BlockArgs>()
+                signature(::GithubUserArgs)
 
                 action {
-                    if (!message.requireGuildChannel(Roles.ADMIN)) {
+                    if (!message.requireMainGuild(Roles.ADMIN)) {
                         return@action
                     }
 
-                    with(parse<BlockArgs>()) {
+                    with(parse(::GithubUserArgs)) {
                         if (isBlocked(user)) {
                             message.channel.createEmbed {
                                 title = "$user is already blocked."
                                 color = Colours.NEGATIVE
                             }
                         }
+
                         val resp = client.put<HttpResponse> {
                             url("/orgs/${config.githubOrganization}/blocks/$user".encodeURLPath())
                         }
+
                         if (resp.status == HttpStatusCode.NoContent) {
                             message.channel.createEmbed {
                                 title = "$user has been blocked from the ${config.githubOrganization} organization."
@@ -77,23 +80,25 @@ class GitHubExtension(bot: ExtensibleBot) : Extension(bot) {
                 name = "unblock"
                 aliases = arrayOf("unban")
                 description = "Unblock a user from the ${config.githubOrganization} GitHub organization."
-                signature<BlockArgs>()
+                signature(::GithubUserArgs)
 
                 action {
-                    if (!message.requireGuildChannel(Roles.ADMIN)) {
+                    if (!message.requireMainGuild(Roles.ADMIN)) {
                         return@action
                     }
 
-                    with(parse<BlockArgs>()) {
+                    with(parse(::GithubUserArgs)) {
                         if (!isBlocked(user)) {
                             message.channel.createEmbed {
                                 title = "$user is not blocked."
                                 color = Colours.NEGATIVE
                             }
                         }
+
                         val resp = client.delete<HttpResponse> {
                             url("/orgs/${config.githubOrganization}/blocks/$user".encodeURLPath())
                         }
+
                         if (resp.status == HttpStatusCode.NoContent) {
                             message.channel.createEmbed {
                                 title = "$user has been unblocked from the ${config.githubOrganization} organization."
@@ -117,13 +122,14 @@ class GitHubExtension(bot: ExtensibleBot) : Extension(bot) {
     }
 
     private suspend fun isBlocked(user: String): Boolean {
-        val resp =
-                client.get<HttpResponse> {
-                    url("/orgs/${config.githubOrganization}/blocks/$user".encodeURLPath())
-                }
+        val resp = client.get<HttpResponse> {
+            url("/orgs/${config.githubOrganization}/blocks/$user".encodeURLPath())
+        }
+
         return when (resp.status) {
             HttpStatusCode.NoContent -> true
             HttpStatusCode.NotFound -> false
+
             else -> error("User is neither blocked nor unblocked")
         }
     }

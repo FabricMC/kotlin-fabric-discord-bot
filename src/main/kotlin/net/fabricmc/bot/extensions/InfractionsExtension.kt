@@ -13,7 +13,13 @@ import com.kotlindiscord.kord.extensions.Paginator
 import com.kotlindiscord.kord.extensions.checks.inGuild
 import com.kotlindiscord.kord.extensions.checks.topRoleHigherOrEqual
 import com.kotlindiscord.kord.extensions.checks.topRoleLower
+import com.kotlindiscord.kord.extensions.commands.converters.*
+import com.kotlindiscord.kord.extensions.commands.parser.Arguments
 import com.kotlindiscord.kord.extensions.extensions.Extension
+import com.kotlindiscord.kord.extensions.utils.deltas.MemberDelta
+import com.kotlindiscord.kord.extensions.utils.dm
+import com.kotlindiscord.kord.extensions.utils.respond
+import com.kotlindiscord.kord.extensions.utils.runSuspended
 import mu.KotlinLogging
 import net.fabricmc.bot.conf.config
 import net.fabricmc.bot.constants.Colours
@@ -23,12 +29,7 @@ import net.fabricmc.bot.enums.InfractionTypes
 import net.fabricmc.bot.enums.Roles
 import net.fabricmc.bot.enums.getInfractionType
 import net.fabricmc.bot.extensions.infractions.*
-import net.fabricmc.bot.runSuspended
-import net.fabricmc.bot.utils.deltas.MemberDelta
-import net.fabricmc.bot.utils.dm
-import net.fabricmc.bot.utils.modLog
-import net.fabricmc.bot.utils.requireGuildChannel
-import net.fabricmc.bot.utils.respond
+import net.fabricmc.bot.utils.*
 import java.time.Instant
 
 private const val PAGINATOR_TIMEOUT = 120 * 1000L
@@ -72,50 +73,6 @@ private const val FILTERS = "**__Filters__**\n" +
 
 private val logger = KotlinLogging.logger {}
 
-/**
- * Arguments for the infraction search command.
- */
-@Suppress("UndocumentedPublicProperty")
-data class InfractionSearchCommandArgs(
-        val target: User? = null,
-        val targetId: Long? = null,
-
-        val moderator: User? = null,
-        val moderatorId: Long? = null,
-
-        val type: String? = null,
-        val active: Boolean? = null,
-
-        val targetName: String? = null
-)
-
-/**
- * Arguments for the infraction reason command.
- */
-@Suppress("UndocumentedPublicProperty")
-data class InfractionReasonCommandArgs(
-        val id: String,
-        val reason: List<String> = listOf()
-)
-
-/**
- * Arguments for infraction commands that only take an ID.
- */
-@Suppress("UndocumentedPublicProperty")
-data class InfractionIDCommandArgs(
-        val id: String
-)
-
-/**
- * Arguments for the nickname command.
- */
-@Suppress("UndocumentedPublicProperty")
-data class InfractionNickCommandArgs(
-        val target: User? = null,
-        val targetId: Long? = null,
-
-        val nickname: List<String> = listOf()
-)
 
 /**
  * Infractions extension, containing commands used to apply and remove infractions.
@@ -217,11 +174,11 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
             )
 
             action {
-                if (!message.requireGuildChannel(null)) {
+                if (!message.requireMainGuild(null)) {
                     return@action
                 }
 
-                with(parse<InfractionNickCommandArgs>()) {
+                with(parse(::InfractionNickCommandArgs)) {
                     if (target != null && targetId != null) {
                         message.respond("Please specify a user mention or user ID - not both.")
                         return@action
@@ -243,10 +200,10 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
 
                     val oldNick = member.nickname
 
-                    val newNick = if (nickname.isEmpty()) {
+                    val newNick = if (nickname.isNullOrEmpty()) {
                         member.username  // Until Kord figures out this null/missing stuff
                     } else {
-                        nickname.joinToString(" ")
+                        nickname
                     }
 
                     sanctionedNickChanges.put(memberId, newNick)
@@ -324,15 +281,15 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                 description = "Get information on a specific infraction by ID. Infraction IDs are UUIDs, and can" +
                         "be found in the footer of every infraction embed."
 
-                signature<InfractionIDCommandArgs>()
+                signature(::InfractionIDCommandArgs)
 
                 action {
-                    if (!message.requireGuildChannel(null)) {
+                    if (!message.requireMainGuild(null)) {
                         return@action
                     }
 
                     runSuspended {
-                        with(parse<InfractionIDCommandArgs>()) {
+                        with(parse(::InfractionIDCommandArgs)) {
                             val inf = infQ.getInfraction(id).executeAsOneOrNull()
                             val embedBuilder = infractionToEmbed(inf)
 
@@ -360,15 +317,15 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                         topRoleHigherOrEqual(config.getRole(Roles.MODERATOR))
                 )
 
-                signature<InfractionIDCommandArgs>()
+                signature(::InfractionIDCommandArgs)
 
                 action {
-                    if (!message.requireGuildChannel(null)) {
+                    if (!message.requireMainGuild(null)) {
                         return@action
                     }
 
                     runSuspended {
-                        with(parse<InfractionIDCommandArgs>()) {
+                        with(parse(::InfractionIDCommandArgs)) {
                             val inf = infQ.getInfraction(id).executeAsOneOrNull()
 
                             if (inf == null) {
@@ -421,15 +378,15 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                         topRoleHigherOrEqual(config.getRole(Roles.MODERATOR))
                 )
 
-                signature<InfractionIDCommandArgs>()
+                signature(::InfractionIDCommandArgs)
 
                 action {
-                    if (!message.requireGuildChannel(null)) {
+                    if (!message.requireMainGuild(null)) {
                         return@action
                     }
 
                     runSuspended {
-                        with(parse<InfractionIDCommandArgs>()) {
+                        with(parse(::InfractionIDCommandArgs)) {
                             val inf = infQ.getInfraction(id).executeAsOneOrNull()
 
                             if (inf == null) {
@@ -494,15 +451,15 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                         topRoleHigherOrEqual(config.getRole(Roles.MODERATOR))
                 )
 
-                signature<InfractionReasonCommandArgs>()
+                signature(::InfractionReasonCommandArgs)
 
                 action {
-                    if (!message.requireGuildChannel(null)) {
+                    if (!message.requireMainGuild(null)) {
                         return@action
                     }
 
                     runSuspended {
-                        with(parse<InfractionReasonCommandArgs>()) {
+                        with(parse(::InfractionReasonCommandArgs)) {
                             val inf = infQ.getInfraction(id).executeAsOneOrNull()
 
                             if (inf == null) {
@@ -513,7 +470,7 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                                 return@with
                             }
 
-                            if (reason.isEmpty()) {
+                            if (reason.isNullOrEmpty()) {
                                 message.respond(
                                         "Reason for infraction `$id` is:\n" +
                                                 ">>> ${inf.reason}"
@@ -522,20 +479,18 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                                 return@with
                             }
 
-                            val joinedReason = reason.joinToString(" ")
-
-                            infQ.setInfractionReason(joinedReason, id)
+                            infQ.setInfractionReason(reason!!, id)
 
                             message.respond(
                                     "Reason for infraction `$id` updated to:\n" +
-                                            ">>> $joinedReason"
+                                            ">>> $reason"
                             )
 
                             modLog {
                                 title = "Infraction reason updated"
                                 color = Colours.BLURPLE
 
-                                description = "**Reason:** $joinedReason"
+                                description = "**Reason:** $reason"
 
                                 field {
                                     name = "Moderator"
@@ -561,12 +516,12 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                 signature = "<filter> [filter ...]"
 
                 action {
-                    if (!message.requireGuildChannel(null)) {
+                    if (!message.requireMainGuild(null)) {
                         return@action
                     }
 
                     runSuspended {
-                        with(parse<InfractionSearchCommandArgs>()) {
+                        with(parse(::InfractionSearchCommandArgs)) {
                             val author = message.author!!
                             val validateMessage = validateSearchArgs(this)
 
@@ -598,7 +553,7 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
 
                             if (type != null) {
                                 infractions = infractions.filter {
-                                    it.infraction_type == getInfractionType(type)
+                                    it.infraction_type == getInfractionType(type!!)
                                 }
                             }
 
@@ -928,4 +883,50 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
             } else {
                 member?.id?.longValue ?: id!!
             }
+
+
+    /**
+     * Arguments for the infraction search command.
+     */
+    @Suppress("UndocumentedPublicProperty")
+    class InfractionSearchCommandArgs : Arguments() {
+        val target by optionalUser("target")
+        val targetId by optionalNumber("targetId")
+
+        val moderator by optionalUser("moderator")
+        val moderatorId by optionalNumber("moderatorId")
+
+        val type by optionalString("type")
+        val active by optionalBoolean("active")
+
+        val targetName by optionalString("targetName")
+    }
+
+    /**
+     * Arguments for the infraction reason command.
+     */
+    @Suppress("UndocumentedPublicProperty")
+    class InfractionReasonCommandArgs : Arguments() {
+        val id by string("id")
+        val reason by coalescedString("reason")
+    }
+
+    /**
+     * Arguments for infraction commands that only take an ID.
+     */
+    @Suppress("UndocumentedPublicProperty")
+    class InfractionIDCommandArgs : Arguments() {
+        val id by string("id")
+    }
+
+    /**
+     * Arguments for the nickname command.
+     */
+    @Suppress("UndocumentedPublicProperty")
+    class InfractionNickCommandArgs : Arguments() {
+        val target by optionalUser("target")
+        val targetId by optionalNumber("targetId")
+
+        val nickname by coalescedString("reason")
+    }
 }

@@ -3,14 +3,17 @@ package net.fabricmc.bot.extensions
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import com.kotlindiscord.kord.extensions.Paginator
 import com.kotlindiscord.kord.extensions.commands.CommandContext
+import com.kotlindiscord.kord.extensions.commands.converters.optionalString
+import com.kotlindiscord.kord.extensions.commands.converters.string
+import com.kotlindiscord.kord.extensions.commands.parser.Arguments
 import com.kotlindiscord.kord.extensions.extensions.Extension
+import com.kotlindiscord.kord.extensions.utils.respond
 import mu.KotlinLogging
 import net.fabricmc.bot.conf.config
 import net.fabricmc.bot.defaultCheck
 import net.fabricmc.bot.events.LatestMinecraftVersionsRetrieved
 import net.fabricmc.bot.extensions.mappings.*
 import net.fabricmc.bot.utils.requireBotChannel
-import net.fabricmc.bot.utils.respond
 import net.fabricmc.mapping.tree.MethodDef
 
 private const val DELETE_DELAY = 1000L * 15L // 15 seconds
@@ -18,37 +21,6 @@ private const val PAGE_TIMEOUT = 1000L * 60L * 5L  // 5 minutes
 private val VERSION_REGEX = "[a-z0-9.]+".toRegex(RegexOption.IGNORE_CASE)
 
 private val logger = KotlinLogging.logger {}
-
-/** Data class representing arguments for class-retrieval commands.
- *
- * @param class Class name to retrieve mappings for
- * @param version Optional Minecraft version to retrieve mappings for
- */
-@Suppress("ConstructorParameterNaming")  // Makes for nicer command output
-data class MappingsClassArgs(
-        val `class`: String,
-        val version: String? = null
-)
-
-/** Data class representing arguments for field-retrieval commands.
- *
- * @param field Field name to retrieve mappings for
- * @param version Optional Minecraft version to retrieve mappings for
- */
-data class MappingsFieldArgs(
-        val field: String,
-        val version: String? = null
-)
-
-/** Data class representing arguments for method-retrieval commands.
- *
- * @param method Method name to retrieve mappings for
- * @param version Optional Minecraft version to retrieve mappings for
- */
-data class MappingsMethodArgs(
-        val method: String,
-        val version: String? = null
-)
 
 /**
  * Extension that handles retrieval and querying of mappings data.
@@ -86,19 +58,19 @@ class MappingsExtension(bot: ExtensibleBot) : Extension(bot) {
                     "version respectively."
 
             check(::defaultCheck)
-            signature<MappingsClassArgs>()
+            signature(::MappingsClassArgs)
 
             action {
-                if (!message.requireBotChannel(DELETE_DELAY)) {
+                if (!message.requireBotChannel(delay = DELETE_DELAY)) {
                     return@action
                 }
 
-                with(parse<MappingsClassArgs>()) {
+                with(parse(::MappingsClassArgs)) {
                     val mcVersion = when (version?.toLowerCase()) {
                         null -> versionsExtension.latestRelease
 
-                        "release" -> mappings.versionNames[version.toLowerCase()] ?: versionsExtension.latestRelease
-                        "snapshot" -> mappings.versionNames[version.toLowerCase()] ?: versionsExtension.latestSnapshot
+                        "release" -> mappings.versionNames[version!!.toLowerCase()] ?: versionsExtension.latestRelease
+                        "snapshot" -> mappings.versionNames[version!!.toLowerCase()] ?: versionsExtension.latestSnapshot
 
                         else -> version
                     }
@@ -120,7 +92,7 @@ class MappingsExtension(bot: ExtensibleBot) : Extension(bot) {
                         return@action
                     }
 
-                    val mappingsData = mappings.getClassMappings(mcVersion, `class`)
+                    val mappingsData = mappings.getClassMappings(mcVersion, className)
 
                     if (mappingsData == null) {
                         message.respond(
@@ -150,19 +122,19 @@ class MappingsExtension(bot: ExtensibleBot) : Extension(bot) {
                     "version respectively."
 
             check(::defaultCheck)
-            signature<MappingsFieldArgs>()
+            signature(::MappingsFieldArgs)
 
             action {
-                if (!message.requireBotChannel(DELETE_DELAY)) {
+                if (!message.requireBotChannel(delay = DELETE_DELAY)) {
                     return@action
                 }
 
-                with(parse<MappingsFieldArgs>()) {
+                with(parse(::MappingsFieldArgs)) {
                     val mcVersion = when (version?.toLowerCase()) {
                         null -> versionsExtension.latestRelease
 
-                        "release" -> versionsExtension.latestRelease
-                        "snapshot" -> versionsExtension.latestSnapshot
+                        "release" -> mappings.versionNames[version!!.toLowerCase()] ?: versionsExtension.latestRelease
+                        "snapshot" -> mappings.versionNames[version!!.toLowerCase()] ?: versionsExtension.latestSnapshot
 
                         else -> version
                     }
@@ -214,19 +186,19 @@ class MappingsExtension(bot: ExtensibleBot) : Extension(bot) {
                     "version respectively."
 
             check(::defaultCheck)
-            signature<MappingsMethodArgs>()
+            signature(::MappingsMethodArgs)
 
             action {
-                if (!message.requireBotChannel(DELETE_DELAY)) {
+                if (!message.requireBotChannel(delay = DELETE_DELAY)) {
                     return@action
                 }
 
-                with(parse<MappingsMethodArgs>()) {
+                with(parse(::MappingsMethodArgs)) {
                     val mcVersion = when (version?.toLowerCase()) {
                         null -> versionsExtension.latestRelease
 
-                        "release" -> versionsExtension.latestRelease
-                        "snapshot" -> versionsExtension.latestSnapshot
+                        "release" -> mappings.versionNames[version!!.toLowerCase()] ?: versionsExtension.latestRelease
+                        "snapshot" -> mappings.versionNames[version!!.toLowerCase()] ?: versionsExtension.latestSnapshot
 
                         else -> version
                     }
@@ -319,5 +291,38 @@ class MappingsExtension(bot: ExtensibleBot) : Extension(bot) {
                 PAGE_TIMEOUT,
                 true
         ).send()
+    }
+
+    /** Class representing arguments for class-retrieval commands.
+     *
+     * @property `class` Class name to retrieve mappings for
+     * @property version Optional Minecraft version to retrieve mappings for
+     */
+    @Suppress("UndocumentedPublicProperty")
+    class MappingsClassArgs : Arguments() {
+        val className by string("class")
+        val version by optionalString("version")
+    }
+
+    /** Class representing arguments for field-retrieval commands.
+     *
+     * @property field Field name to retrieve mappings for
+     * @property version Optional Minecraft version to retrieve mappings for
+     */
+    @Suppress("UndocumentedPublicProperty")
+    class MappingsFieldArgs : Arguments() {
+        val field by string("field")
+        val version by optionalString("version")
+    }
+
+    /** Class representing arguments for method-retrieval commands.
+     *
+     * @property method Method name to retrieve mappings for
+     * @property version Optional Minecraft version to retrieve mappings for
+     */
+    @Suppress("UndocumentedPublicProperty")
+    class MappingsMethodArgs : Arguments() {
+        val method by string("method")
+        val version by optionalString("version")
     }
 }

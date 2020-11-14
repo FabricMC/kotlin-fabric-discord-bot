@@ -4,10 +4,10 @@ import com.gitlab.kordlib.core.behavior.channel.createEmbed
 import com.gitlab.kordlib.rest.builder.message.EmbedBuilder
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import com.kotlindiscord.kord.extensions.extensions.Extension
+import com.kotlindiscord.kord.extensions.utils.hasRole
 import net.fabricmc.bot.conf.config
 import net.fabricmc.bot.constants.Colours
 import net.fabricmc.bot.enums.Roles
-import net.fabricmc.bot.hasRole
 import net.fabricmc.bot.utils.requireBotChannel
 
 private const val DELETE_DELAY = 10_000L  // 10 seconds
@@ -24,7 +24,7 @@ class SelfRoleExtension(bot: ExtensibleBot) : Extension(bot) {
             description = "Toggle hiding community channels, leaving only ones about development."
 
             action {
-                if (!message.requireBotChannel(DELETE_DELAY, allowDm = false)) {
+                if (!message.requireBotChannel(delay = DELETE_DELAY, allowDm = false)) {
                     return@action
                 }
 

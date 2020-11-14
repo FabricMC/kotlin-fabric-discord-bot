@@ -7,15 +7,19 @@ import com.gitlab.kordlib.core.entity.PermissionOverwrite
 import com.gitlab.kordlib.core.entity.channel.*
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import com.kotlindiscord.kord.extensions.checks.topRoleHigherOrEqual
+import com.kotlindiscord.kord.extensions.commands.converters.optionalChannel
+import com.kotlindiscord.kord.extensions.commands.converters.optionalDuration
+import com.kotlindiscord.kord.extensions.commands.converters.optionalNumber
+import com.kotlindiscord.kord.extensions.commands.parser.Arguments
 import com.kotlindiscord.kord.extensions.extensions.Extension
 import com.kotlindiscord.kord.extensions.utils.Scheduler
+import com.kotlindiscord.kord.extensions.utils.toHuman
 import net.fabricmc.bot.conf.config
 import net.fabricmc.bot.constants.Colours
 import net.fabricmc.bot.defaultCheck
 import net.fabricmc.bot.enums.Roles
-import net.fabricmc.bot.toHuman
 import net.fabricmc.bot.utils.modLog
-import net.fabricmc.bot.utils.requireGuildChannel
+import net.fabricmc.bot.utils.requireMainGuild
 import java.time.Duration
 import java.time.Instant
 import java.time.temporal.ChronoUnit
@@ -46,28 +50,6 @@ class ModerationExtension(bot: ExtensibleBot) : Extension(bot) {
     private val scheduler = Scheduler()
     private val lockJobs: MutableMap<Long, UUID> = mutableMapOf()
 
-    /**
-     * Arguments for commands that take a duration and channel.
-     *
-     * @param durationInt Int-style duration representing the duration.
-     * @param duration Duration object representing the duration.
-     * @param channel Channel to action the command in.
-     **/
-    data class DurationChannelCommandArgs(
-            val durationInt: Long? = null,
-            val duration: Duration? = null,
-            val channel: Channel? = null
-    )
-
-    /**
-     * Arguments for the unlock command.
-     *
-     * @param channel Channel to action the command in.
-     */
-    data class UnlockArgs(
-            val channel: Channel? = null
-    )
-
     override suspend fun setup() {
         command {
             name = "lock"
@@ -84,16 +66,16 @@ class ModerationExtension(bot: ExtensibleBot) : Extension(bot) {
             )
 
             action {
-                if (!message.requireGuildChannel(null)) {
+                if (!message.requireMainGuild(null)) {
                     return@action
                 }
 
-                with(parse<DurationChannelCommandArgs>()) {
+                with(parse(::DurationChannelCommandArgs)) {
                     val author = message.author!!
                     val channelObj = (channel ?: message.channel).asChannel() as GuildChannel
 
                     val durationObj = duration ?: if (durationInt != null) {
-                        Duration.of(durationInt, ChronoUnit.SECONDS)
+                        Duration.of(durationInt!!, ChronoUnit.SECONDS)
                     } else {
                         Duration.of(DEFAULT_LOCK_MINUTES, ChronoUnit.MINUTES)
                     }
@@ -175,11 +157,11 @@ class ModerationExtension(bot: ExtensibleBot) : Extension(bot) {
             )
 
             action {
-                if (!message.requireGuildChannel(null)) {
+                if (!message.requireMainGuild(null)) {
                     return@action
                 }
 
-                with(parse<UnlockArgs>()) {
+                with(parse(::UnlockArgs)) {
                     val author = message.author!!
                     val channelObj = (channel ?: message.channel).asChannel() as GuildChannel
 
@@ -247,11 +229,11 @@ class ModerationExtension(bot: ExtensibleBot) : Extension(bot) {
             )
 
             action {
-                if (!message.requireGuildChannel(null)) {
+                if (!message.requireMainGuild(null)) {
                     return@action
                 }
 
-                with(parse<DurationChannelCommandArgs>()) {
+                with(parse(::DurationChannelCommandArgs)) {
                     val author = message.author!!
 
                     if (this.duration != null && this.durationInt != null) {
@@ -263,7 +245,7 @@ class ModerationExtension(bot: ExtensibleBot) : Extension(bot) {
                     }
 
                     val durationObj = duration ?: if (durationInt != null) {
-                        Duration.of(durationInt, ChronoUnit.SECONDS)
+                        Duration.of(durationInt!!, ChronoUnit.SECONDS)
                     } else {
                         Duration.ZERO
                     }
@@ -332,5 +314,29 @@ class ModerationExtension(bot: ExtensibleBot) : Extension(bot) {
                 }
             }
         }
+    }
+
+    /**
+     * Arguments for commands that take a duration and channel.
+     *
+     * @property durationInt Int-style duration representing the duration.
+     * @property duration Duration object representing the duration.
+     * @property channel Channel to action the command in.
+     **/
+    @Suppress("UndocumentedPublicProperty")
+    class DurationChannelCommandArgs : Arguments() {
+        val durationInt by optionalNumber("durationInt")
+        val duration by optionalDuration("duration")
+        val channel by optionalChannel("channel")
+    }
+
+    /**
+     * Arguments for the unlock command.
+     *
+     * @property channel Channel to action the command in.
+     */
+    @Suppress("UndocumentedPublicProperty")
+    class UnlockArgs : Arguments() {
+        val channel by optionalChannel("channel")
     }
 }

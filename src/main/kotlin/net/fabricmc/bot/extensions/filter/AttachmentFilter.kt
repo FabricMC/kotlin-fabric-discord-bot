@@ -5,7 +5,7 @@ import com.gitlab.kordlib.core.entity.Message
 import com.gitlab.kordlib.core.event.message.MessageCreateEvent
 import com.gitlab.kordlib.core.event.message.MessageUpdateEvent
 import com.kotlindiscord.kord.extensions.ExtensibleBot
-import net.fabricmc.bot.deleteIgnoringNotFound
+import com.kotlindiscord.kord.extensions.utils.deleteIgnoringNotFound
 
 // TODO: Think about allowing undisplayable extensions in specific channels
 

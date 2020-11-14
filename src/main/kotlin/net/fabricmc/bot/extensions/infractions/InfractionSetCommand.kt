@@ -9,7 +9,14 @@ import com.gitlab.kordlib.core.event.message.MessageCreateEvent
 import com.kotlindiscord.kord.extensions.checks.topRoleHigherOrEqual
 import com.kotlindiscord.kord.extensions.commands.Command
 import com.kotlindiscord.kord.extensions.commands.CommandContext
+import com.kotlindiscord.kord.extensions.commands.converters.coalescedString
+import com.kotlindiscord.kord.extensions.commands.converters.defaultingDuration
+import com.kotlindiscord.kord.extensions.commands.converters.optionalNumber
+import com.kotlindiscord.kord.extensions.commands.converters.optionalUser
+import com.kotlindiscord.kord.extensions.commands.parser.Arguments
 import com.kotlindiscord.kord.extensions.extensions.Extension
+import com.kotlindiscord.kord.extensions.utils.dm
+import com.kotlindiscord.kord.extensions.utils.runSuspended
 import mu.KotlinLogging
 import net.fabricmc.bot.bot
 import net.fabricmc.bot.conf.config
@@ -18,38 +25,10 @@ import net.fabricmc.bot.database.Infraction
 import net.fabricmc.bot.defaultCheck
 import net.fabricmc.bot.enums.InfractionTypes
 import net.fabricmc.bot.enums.Roles
-import net.fabricmc.bot.runSuspended
-import net.fabricmc.bot.utils.dm
 import net.fabricmc.bot.utils.modLog
-import net.fabricmc.bot.utils.requireGuildChannel
+import net.fabricmc.bot.utils.requireMainGuild
 import java.time.Duration
 import java.time.Instant
-
-/** Data class representing the arguments for an infraction type that doesn't expire.
- *
- * @param member The member to infract.
- * @param memberLong The ID of the member to infract, if they're not on the server.
- * @param reason The reason for the infraction.
- */
-data class InfractionSetNonExpiringCommandArgs(
-        val member: User? = null,
-        val memberLong: Long? = null,
-        val reason: List<String>
-)
-
-/** Data class representing the arguments for an infraction type that expires.
- *
- * @param member The member to infract.
- * @param memberLong The ID of the member to infract, if they're not on the server.
- * @param duration How long to infract the user for.
- * @param reason The reason for the infraction.
- */
-data class InfractionSetExpiringCommandArgs(
-        val member: User? = null,
-        val memberLong: Long? = null,
-        val duration: Duration = Duration.ZERO,
-        val reason: List<String>
-)
 
 private val logger = KotlinLogging.logger {}
 
@@ -67,7 +46,7 @@ private val logger = KotlinLogging.logger {}
 class InfractionSetCommand(extension: Extension, private val type: InfractionTypes,
                            private val commandDescription: String,
                            private val commandName: String,
-                           private val aliasList: Array<String> = arrayOf(),
+                           aliasList: Array<String> = arrayOf(),
         // This can't be suspending, see comment in InfractionActions.applyInfraction
                            private val infrAction: Infraction.(
                                    targetId: Long, expires: Instant?
@@ -76,25 +55,25 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
     private val queries = config.db.infractionQueries
 
     private val commandBody: suspend CommandContext.() -> Unit = {
-        if (message.requireGuildChannel(null)) {
+        if (message.requireMainGuild(null)) {
             if (type.expires) {
-                val args = parse<InfractionSetExpiringCommandArgs>()
+                val args = parse(::InfractionSetExpiringCommandArgs)
 
                 applyInfraction(
                         args.member,
                         args.memberLong,
                         args.duration,
-                        args.reason.joinToString(" "),
+                        args.reason ?: "",
                         message
                 )
             } else {
-                val args = parse<InfractionSetNonExpiringCommandArgs>()
+                val args = parse(::InfractionSetNonExpiringCommandArgs)
 
                 applyInfraction(
                         args.member,
                         args.memberLong,
                         null,
-                        args.reason.joinToString(" "),
+                        args.reason ?: "",
                         message
                 )
             }
@@ -287,5 +266,33 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
         }
 
         action(commandBody)
+    }
+
+    /** Class representing the arguments for an infraction type that doesn't expire.
+     *
+     * @property member The member to infract.
+     * @property memberLong The ID of the member to infract, if they're not on the server.
+     * @property reason The reason for the infraction.
+     */
+    @Suppress("UndocumentedPublicProperty")
+    class InfractionSetNonExpiringCommandArgs : Arguments() {
+        val member by optionalUser("member")
+        val memberLong by optionalNumber("memberId")
+        val reason by coalescedString("reason")
+    }
+
+    /** Class representing the arguments for an infraction type that expires.
+     *
+     * @property member The member to infract.
+     * @property memberLong The ID of the member to infract, if they're not on the server.
+     * @property duration How long to infract the user for.
+     * @property reason The reason for the infraction.
+     */
+    @Suppress("UndocumentedPublicProperty")
+    class InfractionSetExpiringCommandArgs : Arguments() {
+        val member by optionalUser("member")
+        val memberLong by optionalNumber("memberId")
+        val duration by defaultingDuration("duration", Duration.ZERO)
+        val reason by coalescedString("reason")
     }
 }
