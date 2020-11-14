@@ -9,10 +9,7 @@ import com.gitlab.kordlib.core.event.message.MessageCreateEvent
 import com.kotlindiscord.kord.extensions.checks.topRoleHigherOrEqual
 import com.kotlindiscord.kord.extensions.commands.Command
 import com.kotlindiscord.kord.extensions.commands.CommandContext
-import com.kotlindiscord.kord.extensions.commands.converters.coalescedString
-import com.kotlindiscord.kord.extensions.commands.converters.defaultingDuration
-import com.kotlindiscord.kord.extensions.commands.converters.optionalNumber
-import com.kotlindiscord.kord.extensions.commands.converters.optionalUser
+import com.kotlindiscord.kord.extensions.commands.converters.*
 import com.kotlindiscord.kord.extensions.commands.parser.Arguments
 import com.kotlindiscord.kord.extensions.extensions.Extension
 import com.kotlindiscord.kord.extensions.utils.dm
@@ -63,7 +60,7 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
                         args.member,
                         args.memberLong,
                         args.duration,
-                        args.reason ?: "",
+                        args.reason,
                         message
                 )
             } else {
@@ -73,7 +70,7 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
                         args.member,
                         args.memberLong,
                         null,
-                        args.reason ?: "",
+                        args.reason,
                         message
                 )
             }
@@ -292,7 +289,7 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
     class InfractionSetExpiringCommandArgs : Arguments() {
         val member by optionalUser("member")
         val memberLong by optionalNumber("memberId")
-        val duration by defaultingDuration("duration", Duration.ZERO)
+        val duration by defaultingCoalescedDuration("duration", Duration.ZERO)
         val reason by coalescedString("reason")
     }
 }

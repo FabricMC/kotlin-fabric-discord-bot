@@ -364,30 +364,30 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
                         val markdownMatches = mutableSetOf<String>()
 
                         parser.tags.forEach { (name, tag) ->
-                            if (name.contains(query!!)) {
+                            if (name.contains(query)) {
                                 nameMatches.add(name)
                             }
 
-                            if (tag.markdown?.contains(query!!) == true) {
+                            if (tag.markdown?.contains(query) == true) {
                                 markdownMatches.add(name)
                             }
 
                             if (tag.data is AliasTag) {
                                 val data = tag.data as AliasTag
 
-                                if (data.target.contains(query!!)) {
+                                if (data.target.contains(query)) {
                                     aliasTargetMatches.add(Pair(name, data.target))
                                 }
                             } else if (tag.data is EmbedTag) {
                                 val data = tag.data as EmbedTag
 
                                 for (field in data.embed.fields) {
-                                    if (field.name.contains(query!!)) {
+                                    if (field.name.contains(query)) {
                                         embedFieldMatches.add(name)
                                         break
                                     }
 
-                                    if (field.value.contains(query!!)) {
+                                    if (field.value.contains(query)) {
                                         embedFieldMatches.add(name)
                                         break
                                     }

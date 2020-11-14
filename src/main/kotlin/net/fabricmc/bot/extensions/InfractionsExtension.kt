@@ -200,7 +200,7 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
 
                     val oldNick = member.nickname
 
-                    val newNick = if (nickname.isNullOrEmpty()) {
+                    val newNick = if (nickname.isEmpty()) {
                         member.username  // Until Kord figures out this null/missing stuff
                     } else {
                         nickname
@@ -470,7 +470,7 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                                 return@with
                             }
 
-                            if (reason.isNullOrEmpty()) {
+                            if (reason.isEmpty()) {
                                 message.respond(
                                         "Reason for infraction `$id` is:\n" +
                                                 ">>> ${inf.reason}"
@@ -479,7 +479,7 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                                 return@with
                             }
 
-                            infQ.setInfractionReason(reason!!, id)
+                            infQ.setInfractionReason(reason, id)
 
                             message.respond(
                                     "Reason for infraction `$id` updated to:\n" +

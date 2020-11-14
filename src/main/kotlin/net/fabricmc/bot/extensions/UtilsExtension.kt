@@ -59,7 +59,7 @@ class UtilsExtension(bot: ExtensibleBot) : Extension(bot) {
                         var (memberId, memberMessage) = getMemberId(user, userId)
 
                         if (memberId == null) {
-                            memberId = message.data.authorId!!
+                            memberId = message.data.authorId
                         }
 
                         if (memberId != message.data.authorId && !isModerator) {
