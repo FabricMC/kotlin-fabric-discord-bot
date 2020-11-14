@@ -6,6 +6,7 @@ import com.charleskorn.kaml.YamlConfiguration
 import mu.KotlinLogging
 import java.io.File
 import java.nio.file.Path
+import java.util.*
 
 private val CAPS = "[A-Z]".toRegex()
 private const val SEPARATOR = "\n---\n"
@@ -21,7 +22,7 @@ private val logger = KotlinLogging.logger {}
  * @param rootPath Root path containing all of the tags.
  */
 class TagParser(private val rootPath: String) {
-    /** Mapping of all loaded tags. **/
+    /** Mapping of all loaded tags. Names are not normalized.**/
     val tags: MutableMap<String, Tag> = mutableMapOf()
 
     /** Suffix for all tag files. **/
@@ -56,7 +57,7 @@ class TagParser(private val rootPath: String) {
                         logger.debug { "Tag loaded: $tagName" }
                     }
 
-                    tags[tag!!.name] = tag
+                    tags[tagName] = tag!!
                 } else {
                     errors[tagName] = error
                 }
@@ -94,6 +95,16 @@ class TagParser(private val rootPath: String) {
 
         return errors
     }
+
+
+    /**
+     * Create a tag. Expects
+     *
+     * @return Pair of Tag object (if it parsed properly) and list of error strings.
+     */
+    //fun createTag(from: String): Pair<Tag?, String?> {
+//
+ //   }
 
     /**
      * Load a specific tag by name.
@@ -170,7 +181,7 @@ class TagParser(private val rootPath: String) {
             }
         }
 
-        val tag = Tag(normalise(name), name, tagData, markdown)
+        val tag = Tag(tagData, markdown)
 
         return Pair(tag, null)
     }
@@ -187,16 +198,16 @@ class TagParser(private val rootPath: String) {
      *
      * @return List of matching Tag objects
      */
-    fun getTags(name: String): List<Tag> {
+    fun getTags(name: String): SortedMap<String, Tag> {
         val fixedName = normalise(name)
 
         val matchingTag = getTag(fixedName)
 
         if (matchingTag != null) {
-            return listOf(matchingTag)
+            return sortedMapOf(Pair(fixedName, matchingTag))
         }
 
-        return tags.filter { it.key.endsWith("/$fixedName") }.values.toList().sortedBy { it.name }
+        return tags.filter { it.key.endsWith("/$fixedName") }.toSortedMap()
     }
 
     /**

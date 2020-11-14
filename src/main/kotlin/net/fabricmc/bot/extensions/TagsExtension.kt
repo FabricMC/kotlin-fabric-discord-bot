@@ -171,14 +171,14 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
                             "Multiple tags have been found with that name. " +
                                     "Please pick one of the following:\n\n" +
 
-                                    tags.joinToString(", ") { t -> "`${t.name}`" }
+                                    tags.keys.joinToString(", ")
                     ).deleteWithDelay(DELETE_DELAY)
                     it.message.deleteWithDelay(DELETE_DELAY)
 
                     return@action
                 }
 
-                var tag: Tag? = tags.first()
+                var tag: Tag? = tags[tags.firstKey()]
 
                 if (tag!!.data is AliasTag) {
                     val data = tag.data as AliasTag
@@ -275,8 +275,8 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
                             return@action
                         }
 
-                        val url = config.git.tagsFileUrl.replace("{NAME}", tag.suppliedName)
-                        val path = "${config.git.tagsRepoPath.removePrefix("/")}/${tag.suppliedName}${parser.suffix}"
+                        val url = config.git.tagsFileUrl.replace("{NAME}", tagName)
+                        val path = "${config.git.tagsRepoPath.removePrefix("/")}/$tagName${parser.suffix}"
                         val log = git.log().addPath(path).setMaxCount(1).call()
                         val rev = log.firstOrNull()
 
@@ -485,26 +485,25 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
 
                     val parser = this@TagsExtension.parser
 
-                    val aliases = mutableListOf<Tag>()
-                    val otherTags = mutableListOf<Tag>()
+                    val aliases = sortedMapOf<String, Tag>()
+                    val otherTags = sortedMapOf<String, Tag>()
 
-                    parser.tags.values.forEach {
-                        if (it.data is AliasTag) {
-                            aliases.add(it)
+                    parser.tags.forEach {
+                        if (it.value.data is AliasTag) {
+                            aliases[it.key] = it.value
                         } else {
-                            otherTags.add(it)
+                            otherTags[it.key] = it.value
                         }
                     }
 
                     val pages = mutableListOf<String>()
 
                     if (otherTags.isNotEmpty()) {
-                        otherTags.sortBy { it.name }
-                        otherTags.chunked(CHUNK_SIZE).forEach {
+                        otherTags.asIterable().chunked(CHUNK_SIZE).forEach {
                             var page = "**__Tags__ (${otherTags.size})**\n\n"
 
-                            it.forEach { tag ->
-                                page += "**»** `${tag.name}`\n"
+                            it.forEach { entry ->
+                                page += "**»** `${entry.key}`\n"
                             }
 
                             pages.add(page)
@@ -512,14 +511,13 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
                     }
 
                     if (aliases.isNotEmpty()) {
-                        aliases.sortBy { it.name }
-                        aliases.chunked(CHUNK_SIZE).forEach {
+                        aliases.asIterable().chunked(CHUNK_SIZE).forEach {
                             var page = "**__Aliases__ (${aliases.size})**\n\n"
 
-                            it.forEach { alias ->
-                                val data = alias.data as AliasTag
+                            it.forEach { entry ->
+                                val data = entry.value.data as AliasTag
 
-                                page += "`${alias.name}` **»** `${data.target}`\n"
+                                page += "`${entry.key}` **»** `${data.target}`\n"
                             }
 
                             pages.add(page)
