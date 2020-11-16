@@ -121,6 +121,10 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
 
                     description = getInfractionMessage(false, infraction, expires)
 
+                    description += "\n\nIf you believe this infraction was applied in error or you'd like to " +
+                            "appeal it, please " +
+                            "[feel free to fill out this form](https://airtable.com/shrzEYjRF4lBteEij)."
+
                     footer {
                         text = "Infraction ID: ${infraction.id}"
                     }
