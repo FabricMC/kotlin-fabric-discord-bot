@@ -110,7 +110,7 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
         return message
     }
 
-    private suspend fun relayInfraction(infraction: Infraction, expires: Instant?) {
+    private suspend fun relayInfraction(infraction: Infraction, expires: Instant?): Boolean? {
         if (type.relay) {
             val targetObj = bot.kord.getUser(Snowflake(infraction.target_id))
 
@@ -131,12 +131,16 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
 
                     timestamp = Instant.now()
                 }
-            }
+            } ?: return false
+
+            return true
         }
+
+        return null
     }
 
     private suspend fun sendInfractionToChannel(channel: MessageChannelBehavior, infraction: Infraction,
-                                                expires: Instant?) {
+                                                expires: Instant?, relayResult: Boolean? = null) {
         channel.createEmbed {
             color = Colours.POSITIVE
             title = "Infraction created"
@@ -145,13 +149,18 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
 
             footer {
                 text = "ID: ${infraction.id}"
+
+                if (relayResult == false) {
+                    text += " • ⚠️ Failed to DM"
+                }
             }
 
             timestamp = Instant.now()
         }
     }
 
-    private suspend fun sendInfractionToModLog(infraction: Infraction, expires: Instant?, actor: User) {
+    private suspend fun sendInfractionToModLog(infraction: Infraction, expires: Instant?,
+                                               actor: User, relayResult: Boolean? = null) {
         var descriptionText = getInfractionMessage(true, infraction, expires)
 
         descriptionText += "\n\n**User ID:** `${infraction.target_id}`"
@@ -165,6 +174,10 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
 
             footer {
                 text = "ID: ${infraction.id}"
+
+                if (relayResult == false) {
+                    text += " • ⚠️ Failed to DM"
+                }
             }
         }
     }
@@ -236,12 +249,12 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
             queries.getLastInfraction().executeAsOne()
         }
 
-        relayInfraction(infraction, expires)
+        val relayResult = relayInfraction(infraction, expires)
 
         infrAction.invoke(infraction, memberId, expires)
 
-        sendInfractionToChannel(message.channel, infraction, expires)
-        sendInfractionToModLog(infraction, expires, message.author!!)
+        sendInfractionToChannel(message.channel, infraction, expires, relayResult)
+        sendInfractionToModLog(infraction, expires, message.author!!, relayResult)
     }
 
     override val checkList: MutableList<suspend (MessageCreateEvent) -> Boolean> = mutableListOf(
