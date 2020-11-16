@@ -30,7 +30,7 @@ private val blacklist = setOf(
         "liveleak.com",
 
         // Phishing/typo-squatting - not an exhaustive list, just commonly-spammed/linked domains across Discord.
-        "discord.gift", "ssteam.site", "steamwalletgift.com", "yourtube.site", "youtubeshort.watch",
+        "ssteam.site", "steamwalletgift.com", "yourtube.site", "youtubeshort.watch",
 
         // IP loggers (Grabify) - there's plenty more but these are the most common that I've seen.
         "bmwforum.co", "canadianlumberjacks.online", "catsnthing.com", "catsnthings.fun", "crabrave.pw",
