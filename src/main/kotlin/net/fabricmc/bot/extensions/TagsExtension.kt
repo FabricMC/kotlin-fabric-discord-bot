@@ -510,7 +510,6 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
 
 
                             message.respond {
-                                content = "" // FIXME: This is nullable, but null turns into "null", not ""
                                 embed {
                                     color = Colours.NEGATIVE
                                     title = "Tag-loading errors"
