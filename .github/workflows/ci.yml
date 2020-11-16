@@ -39,4 +39,4 @@ jobs:
 
         with:
           name: Tags JAR
-          path: tags/build/libs/Tags-*-SNAPSHOT-all.jar
+          path: tags/build/libs/tags-*-SNAPSHOT-all.jar
