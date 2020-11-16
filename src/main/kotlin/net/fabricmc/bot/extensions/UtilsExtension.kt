@@ -181,6 +181,8 @@ class UtilsExtension(bot: ExtensibleBot) : Extension(bot) {
                     }
                 }
 
+                val newestEmoji = guild.emojis.sortedBy { it.id.timeStamp }.lastOrNull()
+
                 message.channel.createEmbed {
                     title = guild.name
                     color = Colours.BLURPLE
@@ -215,13 +217,24 @@ class UtilsExtension(bot: ExtensibleBot) : Extension(bot) {
                     }
 
                     field {
+                        name = "Emojis"
+                        inline = true
+
+                        value = "**Total:** ${guild.emojis.size}"
+
+                        if (newestEmoji != null) {
+                            value += "\n**Latest:** ${newestEmoji.mention}"
+                        }
+                    }
+
+                    field {
                         name = "Features"
-                        inline = false
+                        inline = true
 
                         value = if (guild.features.isNotEmpty()) {
                             guild.features
                                     .filter { it != GuildFeature.Unknown }
-                                    .joinToString(", ") { "`${it.value}`" }
+                                    .joinToString("\n") { "`${it.value}`" }
                         } else {
                             "No features."
                         }
