@@ -8,7 +8,13 @@ import com.gitlab.kordlib.core.event.gateway.ReadyEvent
 import com.gitlab.kordlib.core.event.message.MessageCreateEvent
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import com.kotlindiscord.kord.extensions.Paginator
+import com.kotlindiscord.kord.extensions.commands.converters.coalescedString
+import com.kotlindiscord.kord.extensions.commands.converters.string
+import com.kotlindiscord.kord.extensions.commands.parser.Arguments
 import com.kotlindiscord.kord.extensions.extensions.Extension
+import com.kotlindiscord.kord.extensions.utils.deleteWithDelay
+import com.kotlindiscord.kord.extensions.utils.respond
+import com.kotlindiscord.kord.extensions.utils.runSuspended
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -17,14 +23,11 @@ import net.fabricmc.bot.TagMissingArgumentException
 import net.fabricmc.bot.conf.config
 import net.fabricmc.bot.constants.Colours
 import net.fabricmc.bot.defaultCheck
-import net.fabricmc.bot.deleteWithDelay
 import net.fabricmc.bot.enums.Channels
 import net.fabricmc.bot.extensions.infractions.instantToDisplay
-import net.fabricmc.bot.runSuspended
 import net.fabricmc.bot.tags.*
 import net.fabricmc.bot.utils.ensureRepo
 import net.fabricmc.bot.utils.requireBotChannel
-import net.fabricmc.bot.utils.respond
 import org.eclipse.jgit.api.MergeResult
 import java.awt.Color
 import java.lang.Integer.max
@@ -39,25 +42,6 @@ private const val MAX_ERRORS = 5
 private const val PAGE_TIMEOUT = 60_000L  // 60 seconds
 private val SUB_REGEX = "\\{\\{(?<name>.*?)}}".toRegex()
 private const val UPDATE_CHECK_DELAY = 1000L * 30L  // 30 seconds, consider kotlin.time when it's not experimental
-
-/**
- * Arguments for commands that just want a tag name.
- *
- * @param tagName Name of the tag
- */
-data class TagArgs(
-        val tagName: String
-)
-
-/**
- * Arguments for tag commands that just want a search query.
- *
- * @param query Search query
- */
-data class TagSearchArgs(
-        val query: List<String> = listOf()
-)
-
 
 /**
  * Extension in charge of keeping track of and exposing tags.
@@ -273,16 +257,16 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
                 aliases = arrayOf("get", "s", "g")
                 description = "Get basic information about a specific tag."
 
-                signature<TagArgs>()
+                signature(::TagArgs)
 
                 action {
-                    if (!message.requireBotChannel(DELETE_DELAY)) {
+                    if (!message.requireBotChannel(delay = DELETE_DELAY)) {
                         return@action
                     }
 
                     val parser = this@TagsExtension.parser
 
-                    with(parse<TagArgs>()) {
+                    with(parse(::TagArgs)) {
                         val tag = parser.getTag(tagName)
 
                         if (tag == null) {
@@ -364,48 +348,46 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
                 aliases = arrayOf("find", "f", "s")
                 description = "Search through the tag names and content for a piece of text."
 
-                signature<TagSearchArgs>()
+                signature(::TagSearchArgs)
 
                 action {
-                    if (!message.requireBotChannel(DELETE_DELAY)) {
+                    if (!message.requireBotChannel(delay = DELETE_DELAY)) {
                         return@action
                     }
 
                     val parser = this@TagsExtension.parser
 
-                    with(parse<TagSearchArgs>()) {
-                        val queryString = query.joinToString(" ")
-
+                    with(parse(::TagSearchArgs)) {
                         val aliasTargetMatches = mutableSetOf<Pair<String, String>>()
                         val embedFieldMatches = mutableSetOf<String>()
                         val nameMatches = mutableSetOf<String>()
                         val markdownMatches = mutableSetOf<String>()
 
                         parser.tags.forEach { (name, tag) ->
-                            if (name.contains(queryString)) {
+                            if (name.contains(query)) {
                                 nameMatches.add(name)
                             }
 
-                            if (tag.markdown?.contains(queryString) == true) {
+                            if (tag.markdown?.contains(query) == true) {
                                 markdownMatches.add(name)
                             }
 
                             if (tag.data is AliasTag) {
                                 val data = tag.data as AliasTag
 
-                                if (data.target.contains(queryString)) {
+                                if (data.target.contains(query)) {
                                     aliasTargetMatches.add(Pair(name, data.target))
                                 }
                             } else if (tag.data is EmbedTag) {
                                 val data = tag.data as EmbedTag
 
                                 for (field in data.embed.fields) {
-                                    if (field.name.contains(queryString)) {
+                                    if (field.name.contains(query)) {
                                         embedFieldMatches.add(name)
                                         break
                                     }
 
-                                    if (field.value.contains(queryString)) {
+                                    if (field.value.contains(query)) {
                                         embedFieldMatches.add(name)
                                         break
                                     }
@@ -497,7 +479,7 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
                 description = "Get a list of all of the available tags."
 
                 action {
-                    if (!message.requireBotChannel(DELETE_DELAY)) {
+                    if (!message.requireBotChannel(delay = DELETE_DELAY)) {
                         return@action
                     }
 
@@ -618,5 +600,25 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
         substitutions.forEach { (key, value) -> result = result.replace(key, value) }
 
         return result
+    }
+
+    /**
+     * Arguments for commands that just want a tag name.
+     *
+     * @property tagName Name of the tag
+     */
+    @Suppress("UndocumentedPublicProperty")
+    class TagArgs : Arguments() {
+        val tagName by string("tag")
+    }
+
+    /**
+     * Arguments for tag commands that just want a search query.
+     *
+     * @property query Search query
+     */
+    @Suppress("UndocumentedPublicProperty")
+    class TagSearchArgs : Arguments() {
+        val query by coalescedString("query")
     }
 }

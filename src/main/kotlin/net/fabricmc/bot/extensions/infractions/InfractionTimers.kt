@@ -2,13 +2,13 @@ package net.fabricmc.bot.extensions.infractions
 
 import com.gitlab.kordlib.common.entity.Snowflake
 import com.kotlindiscord.kord.extensions.utils.Scheduler
+import com.kotlindiscord.kord.extensions.utils.runSuspended
 import mu.KotlinLogging
 import net.fabricmc.bot.conf.config
 import net.fabricmc.bot.constants.Colours
 import net.fabricmc.bot.database.Infraction
 import net.fabricmc.bot.enums.InfractionTypes
 import net.fabricmc.bot.enums.Roles
-import net.fabricmc.bot.runSuspended
 import net.fabricmc.bot.utils.modLog
 import java.time.Duration
 import java.time.Instant

@@ -1,5 +1,6 @@
 package net.fabricmc.bot.extensions.mappings
 
+import com.kotlindiscord.kord.extensions.utils.runSuspended
 import io.ktor.client.HttpClient
 import io.ktor.client.features.json.JsonFeature
 import io.ktor.client.features.json.serializer.KotlinxSerializer
@@ -8,7 +9,6 @@ import io.ktor.client.request.request
 import kotlinx.serialization.json.Json
 import mu.KotlinLogging
 import net.fabricmc.bot.conf.config
-import net.fabricmc.bot.runSuspended
 import net.fabricmc.mapping.tree.*
 import java.net.URLEncoder
 import java.nio.file.Files
@@ -38,6 +38,9 @@ class MappingsManager {
 
     /** Maps "snapshot" and "release" to actual MC versions. **/
     val versionNames: MutableMap<String, String> = mutableMapOf()
+
+    /** Maps cached MC versions to their current yarn releases. **/
+    val yarnVersions: MutableMap<String, String> = mutableMapOf()
 
     private val client = HttpClient {
         install(JsonFeature) {
@@ -125,7 +128,10 @@ class MappingsManager {
      * @param snapshot Snapshot version to cache
      */
     suspend fun cacheMappings(release: String, snapshot: String) {
-        if (versionCache.containsKey(release) && versionCache.containsKey(snapshot)) {
+        val releaseYarnVersion = getLatestYarnVersion(release)
+        val snapshotYarnVersion = getLatestYarnVersion(snapshot)
+
+        if (yarnVersions[release] == releaseYarnVersion && yarnVersions[snapshot] == snapshotYarnVersion) {
             logger.debug { "Both keys hit the cache, not clearing." }
             return
         }
@@ -138,36 +144,48 @@ class MappingsManager {
         if (!versionCache.containsKey(release)) {
             logger.debug { "Caching release version: $release." }
 
-            var releaseVersion = openMappings(release)
+            if (releaseYarnVersion != null) {
+                var releaseVersion = openMappings(release)
 
-            if (releaseVersion == null) {
-                logger.warn { "No mappings found for release version: $release" }
+                if (releaseVersion == null) {
+                    logger.warn { "No mappings found for release version: $release" }
+                } else {
+                    versionCache.remove(versionNames["release"])
+                    versionCache[release] = releaseVersion
+
+                    versionNames["release"] = release
+                    releaseVersion = null
+
+                    yarnVersions[release] = releaseYarnVersion
+
+                    logger.info { "Cached release version: $release" }
+                }
             } else {
-                versionCache.remove(versionNames["release"])
-                versionCache[release] = releaseVersion
-
-                versionNames["release"] = release
-                releaseVersion = null
-
-                logger.info { "Cached release version: $release" }
+                logger.warn { "No yarn build found for release version: $release" }
             }
         }
 
         if (!versionCache.containsKey(snapshot)) {
             logger.debug { "Caching snapshot version: $snapshot." }
 
-            var snapshotVersion = openMappings(snapshot)
+            if (snapshotYarnVersion != null) {
+                var snapshotVersion = openMappings(snapshot)
 
-            if (snapshotVersion == null) {
-                logger.warn { "No mappings found for snapshot version: $snapshot" }
+                if (snapshotVersion == null) {
+                    logger.warn { "No mappings found for snapshot version: $snapshot" }
+                } else {
+                    versionCache.remove(versionNames["snapshot"])
+                    versionCache[snapshot] = snapshotVersion
+
+                    versionNames["snapshot"] = release
+                    snapshotVersion = null
+
+                    yarnVersions[snapshot] = snapshotYarnVersion
+
+                    logger.info { "Cached snapshot version: $snapshot" }
+                }
             } else {
-                versionCache.remove(versionNames["snapshot"])
-                versionCache[snapshot] = snapshotVersion
-
-                versionNames["snapshot"] = release
-                snapshotVersion = null
-
-                logger.info { "Cached snapshot version: $snapshot" }
+                logger.warn { "No yarn build found for snapshot version: $snapshot" }
             }
         }
     }
@@ -178,11 +196,11 @@ class MappingsManager {
      * @param minecraftVersion Minecraft version to retrieve mappings for
      */
     suspend fun openMappings(minecraftVersion: String): TinyTree? {
+        val latestVersion = getLatestYarnVersion(minecraftVersion) ?: return null
+
         if (versionCache.containsKey(minecraftVersion)) {
             return versionCache[minecraftVersion]
         }
-
-        val latestVersion = getLatestYarnVersion(minecraftVersion) ?: return null
 
         val tinyPath = cacheDir.resolve("$latestVersion.tiny")
         val jarPath = cacheDir.resolve("$latestVersion.jar")

@@ -4,7 +4,6 @@ import com.gitlab.kordlib.common.entity.GuildFeature
 import com.gitlab.kordlib.common.entity.Snowflake
 import com.gitlab.kordlib.common.entity.Status
 import com.gitlab.kordlib.core.behavior.channel.createEmbed
-import com.gitlab.kordlib.core.entity.User
 import com.gitlab.kordlib.core.entity.channel.Category
 import com.gitlab.kordlib.core.entity.channel.NewsChannel
 import com.gitlab.kordlib.core.entity.channel.TextChannel
@@ -12,8 +11,11 @@ import com.gitlab.kordlib.core.entity.channel.VoiceChannel
 import com.gitlab.kordlib.rest.Image
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import com.kotlindiscord.kord.extensions.checks.topRoleHigherOrEqual
+import com.kotlindiscord.kord.extensions.commands.converters.optionalNumber
+import com.kotlindiscord.kord.extensions.commands.converters.optionalUser
+import com.kotlindiscord.kord.extensions.commands.parser.Arguments
 import com.kotlindiscord.kord.extensions.extensions.Extension
-import com.kotlindiscord.kord.extensions.getTopRole
+import com.kotlindiscord.kord.extensions.utils.*
 import kotlinx.coroutines.flow.toList
 import net.fabricmc.bot.*
 import net.fabricmc.bot.conf.config
@@ -25,17 +27,9 @@ import net.fabricmc.bot.extensions.infractions.getMemberId
 import net.fabricmc.bot.extensions.infractions.instantToDisplay
 import net.fabricmc.bot.utils.getStatusEmoji
 import net.fabricmc.bot.utils.requireBotChannel
-import net.fabricmc.bot.utils.respond
 import java.time.Instant
 
 private const val DELETE_DELAY = 10_000L  // 10 seconds
-
-/** @suppress **/
-@Suppress("UndocumentedPublicProperty")
-data class UtilsUserArgs(
-        val user: User? = null,
-        val userId: Long? = null
-)
 
 /**
  * Extension providing useful utility commands.
@@ -55,9 +49,9 @@ class UtilsExtension(bot: ExtensibleBot) : Extension(bot) {
             signature = "[user]"
 
             action {
-                with(parse<UtilsUserArgs>()) {
+                with(parse(::UtilsUserArgs)) {
                     runSuspended {
-                        if (!message.requireBotChannel(DELETE_DELAY)) {
+                        if (!message.requireBotChannel(delay = DELETE_DELAY)) {
                             return@runSuspended
                         }
 
@@ -65,7 +59,7 @@ class UtilsExtension(bot: ExtensibleBot) : Extension(bot) {
                         var (memberId, memberMessage) = getMemberId(user, userId)
 
                         if (memberId == null) {
-                            memberId = message.data.authorId!!
+                            memberId = message.data.authorId
                         }
 
                         if (memberId != message.data.authorId && !isModerator) {
@@ -140,7 +134,7 @@ class UtilsExtension(bot: ExtensibleBot) : Extension(bot) {
             check(::defaultCheck)
 
             action {
-                if (!message.requireBotChannel(DELETE_DELAY)) {
+                if (!message.requireBotChannel(delay = DELETE_DELAY)) {
                     return@action
                 }
 
@@ -187,6 +181,8 @@ class UtilsExtension(bot: ExtensibleBot) : Extension(bot) {
                     }
                 }
 
+                val newestEmoji = guild.emojis.sortedBy { it.id.timeStamp }.lastOrNull()
+
                 message.channel.createEmbed {
                     title = guild.name
                     color = Colours.BLURPLE
@@ -221,13 +217,24 @@ class UtilsExtension(bot: ExtensibleBot) : Extension(bot) {
                     }
 
                     field {
+                        name = "Emojis"
+                        inline = true
+
+                        value = "**Total:** ${guild.emojis.size}"
+
+                        if (newestEmoji != null) {
+                            value += "\n**Latest:** ${newestEmoji.mention}"
+                        }
+                    }
+
+                    field {
                         name = "Features"
-                        inline = false
+                        inline = true
 
                         value = if (guild.features.isNotEmpty()) {
                             guild.features
                                     .filter { it != GuildFeature.Unknown }
-                                    .joinToString(", ") { "`${it.value}`" }
+                                    .joinToString("\n") { "`${it.value}`" }
                         } else {
                             "No features."
                         }
@@ -241,4 +248,11 @@ class UtilsExtension(bot: ExtensibleBot) : Extension(bot) {
         }
     }
 
+    /** @suppress **/
+    @Suppress("UndocumentedPublicProperty")
+    class UtilsUserArgs : Arguments() {
+        val user by optionalUser("user")
+        val userId by optionalNumber("userId")
+
+    }
 }

@@ -7,7 +7,7 @@ import com.gitlab.kordlib.core.entity.channel.Channel
 import com.gitlab.kordlib.core.event.message.MessageCreateEvent
 import com.gitlab.kordlib.core.event.message.MessageUpdateEvent
 import com.kotlindiscord.kord.extensions.ExtensibleBot
-import net.fabricmc.bot.getUrl
+import com.kotlindiscord.kord.extensions.utils.getUrl
 
 /**
  * Filter class intended for finding removing messages, and alerting staff when selfbots and

@@ -7,15 +7,15 @@ import com.gitlab.kordlib.core.entity.channel.Channel
 import com.gitlab.kordlib.core.event.message.MessageCreateEvent
 import com.gitlab.kordlib.core.event.message.MessageUpdateEvent
 import com.kotlindiscord.kord.extensions.ExtensibleBot
-import net.fabricmc.bot.deleteIgnoringNotFound
-import net.fabricmc.bot.getUrl
+import com.kotlindiscord.kord.extensions.utils.deleteIgnoringNotFound
+import com.kotlindiscord.kord.extensions.utils.getUrl
 import org.nibor.autolink.LinkExtractor
 import org.nibor.autolink.LinkType
 
 private val blacklist = setOf(
         // Adult domains - not an exhaustive list, just commonly-spammed/linked domains across Discord.
         "e621.net", "kink.com", "motherless.com", "paheal.net", "pornhub.com", "redtube.com",
-        "xhamster.com", "xnxx.com", "youjizz.com", "youporn.com",
+        "xhamster.com", "xnxx.com", "xvideos.com", "youjizz.com", "youporn.com",
 
         // Piracy - not an exhaustive list, just what's popular.
         "1337x.to", "baybea.net", "beatpb.club", "blue247.pw", "demonoid.is", "eztv.io",

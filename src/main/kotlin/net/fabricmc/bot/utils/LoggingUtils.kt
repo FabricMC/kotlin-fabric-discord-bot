@@ -7,11 +7,12 @@ import com.gitlab.kordlib.core.entity.channel.GuildMessageChannel
 import com.gitlab.kordlib.rest.builder.message.EmbedBuilder
 import com.gitlab.kordlib.rest.builder.message.MentionTypes
 import com.gitlab.kordlib.rest.builder.message.MessageCreateBuilder
+import com.kotlindiscord.kord.extensions.utils.ensureWebhook
 import kotlinx.coroutines.delay
 import mu.KotlinLogging
 import net.fabricmc.bot.bot
+import net.fabricmc.bot.conf.FabricBotConfig
 import net.fabricmc.bot.conf.config
-import net.fabricmc.bot.ensureWebhook
 import net.fabricmc.bot.enums.Channels
 import net.fabricmc.bot.extensions.ActionLogExtension
 import java.time.Instant
@@ -49,7 +50,9 @@ suspend fun actionLog(body: suspend EmbedBuilder.() -> Unit): Message {
 
     builder.timestamp = Instant.now()
 
-    val webhook = ensureWebhook(channel)
+    val webhook = ensureWebhook(channel, "Fabric Bot") {
+        FabricBotConfig::class.java.getResource("/logo.png").readBytes()
+    }
 
     return webhook.execute(webhook.token!!) {
         embeds += builder.toRequest()
@@ -69,7 +72,9 @@ suspend fun modLog(body: suspend EmbedBuilder.() -> Unit): Message {
     body.invoke(builder)
     builder.timestamp = Instant.now()
 
-    val webhook = ensureWebhook(Channels.MODERATOR_LOG)
+    val webhook = ensureWebhook(config.getChannel(Channels.MODERATOR_LOG) as GuildMessageChannel, "Fabric Bot") {
+        FabricBotConfig::class.java.getResource("/logo.png").readBytes()
+    }
 
     return webhook.execute(webhook.token!!) {
         embeds += builder.toRequest()

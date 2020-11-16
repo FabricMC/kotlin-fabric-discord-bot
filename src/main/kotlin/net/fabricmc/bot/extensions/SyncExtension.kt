@@ -16,6 +16,7 @@ import com.gitlab.kordlib.core.event.role.RoleUpdateEvent
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import com.kotlindiscord.kord.extensions.checks.topRoleHigherOrEqual
 import com.kotlindiscord.kord.extensions.extensions.Extension
+import com.kotlindiscord.kord.extensions.utils.runSuspended
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.toList
 import mu.KotlinLogging
@@ -26,7 +27,6 @@ import net.fabricmc.bot.extensions.infractions.applyInfraction
 import net.fabricmc.bot.extensions.infractions.getDelayFromNow
 import net.fabricmc.bot.extensions.infractions.mysqlToInstant
 import net.fabricmc.bot.extensions.infractions.scheduleUndoInfraction
-import net.fabricmc.bot.runSuspended
 import net.fabricmc.bot.utils.actionLog
 import java.time.Instant
 
@@ -154,7 +154,7 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
         var expiredInfractions = 0
 
         infractions.forEach {
-            val memberId = it.target_id.toLong()
+            val memberId = it.target_id
             val member = config.getGuild().getMemberOrNull(Snowflake(memberId))
             val expires = mysqlToInstant(it.expires)
             val delay = getDelayFromNow(expires)

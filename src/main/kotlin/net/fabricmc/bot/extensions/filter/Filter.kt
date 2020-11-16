@@ -6,10 +6,10 @@ import com.gitlab.kordlib.core.event.message.MessageCreateEvent
 import com.gitlab.kordlib.core.event.message.MessageUpdateEvent
 import com.gitlab.kordlib.rest.builder.message.MessageCreateBuilder
 import com.kotlindiscord.kord.extensions.ExtensibleBot
-import net.fabricmc.bot.deleteWithDelay
+import com.kotlindiscord.kord.extensions.utils.deleteWithDelay
+import com.kotlindiscord.kord.extensions.utils.dm
+import com.kotlindiscord.kord.extensions.utils.respond
 import net.fabricmc.bot.utils.alertMessage
-import net.fabricmc.bot.utils.dm
-import net.fabricmc.bot.utils.respond
 
 /** How long to wait before removing notification messages in channels - 10 seconds. **/
 const val DELETE_DELAY = 10_000L
@@ -91,8 +91,8 @@ abstract class Filter(val bot: ExtensibleBot) {
      */
     suspend fun sendNotification(eventMessage: Message, reason: String): Message {
         val message = "$reason\n\n$mistakeMessage"
-
         var sent = eventMessage.author!!.dm(message)
+
         if (sent == null) { // DMs disabled
             sent = eventMessage.respond(message)
             sent.deleteWithDelay(DELETE_DELAY)

@@ -11,6 +11,10 @@ import com.gitlab.kordlib.core.event.role.RoleUpdateEvent
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import com.kotlindiscord.kord.extensions.checks.inGuild
 import com.kotlindiscord.kord.extensions.extensions.Extension
+import com.kotlindiscord.kord.extensions.utils.createdAt
+import com.kotlindiscord.kord.extensions.utils.deltas.MemberDelta
+import com.kotlindiscord.kord.extensions.utils.deltas.UserDelta
+import com.kotlindiscord.kord.extensions.utils.getUrl
 import kotlinx.coroutines.flow.toSet
 import mu.KotlinLogging
 import net.fabricmc.bot.*
@@ -19,8 +23,6 @@ import net.fabricmc.bot.constants.Colours
 import net.fabricmc.bot.enums.Channels
 import net.fabricmc.bot.extensions.infractions.instantToDisplay
 import net.fabricmc.bot.utils.actionLog
-import net.fabricmc.bot.utils.deltas.MemberDelta
-import net.fabricmc.bot.utils.deltas.UserDelta
 import net.fabricmc.bot.utils.modLog
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter

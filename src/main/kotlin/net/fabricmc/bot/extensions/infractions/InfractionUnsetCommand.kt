@@ -9,7 +9,12 @@ import com.gitlab.kordlib.core.event.message.MessageCreateEvent
 import com.kotlindiscord.kord.extensions.checks.topRoleHigherOrEqual
 import com.kotlindiscord.kord.extensions.commands.Command
 import com.kotlindiscord.kord.extensions.commands.CommandContext
+import com.kotlindiscord.kord.extensions.commands.converters.optionalNumber
+import com.kotlindiscord.kord.extensions.commands.converters.optionalUser
+import com.kotlindiscord.kord.extensions.commands.parser.Arguments
 import com.kotlindiscord.kord.extensions.extensions.Extension
+import com.kotlindiscord.kord.extensions.utils.dm
+import com.kotlindiscord.kord.extensions.utils.runSuspended
 import mu.KotlinLogging
 import net.fabricmc.bot.bot
 import net.fabricmc.bot.conf.config
@@ -18,10 +23,8 @@ import net.fabricmc.bot.database.Infraction
 import net.fabricmc.bot.defaultCheck
 import net.fabricmc.bot.enums.InfractionTypes
 import net.fabricmc.bot.enums.Roles
-import net.fabricmc.bot.runSuspended
-import net.fabricmc.bot.utils.dm
 import net.fabricmc.bot.utils.modLog
-import net.fabricmc.bot.utils.requireGuildChannel
+import net.fabricmc.bot.utils.requireMainGuild
 import java.time.Instant
 import java.util.*
 
@@ -30,10 +33,11 @@ import java.util.*
  * @param member The member to pardon.
  * @param memberLong The ID of the member to pardon, if they're not on the server.
  */
-data class InfractionUnsetCommandArgs(
-        val member: User? = null,
-        val memberLong: Long? = null
-)
+@Suppress("UndocumentedPublicProperty")
+class InfractionUnsetCommandArgs : Arguments() {
+    val member by optionalUser("member")
+    val memberLong by optionalNumber("memberId")
+}
 
 private val logger = KotlinLogging.logger {}
 
@@ -51,7 +55,7 @@ private val logger = KotlinLogging.logger {}
 class InfractionUnsetCommand(extension: Extension, private val type: InfractionTypes,
                              private val commandDescription: String,
                              private val commandName: String,
-                             private val aliasList: Array<String> = arrayOf(),
+                             aliasList: Array<String> = arrayOf(),
         // This can't be suspending, see comment in InfractionActions.applyInfraction
                              private val infrAction: Infraction.(
                                      targetId: Long, expires: Instant?
@@ -60,8 +64,8 @@ class InfractionUnsetCommand(extension: Extension, private val type: InfractionT
     private val queries = config.db.infractionQueries
 
     private val commandBody: suspend CommandContext.() -> Unit = {
-        if (message.requireGuildChannel(null)) {
-            val args = parse<InfractionUnsetCommandArgs>()
+        if (message.requireMainGuild(null)) {
+            val args = parse(::InfractionUnsetCommandArgs)
 
             undoInfraction(
                     args.member,

@@ -5,7 +5,10 @@ import com.gitlab.kordlib.core.behavior.channel.createEmbed
 import com.gitlab.kordlib.core.event.gateway.ReadyEvent
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import com.kotlindiscord.kord.extensions.checks.topRoleHigherOrEqual
+import com.kotlindiscord.kord.extensions.commands.converters.string
+import com.kotlindiscord.kord.extensions.commands.parser.Arguments
 import com.kotlindiscord.kord.extensions.extensions.Extension
+import com.kotlindiscord.kord.extensions.utils.respond
 import io.ktor.client.HttpClient
 import io.ktor.client.features.json.JsonFeature
 import io.ktor.client.features.json.serializer.KotlinxSerializer
@@ -22,8 +25,7 @@ import net.fabricmc.bot.defaultCheck
 import net.fabricmc.bot.enums.Roles
 import net.fabricmc.bot.events.LatestMinecraftVersionsRetrieved
 import net.fabricmc.bot.utils.alert
-import net.fabricmc.bot.utils.requireGuildChannel
-import net.fabricmc.bot.utils.respond
+import net.fabricmc.bot.utils.requireMainGuild
 
 private const val UPDATE_CHECK_DELAY = 1000L * 30L  // 30 seconds, consider kotlin.time when it's not experimental
 private const val SETUP_DELAY = 1000L * 10L  // 10 seconds
@@ -32,12 +34,6 @@ private var JIRA_URL = "https://bugs.mojang.com/rest/api/latest/project/MC/versi
 private var MINECRAFT_URL = "https://launchermeta.mojang.com/mc/game/version_manifest.json"
 
 private val logger = KotlinLogging.logger {}
-
-/** @suppress **/
-@Suppress("UndocumentedPublicProperty")
-data class UrlCommand(
-        val url: String
-)
 
 /**
  * Automatic updates on new Minecraft versions, in Jira and launchermeta.
@@ -119,7 +115,7 @@ class VersionCheckExtension(bot: ExtensibleBot) : Extension(bot) {
             )
 
             action {
-                if (!message.requireGuildChannel(Roles.ADMIN)) {
+                if (!message.requireMainGuild(Roles.ADMIN)) {
                     return@action
                 }
 
@@ -185,7 +181,7 @@ class VersionCheckExtension(bot: ExtensibleBot) : Extension(bot) {
 
                 aliases = arrayOf("jiraurl")
 
-                signature<UrlCommand>()
+                signature(::UrlCommandArguments)
 
                 check(
                         ::defaultCheck,
@@ -193,7 +189,7 @@ class VersionCheckExtension(bot: ExtensibleBot) : Extension(bot) {
                 )
 
                 action {
-                    with(parse<UrlCommand>()) {
+                    with(parse(::UrlCommandArguments)) {
                         JIRA_URL = url
 
                         message.respond(
@@ -209,7 +205,7 @@ class VersionCheckExtension(bot: ExtensibleBot) : Extension(bot) {
 
                 aliases = arrayOf("mcurl")
 
-                signature<UrlCommand>()
+                signature(::UrlCommandArguments)
 
                 check(
                         ::defaultCheck,
@@ -217,7 +213,7 @@ class VersionCheckExtension(bot: ExtensibleBot) : Extension(bot) {
                 )
 
                 action {
-                    with(parse<UrlCommand>()) {
+                    with(parse(::UrlCommandArguments)) {
                         MINECRAFT_URL = url
 
                         message.respond(
@@ -334,6 +330,12 @@ class VersionCheckExtension(bot: ExtensibleBot) : Extension(bot) {
         return response.versions
     }
 
+
+    /** @suppress **/
+    @Suppress("UndocumentedPublicProperty")
+    class UrlCommandArguments : Arguments() {
+        val url by string("url")
+    }
 }
 
 @Serializable
