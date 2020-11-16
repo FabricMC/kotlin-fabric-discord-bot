@@ -143,16 +143,19 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
                                                 expires: Instant?, relayResult: Boolean? = null) {
         channel.createEmbed {
             color = Colours.POSITIVE
-            title = "Infraction created"
+
+            author {
+                name = "User ${infraction.infraction_type.actionText}"
+
+                if (relayResult == false) {
+                    icon = "https://cdn.discordapp.com/emojis/777986567993950239.png"
+                }
+            }
 
             description = getInfractionMessage(true, infraction, expires)
 
             footer {
                 text = "ID: ${infraction.id}"
-
-                if (relayResult == false) {
-                    text += " • ⚠️ Failed to DM"
-                }
             }
 
             timestamp = Instant.now()
@@ -168,16 +171,19 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
 
         modLog {
             color = Colours.NEGATIVE
-            title = "User ${infraction.infraction_type.actionText}"
+
+            author {
+                name = "User ${infraction.infraction_type.actionText}"
+
+                if (relayResult == false) {
+                    icon = "https://cdn.discordapp.com/emojis/777986567993950239.png"
+                }
+            }
 
             description = descriptionText
 
             footer {
                 text = "ID: ${infraction.id}"
-
-                if (relayResult == false) {
-                    text += " • ⚠️ Failed to DM"
-                }
             }
         }
     }
