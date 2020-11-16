@@ -154,6 +154,10 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
 
             description = getInfractionMessage(true, infraction, expires)
 
+            if (relayResult == false) {
+                description += "\n\n**Note:** Failed to DM the user, they may have their DMs disabled."
+            }
+
             footer {
                 text = "ID: ${infraction.id}"
             }
@@ -181,6 +185,10 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
             }
 
             description = descriptionText
+
+            if (relayResult == false) {
+                description += "\n\n**Note:** Failed to DM the user, they may have their DMs disabled."
+            }
 
             footer {
                 text = "ID: ${infraction.id}"
