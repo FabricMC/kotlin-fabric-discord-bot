@@ -34,6 +34,7 @@ suspend fun main() {
 
     bot.addExtension(ActionLogExtension::class)
     bot.addExtension(CleanExtension::class)
+    bot.addExtension(DefconExtension::class)
     bot.addExtension(EmojiExtension::class)
     bot.addExtension(FilterExtension::class)
     bot.addExtension(GitHubExtension::class)

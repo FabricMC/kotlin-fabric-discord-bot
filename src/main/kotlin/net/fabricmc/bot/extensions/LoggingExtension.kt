@@ -127,7 +127,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                             name = "Created"
 
                             value = if (it.member.isNew()) {
-                                "**New:** $createdAt"
+                                ":new: $createdAt"
                             } else {
                                 createdAt
                             }
