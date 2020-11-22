@@ -58,7 +58,7 @@ class InfractionUnsetCommand(extension: Extension, private val type: InfractionT
                              aliasList: Array<String> = arrayOf(),
         // This can't be suspending, see comment in InfractionActions.applyInfraction
                              private val infrAction: Infraction.(
-                                     targetId: Long, expires: Instant?
+                                     targetId: Snowflake, expires: Instant?
                              ) -> Unit
 ) : Command(extension) {
     private val queries = config.db.infractionQueries
@@ -136,7 +136,7 @@ class InfractionUnsetCommand(extension: Extension, private val type: InfractionT
         var descriptionText = getInfractionMessage(true, infraction, true)
 
         descriptionText += "\n\n**User ID:** `${infraction.target_id}`"
-        descriptionText += "\n**Moderator:** ${actor.mention} (${actor.tag} / `${actor.id.longValue}`)"
+        descriptionText += "\n**Moderator:** ${actor.mention} (${actor.tag} / `${actor.id}`)"
 
         modLog {
             color = Colours.POSITIVE
@@ -152,7 +152,7 @@ class InfractionUnsetCommand(extension: Extension, private val type: InfractionT
 
     private suspend fun undoInfraction(memberObj: User?, memberLong: Long?, message: Message) {
         val author = message.author!!
-        val (memberId, memberMessage) = getMemberId(memberObj, memberLong)
+        val (memberId, memberMessage) = getMemberId(memberObj, memberLong?.let { Snowflake(it) })
 
         if (memberId == null) {
             message.channel.createMessage("${author.mention} $memberMessage")
@@ -160,7 +160,7 @@ class InfractionUnsetCommand(extension: Extension, private val type: InfractionT
         }
 
         val infractions = runSuspended {
-            queries.getActiveInfractionsByUser(memberId).executeAsList()
+            queries.getActiveInfractionsByUser(memberId.value).executeAsList()
         }.filter { it.infraction_type == type }
 
         if (infractions.isEmpty()) {

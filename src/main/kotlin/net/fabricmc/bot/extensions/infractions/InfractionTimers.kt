@@ -27,7 +27,7 @@ private val logger = KotlinLogging.logger {}
  * @param infraction The infraction object from the database.
  * @param time An [Instant] representing the expiry time of the infraction.
  */
-suspend fun scheduleUndoInfraction(id: Long, infraction: Infraction, time: Instant?, manual: Boolean = false) {
+suspend fun scheduleUndoInfraction(id: Snowflake, infraction: Infraction, time: Instant?, manual: Boolean = false) {
     when (infraction.infraction_type) {
         InfractionTypes.BAN -> unbanAt(id, infraction, time, manual)
         InfractionTypes.META_MUTE -> unMetaMuteAt(id, infraction, time, manual)
@@ -46,9 +46,9 @@ suspend fun scheduleUndoInfraction(id: Long, infraction: Infraction, time: Insta
  * @param id The ID of the user to unban.
  * @param time The [Instant] representing the time to remove the ban.
  */
-suspend fun unbanAt(id: Long, infraction: Infraction, time: Instant?, manual: Boolean) {
+suspend fun unbanAt(id: Snowflake, infraction: Infraction, time: Instant?, manual: Boolean) {
     schedule(getDelayFromNow(time), infraction, manual) {
-        config.getGuild().unban(Snowflake(id))
+        config.getGuild().unban(id)
     }
 }
 
@@ -58,9 +58,9 @@ suspend fun unbanAt(id: Long, infraction: Infraction, time: Instant?, manual: Bo
  * @param id The ID of the user to unban.
  * @param time The [Instant] representing the time to remove the mute.
  */
-suspend fun unMuteAt(id: Long, infraction: Infraction, time: Instant?, manual: Boolean) {
+suspend fun unMuteAt(id: Snowflake, infraction: Infraction, time: Instant?, manual: Boolean) {
     schedule(getDelayFromNow(time), infraction, manual) {
-        val member = config.getGuild().getMemberOrNull(Snowflake(id)) ?: return@schedule
+        val member = config.getGuild().getMemberOrNull(id) ?: return@schedule
 
         member.removeRole(config.getRoleSnowflake(Roles.MUTED), "Expiring temporary mute")
     }
@@ -72,9 +72,9 @@ suspend fun unMuteAt(id: Long, infraction: Infraction, time: Instant?, manual: B
  * @param id The ID of the user to unban.
  * @param time The [Instant] representing the time to remove the mute.
  */
-suspend fun unMetaMuteAt(id: Long, infraction: Infraction, time: Instant?, manual: Boolean) {
+suspend fun unMetaMuteAt(id: Snowflake, infraction: Infraction, time: Instant?, manual: Boolean) {
     schedule(getDelayFromNow(time), infraction, manual) {
-        val member = config.getGuild().getMemberOrNull(Snowflake(id)) ?: return@schedule
+        val member = config.getGuild().getMemberOrNull(id) ?: return@schedule
 
         member.removeRole(config.getRoleSnowflake(Roles.NO_META), "Expiring temporary meta-mute")
     }
@@ -86,9 +86,9 @@ suspend fun unMetaMuteAt(id: Long, infraction: Infraction, time: Instant?, manua
  * @param id The ID of the user to unban.
  * @param time The [Instant] representing the time to remove the mute.
  */
-suspend fun unReactionMuteAt(id: Long, infraction: Infraction, time: Instant?, manual: Boolean) {
+suspend fun unReactionMuteAt(id: Snowflake, infraction: Infraction, time: Instant?, manual: Boolean) {
     schedule(getDelayFromNow(time), infraction, manual) {
-        val member = config.getGuild().getMemberOrNull(Snowflake(id)) ?: return@schedule
+        val member = config.getGuild().getMemberOrNull(id) ?: return@schedule
 
         member.removeRole(config.getRoleSnowflake(Roles.NO_REACTIONS), "Expiring temporary reaction-mute")
     }
@@ -100,9 +100,9 @@ suspend fun unReactionMuteAt(id: Long, infraction: Infraction, time: Instant?, m
  * @param id The ID of the user to unban.
  * @param time The [Instant] representing the time to remove the mute.
  */
-suspend fun unRequestsMuteAt(id: Long, infraction: Infraction, time: Instant?, manual: Boolean) {
+suspend fun unRequestsMuteAt(id: Snowflake, infraction: Infraction, time: Instant?, manual: Boolean) {
     schedule(getDelayFromNow(time), infraction, manual) {
-        val member = config.getGuild().getMemberOrNull(Snowflake(id)) ?: return@schedule
+        val member = config.getGuild().getMemberOrNull(id) ?: return@schedule
 
         member.removeRole(config.getRoleSnowflake(Roles.NO_REQUESTS), "Expiring temporary requests mute")
     }
@@ -114,9 +114,9 @@ suspend fun unRequestsMuteAt(id: Long, infraction: Infraction, time: Instant?, m
  * @param id The ID of the user to unban.
  * @param time The [Instant] representing the time to remove the mute.
  */
-suspend fun unSupportMuteAt(id: Long, infraction: Infraction, time: Instant?, manual: Boolean) {
+suspend fun unSupportMuteAt(id: Snowflake, infraction: Infraction, time: Instant?, manual: Boolean) {
     schedule(getDelayFromNow(time), infraction, manual) {
-        val member = config.getGuild().getMemberOrNull(Snowflake(id)) ?: return@schedule
+        val member = config.getGuild().getMemberOrNull(id) ?: return@schedule
 
         member.removeRole(config.getRoleSnowflake(Roles.NO_SUPPORT), "Expiring temporary support mute")
     }
@@ -129,7 +129,7 @@ suspend fun unSupportMuteAt(id: Long, infraction: Infraction, time: Instant?, ma
  * @param time The [Instant] representing the time to remove the mute.
  */
 @Suppress("UnusedPrivateMember")
-fun unNickLockAt(id: Long, infraction: Infraction, time: Instant?, manual: Boolean) {
+fun unNickLockAt(id: Snowflake, infraction: Infraction, time: Instant?, manual: Boolean) {
     schedule(getDelayFromNow(time), infraction, manual) { }
 }
 

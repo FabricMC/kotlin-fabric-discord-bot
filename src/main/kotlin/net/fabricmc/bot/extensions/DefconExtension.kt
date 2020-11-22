@@ -56,7 +56,7 @@ class DefconExtension(bot: ExtensibleBot) : Extension(bot) {
                     description = "Prevented a user from joining as their account was created within the last " +
                             "three days.\n\n" +
 
-                            "**User ID:** `${it.member.id.longValue}`\n" +
+                            "**User ID:** `${it.member.id}`\n" +
                             "**User tag:** `${it.member.tag}`\n" +
                             "**Creation date:** `${instantToDisplay(it.member.id.timeStamp)}`"
 

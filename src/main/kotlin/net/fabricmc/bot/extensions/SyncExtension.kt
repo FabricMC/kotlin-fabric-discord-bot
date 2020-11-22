@@ -5,7 +5,6 @@ import com.gitlab.kordlib.core.behavior.channel.createEmbed
 import com.gitlab.kordlib.core.entity.Member
 import com.gitlab.kordlib.core.entity.Role
 import com.gitlab.kordlib.core.entity.User
-import com.gitlab.kordlib.core.event.UserUpdateEvent
 import com.gitlab.kordlib.core.event.gateway.ReadyEvent
 import com.gitlab.kordlib.core.event.guild.MemberJoinEvent
 import com.gitlab.kordlib.core.event.guild.MemberLeaveEvent
@@ -13,6 +12,7 @@ import com.gitlab.kordlib.core.event.guild.MemberUpdateEvent
 import com.gitlab.kordlib.core.event.role.RoleCreateEvent
 import com.gitlab.kordlib.core.event.role.RoleDeleteEvent
 import com.gitlab.kordlib.core.event.role.RoleUpdateEvent
+import com.gitlab.kordlib.core.event.user.UserUpdateEvent
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import com.kotlindiscord.kord.extensions.checks.topRoleHigherOrEqual
 import com.kotlindiscord.kord.extensions.extensions.Extension
@@ -59,11 +59,11 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
 
         event<RoleCreateEvent> { action { runSuspended { roleUpdated(it.role) } } }
         event<RoleUpdateEvent> { action { runSuspended { roleUpdated(it.role) } } }
-        event<RoleDeleteEvent> { action { runSuspended { roleDeleted(it.roleId.longValue) } } }
+        event<RoleDeleteEvent> { action { runSuspended { roleDeleted(it.roleId) } } }
 
         event<MemberJoinEvent> { action { runSuspended { memberJoined(it.member) } } }
-        event<MemberUpdateEvent> { action { runSuspended { memberUpdated(it.getMember()) } } }
-        event<MemberLeaveEvent> { action { runSuspended { memberLeft(it.user.id.longValue) } } }
+        event<MemberUpdateEvent> { action { runSuspended { memberUpdated(it.member) } } }
+        event<MemberLeaveEvent> { action { runSuspended { memberLeft(it.user.id) } } }
         event<UserUpdateEvent> { action { runSuspended { userUpdated(it.user) } } }
 
         command {
@@ -154,8 +154,8 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
         var expiredInfractions = 0
 
         infractions.forEach {
-            val memberId = it.target_id
-            val member = config.getGuild().getMemberOrNull(Snowflake(memberId))
+            val memberId = Snowflake(it.target_id)
+            val member = config.getGuild().getMemberOrNull(memberId)
             val expires = mysqlToInstant(it.expires)
             val delay = getDelayFromNow(expires)
 
@@ -181,68 +181,68 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
     private inline fun roleUpdated(role: Role) {
         logger.debug { "Role updated: ${role.name} (${role.id})" }
 
-        val dbRole = roles.getRole(role.id.longValue).executeAsOneOrNull()
+        val dbRole = roles.getRole(role.id.value).executeAsOneOrNull()
 
         if (dbRole == null) {
-            roles.insertRole(role.id.longValue, role.color.rgb, role.name)
+            roles.insertRole(role.id.value, role.color.rgb, role.name)
         } else {
-            roles.updateRole(role.color.rgb, role.name, role.id.longValue)
+            roles.updateRole(role.color.rgb, role.name, role.id.value)
         }
     }
 
-    private inline fun roleDeleted(roleId: Long) {
-        logger.debug { "Role deleted: $roleId" }
+    private inline fun roleDeleted(roleId: Snowflake) {
+        logger.debug { "Role deleted: ${roleId.value}" }
 
-        junction.dropUserRoleByRole(roleId)
-        roles.dropRole(roleId)
+        junction.dropUserRoleByRole(roleId.value)
+        roles.dropRole(roleId.value)
     }
 
     private suspend inline fun memberJoined(member: Member) {
-        logger.debug { "Member Joined: ${member.tag} (${member.id.longValue})" }
+        logger.debug { "Member Joined: ${member.tag} (${member.id})" }
 
         memberUpdated(member)
 
         val infractions = config.db.infractionQueries
-                .getActiveInfractionsByUser(member.id.longValue)
+                .getActiveInfractionsByUser(member.id.value)
                 .executeAsList()
                 .filter { it.infraction_type.expires }
 
         infractions.forEach {
-            applyInfraction(it, member.id.longValue, null)  // Expiry already scheduled at this point
+            applyInfraction(it, member.id, null)  // Expiry already scheduled at this point
         }
     }
 
     private suspend inline fun memberUpdated(member: Member) {
-        logger.debug { "Member updated: ${member.tag} (${member.id.longValue})" }
+        logger.debug { "Member updated: ${member.tag} (${member.id})" }
 
-        val memberId = member.id.longValue
-        val dbUser = users.getUser(memberId).executeAsOneOrNull()
+        val memberId = member.id
+        val dbUser = users.getUser(memberId.value).executeAsOneOrNull()
 
         if (dbUser == null) {
-            users.insertUser(memberId, member.avatar.url, member.discriminator, true, member.username)
+            users.insertUser(memberId.value, member.avatar.url, member.discriminator, true, member.username)
         } else {
-            users.updateUser(member.avatar.url, member.discriminator, true, member.username, memberId)
+            users.updateUser(member.avatar.url, member.discriminator, true, member.username, memberId.value)
         }
 
-        val currentRoles = member.roles.toList().map { it.id.longValue }
-        val dbRoles = junction.getUserRoleByUser(member.id.longValue).executeAsList().map { it.role_id }
+        val currentRoles = member.roles.toList().map { it.id }
+        val dbRoles = junction.getUserRoleByUser(member.id.value).executeAsList().map { it.role_id }
 
-        val rolesToAdd = currentRoles.filter { !dbRoles.contains(it) }
+        val rolesToAdd = currentRoles.filter { !dbRoles.contains(it) }.map { it.value }
         val rolesToRemove = dbRoles.filter { !currentRoles.contains(it) }
 
         rolesToAdd.forEach {
-            junction.insertUserRole(it, memberId)
+            junction.insertUserRole(it, memberId.value)
         }
 
         rolesToRemove.forEach {
-            junction.dropUserRole(it, memberId)
+            junction.dropUserRole(it, memberId.value)
         }
     }
 
-    private inline fun memberLeft(userId: Long) {
+    private inline fun memberLeft(userId: Snowflake) {
         logger.debug { "User left: $userId" }
 
-        val dbUser = users.getUser(userId).executeAsOneOrNull()
+        val dbUser = users.getUser(userId.value).executeAsOneOrNull()
 
         if (dbUser != null) {
             users.updateUser(dbUser.avatarUrl, dbUser.discriminator, false, dbUser.username, dbUser.id)
@@ -250,15 +250,15 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
     }
 
     private suspend inline fun userUpdated(user: User) {
-        logger.debug { "User updated: ${user.tag} (${user.id.longValue})" }
+        logger.debug { "User updated: ${user.tag} (${user.id})" }
 
         val member = config.getGuild().getMemberOrNull(user.id)
-        val dbUser = users.getUser(user.id.longValue).executeAsOneOrNull()
+        val dbUser = users.getUser(user.id.value).executeAsOneOrNull()
 
         if (dbUser == null) {
-            users.insertUser(user.id.longValue, user.avatar.url, user.discriminator, member != null, user.username)
+            users.insertUser(user.id.value, user.avatar.url, user.discriminator, member != null, user.username)
         } else {
-            users.updateUser(user.avatar.url, user.discriminator, member != null, user.username, user.id.longValue)
+            users.updateUser(user.avatar.url, user.discriminator, member != null, user.username, user.id.value)
         }
     }
 
@@ -267,7 +267,7 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
         val dbRoles = roles.getAllRoles().executeAsList().map { it.id to it }.toMap()
 
         logger.debug { "Updating roles: Getting roles from Discord" }
-        val discordRoles = config.getGuild().roles.toList().map { it.id.longValue to it }.toMap()
+        val discordRoles = config.getGuild().roles.toList().map { it.id.value to it }.toMap()
 
         logger.info { "Syncing ${discordRoles.size} roles." }
 
@@ -296,7 +296,7 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
         rolesToRemove.forEach {
             logger.debug { "Removing role with ID: $it" }
 
-            roleDeleted(it)
+            roleDeleted(Snowflake(it))
         }
 
         return Pair(rolesUpdated, rolesToRemove.size)
@@ -307,7 +307,7 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
         val dbUsers = users.getAllUsers().executeAsList().map { it.id to it }.toMap()
 
         logger.debug { "Updating users: Getting users from Discord" }
-        val discordUsers = config.getGuild().members.toList().map { it.id.longValue to it }.toMap()
+        val discordUsers = config.getGuild().members.toList().map { it.id.value to it }.toMap()
 
         logger.info { "Syncing ${discordUsers.size} members." }
 
@@ -322,7 +322,7 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
             val dbUser = dbUsers[it]
 
             val dbUserRoles = junction.getUserRoleByUser(it).executeAsList().map { role -> role.role_id }
-            val discordUserRoles = member.roles.toList().map { role -> role.id.longValue }
+            val discordUserRoles = member.roles.toList().map { role -> role.id.value }
 
             val rolesUpToDate = dbUserRoles.containsAll(discordUserRoles)
 
@@ -346,7 +346,7 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
         usersToRemove.forEach {
             logger.debug { "Marking user with ID as not present: ($it)" }
 
-            memberLeft(it)  // User isn't in discordUsers at all so we have no object
+            memberLeft(Snowflake(it))  // User isn't in discordUsers at all so we have no object
         }
 
         return Pair(usersUpdated, usersToRemove.size)

@@ -114,7 +114,7 @@ class FilterExtension(bot: ExtensibleBot) : Extension(bot) {
 
                         @Suppress("TooGenericExceptionCaught")  // Anything could happen here.
                         try {
-                            if (!filter.checkEdit(this, sanitizeMessage(new.content ?: ""))) break
+                            if (!filter.checkEdit(this, sanitizeMessage(new.content.value ?: ""))) break
                         } catch (e: Exception) {
                             logger.catching(e)
                         }

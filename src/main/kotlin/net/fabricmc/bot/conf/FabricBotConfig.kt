@@ -128,7 +128,7 @@ class FabricBotConfig {
             Channels.MODERATOR_LOG -> Snowflake(config[ChannelsSpec.moderatorLog])
         }
 
-        return bot.kord.getChannel(snowflake) ?: throw MissingChannelException(snowflake.longValue)
+        return bot.kord.getChannel(snowflake) ?: throw MissingChannelException(snowflake)
     }
 
     /**
@@ -165,7 +165,7 @@ class FabricBotConfig {
     suspend fun getRole(role: Roles): Role {
         val snowflake = getRoleSnowflake(role)
 
-        return getGuild().getRoleOrNull(snowflake) ?: throw MissingRoleException(snowflake.longValue)
+        return getGuild().getRoleOrNull(snowflake) ?: throw MissingRoleException(snowflake)
     }
 
     /**
@@ -176,7 +176,7 @@ class FabricBotConfig {
      */
     @Throws(MissingGuildException::class)
     suspend fun getGuild(): Guild =
-            bot.kord.getGuild(guildSnowflake) ?: throw MissingGuildException(guildSnowflake.longValue)
+            bot.kord.getGuild(guildSnowflake) ?: throw MissingGuildException(guildSnowflake)
 
     /**
      * Attempt to retrieve the [Guild] object for the configured emoji guild.
@@ -186,7 +186,7 @@ class FabricBotConfig {
      */
     @Throws(MissingGuildException::class)
     suspend fun getEmojiGuild(): Guild =
-            bot.kord.getGuild(emojiGuildSnowflake) ?: throw MissingGuildException(emojiGuildSnowflake.longValue)
+            bot.kord.getGuild(emojiGuildSnowflake) ?: throw MissingGuildException(emojiGuildSnowflake)
 
     /**
      * Get the list of channels Jira updates should be sent to.

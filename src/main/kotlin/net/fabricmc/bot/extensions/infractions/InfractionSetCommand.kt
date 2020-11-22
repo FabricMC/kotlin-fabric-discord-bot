@@ -46,7 +46,7 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
                            aliasList: Array<String> = arrayOf(),
         // This can't be suspending, see comment in InfractionActions.applyInfraction
                            private val infrAction: Infraction.(
-                                   targetId: Long, expires: Instant?
+                                   targetId: Snowflake, expires: Instant?
                            ) -> Unit
 ) : Command(extension) {
     private val queries = config.db.infractionQueries
@@ -171,7 +171,7 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
         var descriptionText = getInfractionMessage(true, infraction, expires)
 
         descriptionText += "\n\n**User ID:** `${infraction.target_id}`"
-        descriptionText += "\n**Moderator:** ${actor.mention} (${actor.tag} / `${actor.id.longValue}`)"
+        descriptionText += "\n**Moderator:** ${actor.mention} (${actor.tag} / `${actor.id}`)"
 
         modLog {
             color = Colours.NEGATIVE
@@ -217,21 +217,21 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
     private suspend fun applyInfraction(memberObj: User?, memberLong: Long?, duration: Duration?,
                                         reason: String, message: Message) {
         val author = message.author!!
-        val (memberId, memberMessage) = getMemberId(memberObj, memberLong)
+        val (memberId, memberMessage) = getMemberId(memberObj, memberLong?.let { Snowflake(it) })
 
         if (memberId == null) {
             message.channel.createMessage("${author.mention} $memberMessage")
             return
         }
 
-        val memberMissingMessage = getUserMissingMessage(memberId)
+        val memberMissingMessage = getUserMissingMessage(memberId.value)
 
         if (memberMissingMessage != null) {
             message.channel.createMessage("${author.mention} $memberMissingMessage")
             return
         }
 
-        ensureUser(memberObj, memberId)
+        ensureUser(memberObj, memberId.value)
 
         val expires = if (duration != Duration.ZERO && duration != null) {
             Instant.now().plus(duration)
@@ -243,8 +243,8 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
             if (expires != null) {
                 queries.addInfraction(
                         reason,
-                        author.id.longValue,
-                        memberId,
+                        author.id.value,
+                        memberId.value,
                         instantToMysql(expires),
                         true,
                         type
@@ -252,8 +252,8 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
             } else {
                 queries.addInfraction(
                         reason,
-                        author.id.longValue,
-                        memberId,
+                        author.id.value,
+                        memberId.value,
                         null,  // null for forever
                         true,
                         type

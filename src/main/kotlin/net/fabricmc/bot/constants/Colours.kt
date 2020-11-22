@@ -1,5 +1,6 @@
 package net.fabricmc.bot.constants
 
+import com.gitlab.kordlib.common.kColor
 import java.awt.Color
 
 /**
@@ -7,16 +8,16 @@ import java.awt.Color
  */
 object Colours {
     /** @suppress **/
-    val BLURPLE = Color.decode("#7289DA")
+    val BLURPLE = Color.decode("#7289DA").kColor
 
     /** @suppress **/
-    val FABRIC = Color.decode("#DBD0B4")
+    val FABRIC = Color.decode("#DBD0B4").kColor
 
     /** @suppress **/
-    val NEGATIVE = Color.decode("#e74c3c")
+    val NEGATIVE = Color.decode("#e74c3c").kColor
 
     /** @suppress **/
-    val POSITIVE = Color.decode("#2ecc71")
+    val POSITIVE = Color.decode("#2ecc71").kColor
 
     /**
      * Given a string name, return the corresponding colour.

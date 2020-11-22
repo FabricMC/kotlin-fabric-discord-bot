@@ -1,5 +1,6 @@
 package net.fabricmc.bot.extensions
 
+import com.gitlab.kordlib.common.kColor
 import com.gitlab.kordlib.core.behavior.channel.createEmbed
 import com.gitlab.kordlib.core.behavior.channel.createMessage
 import com.gitlab.kordlib.core.entity.Embed
@@ -25,7 +26,11 @@ import net.fabricmc.bot.constants.Colours
 import net.fabricmc.bot.defaultCheck
 import net.fabricmc.bot.enums.Channels
 import net.fabricmc.bot.extensions.infractions.instantToDisplay
-import net.fabricmc.bot.tags.*
+import net.fabricmc.bot.tags.AliasTag
+import net.fabricmc.bot.tags.EmbedTag
+import net.fabricmc.bot.tags.Tag
+import net.fabricmc.bot.tags.TagParser
+import net.fabricmc.bot.tags.TextTag
 import net.fabricmc.bot.utils.ensureRepo
 import net.fabricmc.bot.utils.requireBotChannel
 import org.eclipse.jgit.api.MergeResult
@@ -68,9 +73,9 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
                     var description = "The following errors were encountered while loading tags.\n\n"
 
                     description += errors.toList()
-                            .sortedBy { it.first }
-                            .take(MAX_ERRORS)
-                            .joinToString("\n\n") { "**${it.first} »** ${it.second}" }
+                        .sortedBy { it.first }
+                        .take(MAX_ERRORS)
+                        .joinToString("\n\n") { "**${it.first} »** ${it.second}" }
 
                     if (errors.size > MAX_ERRORS) {
                         description += "\n\n**...plus ${errors.size - MAX_ERRORS} more.**"
@@ -168,10 +173,10 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
 
                 if (tags.size > 1) {
                     it.message.respond(
-                            "Multiple tags have been found with that name. " +
-                                    "Please pick one of the following:\n\n" +
+                        "Multiple tags have been found with that name. " +
+                                "Please pick one of the following:\n\n" +
 
-                                    tags.joinToString(", ") { t -> "`${t.name}`" }
+                                tags.joinToString(", ") { t -> "`${t.name}`" }
                     ).deleteWithDelay(DELETE_DELAY)
                     it.message.deleteWithDelay(DELETE_DELAY)
 
@@ -187,16 +192,16 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
 
                     if (tag == null) {
                         it.message.respond(
-                                "Invalid alias - no such alias target: " +
-                                        "`$tagName` -> `${data.target}`"
+                            "Invalid alias - no such alias target: " +
+                                    "`$tagName` -> `${data.target}`"
                         )
                         return@action
                     }
 
                     if (tag.data is AliasTag) {
                         it.message.respond(
-                                "Invalid alias - this alias points to another alias: " +
-                                        "`$tagName` -> `${data.target}`"
+                            "Invalid alias - this alias points to another alias: " +
+                                    "`$tagName` -> `${data.target}`"
                         )
                         return@action
                     }
@@ -220,7 +225,7 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
 
                     it.message.channel.createEmbed {
                         Embed(data.embed, bot.kord).apply(this)
-
+                        /*
                         data.embed.fields.forEach {
                             // They'll fix this, but for now...
                             field {
@@ -230,13 +235,13 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
                                 value = it.value
                             }
                         }
-
-                        description = markdown ?: data.embed.description
+                        */
+                        description = markdown ?: data.embed.description.value
 
                         if (data.colour != null) {
                             val colourString = data.colour!!.toLowerCase()
 
-                            color = Colours.fromName(colourString) ?: Color.decode(colourString)
+                            color = Colours.fromName(colourString) ?: Color.decode(colourString).kColor
                         }
                     }
                 }
@@ -381,15 +386,11 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
                             } else if (tag.data is EmbedTag) {
                                 val data = tag.data as EmbedTag
 
-                                for (field in data.embed.fields) {
+                                data.embed.fields.value?.forEach { field ->
                                     if (field.name.contains(query)) {
                                         embedFieldMatches.add(name)
-                                        break
-                                    }
-
-                                    if (field.value.contains(query)) {
+                                    } else if (field.value.contains(query)) {
                                         embedFieldMatches.add(name)
-                                        break
                                     }
                                 }
                             }
@@ -458,13 +459,13 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
                             }
 
                             val paginator = Paginator(
-                                    bot,
-                                    message.channel,
-                                    "Search: $totalMatches match" + if (totalMatches > 1) "es" else "",
-                                    pages,
-                                    message.author,
-                                    PAGE_TIMEOUT,
-                                    true
+                                bot,
+                                message.channel,
+                                "Search: $totalMatches match" + if (totalMatches > 1) "es" else "",
+                                pages,
+                                message.author,
+                                PAGE_TIMEOUT,
+                                true
                             )
 
                             paginator.send()
@@ -527,13 +528,13 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
                     }
 
                     val paginator = Paginator(
-                            bot,
-                            message.channel,
-                            "All tags (${parser.tags.size})",
-                            pages,
-                            message.author,
-                            PAGE_TIMEOUT,
-                            true
+                        bot,
+                        message.channel,
+                        "All tags (${parser.tags.size})",
+                        pages,
+                        message.author,
+                        PAGE_TIMEOUT,
+                        true
                     )
 
                     paginator.send()

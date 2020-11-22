@@ -2,7 +2,7 @@ package net.fabricmc.bot.extensions
 
 import com.gitlab.kordlib.common.entity.GuildFeature
 import com.gitlab.kordlib.common.entity.Snowflake
-import com.gitlab.kordlib.common.entity.Status
+import com.gitlab.kordlib.common.entity.PresenceStatus
 import com.gitlab.kordlib.core.behavior.channel.createEmbed
 import com.gitlab.kordlib.core.entity.channel.Category
 import com.gitlab.kordlib.core.entity.channel.NewsChannel
@@ -17,6 +17,7 @@ import com.kotlindiscord.kord.extensions.commands.parser.Arguments
 import com.kotlindiscord.kord.extensions.extensions.Extension
 import com.kotlindiscord.kord.extensions.utils.*
 import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.flow.toSet
 import net.fabricmc.bot.*
 import net.fabricmc.bot.conf.config
 import net.fabricmc.bot.constants.Colours
@@ -56,7 +57,7 @@ class UtilsExtension(bot: ExtensibleBot) : Extension(bot) {
                         }
 
                         val isModerator = topRoleHigherOrEqual(config.getRole(Roles.TRAINEE_MODERATOR))(event)
-                        var (memberId, memberMessage) = getMemberId(user, userId)
+                        var (memberId, _) = getMemberId(user, userId?.let { Snowflake(it) })
 
                         if (memberId == null) {
                             memberId = message.data.authorId
@@ -70,7 +71,7 @@ class UtilsExtension(bot: ExtensibleBot) : Extension(bot) {
                             return@runSuspended
                         }
 
-                        val member = config.getGuild().getMemberOrNull(Snowflake(memberId))
+                        val member = config.getGuild().getMemberOrNull(memberId)
 
                         if (member == null) {
                             message.deleteWithDelay(DELETE_DELAY)
@@ -79,7 +80,7 @@ class UtilsExtension(bot: ExtensibleBot) : Extension(bot) {
                             return@runSuspended
                         }
 
-                        val infractions = config.db.infractionQueries.getActiveInfractionsByUser(memberId)
+                        val infractions = config.db.infractionQueries.getActiveInfractionsByUser(memberId.value)
                                 .executeAsList().filter { it.infraction_type != InfractionTypes.NOTE }
 
                         val activeInfractions = infractions.count { it.active }
@@ -91,8 +92,8 @@ class UtilsExtension(bot: ExtensibleBot) : Extension(bot) {
 
                             color = member.getTopRole()?.color ?: Colours.BLURPLE
 
-                            description = "**ID:** `$memberId`\n" +
-                                    "**Status:** ${member.getStatusEmoji()}\n"
+                            description = "**ID:** `${memberId.value}`\n" +
+                                    "**PresenceStatus:** ${member.getStatusEmoji()}\n"
 
                             if (member.nickname != null) {
                                 description += "**Nickname:** ${member.nickname}\n"
@@ -148,11 +149,11 @@ class UtilsExtension(bot: ExtensibleBot) : Extension(bot) {
                 val emojiOffline = EmojiExtension.getEmoji(Emojis.STATUS_OFFLINE)
                 val emojiOnline = EmojiExtension.getEmoji(Emojis.STATUS_ONLINE)
 
-                val statuses: MutableMap<Status, Long> = mutableMapOf(
-                        Status.Idle to 0,
-                        Status.DnD to 0,
-                        Status.Offline to 0,
-                        Status.Online to 0,
+                val statuses: MutableMap<PresenceStatus, Long> = mutableMapOf(
+                        PresenceStatus.Idle to 0,
+                        PresenceStatus.DoNotDisturb to 0,
+                        PresenceStatus.Offline to 0,
+                        PresenceStatus.Online to 0,
                 )
 
                 val presences = guild.presences.toList()
@@ -161,7 +162,7 @@ class UtilsExtension(bot: ExtensibleBot) : Extension(bot) {
                     statuses[it.status] = statuses[it.status]!!.plus(1)
                 }
 
-                val offline = members.size - presences.size + statuses[Status.Offline]!!
+                val offline = members.size - presences.size + statuses[PresenceStatus.Offline]!!
 
                 val channels: MutableMap<String, Long> = mutableMapOf(
                         "Category" to 0,
@@ -181,7 +182,7 @@ class UtilsExtension(bot: ExtensibleBot) : Extension(bot) {
                     }
                 }
 
-                val newestEmoji = guild.emojis.sortedBy { it.id.timeStamp }.lastOrNull()
+                val newestEmoji = guild.emojis.toList().maxBy { it.id.timeStamp }
 
                 message.channel.createEmbed {
                     title = guild.name
@@ -210,9 +211,9 @@ class UtilsExtension(bot: ExtensibleBot) : Extension(bot) {
 
                         value = "**Total:** ${members.size}\n\n" +
 
-                                "$emojiOnline ${statuses[Status.Online]}\n" +
-                                "$emojiAway ${statuses[Status.Idle]}\n" +
-                                "$emojiDnd ${statuses[Status.DnD]}\n" +
+                                "$emojiOnline ${statuses[PresenceStatus.Online]}\n" +
+                                "$emojiAway ${statuses[PresenceStatus.Idle]}\n" +
+                                "$emojiDnd ${statuses[PresenceStatus.DoNotDisturb]}\n" +
                                 "$emojiOffline $offline"
                     }
 
@@ -220,7 +221,7 @@ class UtilsExtension(bot: ExtensibleBot) : Extension(bot) {
                         name = "Emojis"
                         inline = true
 
-                        value = "**Total:** ${guild.emojis.size}"
+                        value = "**Total:** ${guild.emojis.toSet().size}"
 
                         if (newestEmoji != null) {
                             value += "\n**Latest:** ${newestEmoji.mention}"
@@ -233,7 +234,7 @@ class UtilsExtension(bot: ExtensibleBot) : Extension(bot) {
 
                         value = if (guild.features.isNotEmpty()) {
                             guild.features
-                                    .filter { it != GuildFeature.Unknown }
+                                    .filter { it !is GuildFeature.Unknown }
                                     .joinToString("\n") { "`${it.value}`" }
                         } else {
                             "No features."

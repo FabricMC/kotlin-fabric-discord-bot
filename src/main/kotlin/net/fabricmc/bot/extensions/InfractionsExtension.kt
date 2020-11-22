@@ -119,7 +119,7 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
 
         val verb = inf.infraction_type.verb.capitalize()
         val moderator = inf.moderator_id
-        val target = inf.target_id
+        val target = Snowflake(inf.target_id)
 
         val created = instantToDisplay(mysqlToInstant(inf.created))
         val expired = instantToDisplay(mysqlToInstant(inf.expires)) ?: "Never"
@@ -219,16 +219,16 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                         // Until Kord figures out this null/missing stuff
                         description = if (newNick == member.username) {
                             "Nickname for ${member.mention} (${member.tag} / " +
-                                    "`${member.id.longValue}`) updated to: $newNick"
+                                    "`${member.id}`) updated to: $newNick"
                         } else {
                             "Nickname for ${member.mention} (${member.tag} / " +
-                                    "`${member.id.longValue}`) removed."
+                                    "`${member.id}`) removed."
                         }
 
                         field {
                             name = "Moderator"
                             value = "${message.author!!.mention} (${message.author!!.tag} / " +
-                                    "`${message.author!!.id.longValue}`)"
+                                    "`${message.author!!.id}`)"
                         }
 
                         if (oldNick != null) {
@@ -338,7 +338,7 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
 
                             infQ.setInfractionActive(false, inf.id)
 
-                            pardonInfraction(inf, inf.target_id, null, true)
+                            pardonInfraction(inf, Snowflake(inf.target_id), null, true)
 
                             modLog {
                                 title = "Infraction Manually Expired"
@@ -352,7 +352,7 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                                 field {
                                     name = "Moderator"
                                     value = "${message.author!!.mention} (${message.author!!.tag} / " +
-                                            "`${message.author!!.id.longValue}`)"
+                                            "`${message.author!!.id}`)"
                                 }
 
                                 footer {
@@ -411,7 +411,7 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
 
                             infQ.setInfractionActive(true, inf.id)
 
-                            applyInfraction(inf, inf.target_id, expires, true)
+                            applyInfraction(inf, Snowflake(inf.target_id), expires, true)
 
                             modLog {
                                 title = "Infraction Manually Reactivated"
@@ -425,7 +425,7 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                                 field {
                                     name = "Moderator"
                                     value = "${message.author!!.mention} (${message.author!!.tag} / " +
-                                            "`${message.author!!.id.longValue}`)"
+                                            "`${message.author!!.id}`)"
                                 }
 
                                 footer {
@@ -495,7 +495,7 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                                 field {
                                     name = "Moderator"
                                     value = "${message.author!!.mention} (${message.author!!.tag} / " +
-                                            "`${message.author!!.id.longValue}`)"
+                                            "`${message.author!!.id}`)"
                                 }
 
                                 footer {
@@ -806,11 +806,11 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
             action {
                 runSuspended {
                     val oldMember = it.old
-                    val newMember = it.getMember()
+                    val newMember = it.member
 
                     logger.debug { "Checking out nick change for user: ${newMember.tag} -> ${newMember.nickname}" }
 
-                    val infractions = infQ.getActiveInfractionsByUser(it.memberId.longValue)
+                    val infractions = infQ.getActiveInfractionsByUser(newMember.id.value)
                             .executeAsList()
                             .filter { it.infraction_type == InfractionTypes.NICK_LOCK }
 
@@ -825,9 +825,9 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                     if (delta?.nickname != null) {  // We've got the old one if there's a delta
                         val oldNick = oldMember!!.nickname ?: oldMember.username
                         val newNick = newMember.nickname ?: newMember.username
-                        val memberId = it.memberId.longValue
+                        val memberId = it.member.id
 
-                        if (newNick in sanctionedNickChanges.get(memberId)) {
+                        if (newNick in sanctionedNickChanges.get(memberId.value)) {
                             logger.debug { "This was a sanctioned nickname change, not reverting." }
 
                             sanctionedNickChanges.remove(memberId, newNick)
@@ -836,7 +836,7 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
 
                         logger.debug { "Reversing nickname change." }
 
-                        sanctionedNickChanges.put(memberId, oldNick)
+                        sanctionedNickChanges.put(memberId.value, oldNick)
 
                         newMember.edit {
                             nickname = oldNick
@@ -845,7 +845,7 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                         modLog {
                             title = "Nick-lock enforced"
                             description = "Prevented nickname change for ${newMember.mention} (${newMember.tag} / " +
-                                    "`${newMember.id.longValue}`)."
+                                    "`${newMember.id}`)."
 
                             color = Colours.POSITIVE
 
@@ -859,7 +859,7 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                         modLog {
                             title = "Nick-lock enforcement failed"
                             description = "Failed to enforce nick-lock because user isn't in the cache:" +
-                                    " ${newMember.mention} (${newMember.tag} / `${newMember.id.longValue}`)."
+                                    " ${newMember.mention} (${newMember.tag} / `${newMember.id}`)."
 
                             color = Colours.NEGATIVE
 
@@ -881,7 +881,7 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
             } else if (member != null && id != null) {
                 null
             } else {
-                member?.id?.longValue ?: id!!
+                member?.id?.value ?: id!!
             }
 
 

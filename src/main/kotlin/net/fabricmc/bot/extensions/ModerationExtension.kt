@@ -1,6 +1,7 @@
 package net.fabricmc.bot.extensions
 
 import com.gitlab.kordlib.common.entity.Permission
+import com.gitlab.kordlib.common.entity.Snowflake
 import com.gitlab.kordlib.core.behavior.channel.createEmbed
 import com.gitlab.kordlib.core.behavior.channel.edit
 import com.gitlab.kordlib.core.entity.PermissionOverwrite
@@ -48,7 +49,7 @@ class ModerationExtension(bot: ExtensibleBot) : Extension(bot) {
     override val name = "moderation"
 
     private val scheduler = Scheduler()
-    private val lockJobs: MutableMap<Long, UUID> = mutableMapOf()
+    private val lockJobs: MutableMap<Snowflake, UUID> = mutableMapOf()
 
     override suspend fun setup() {
         command {
@@ -100,7 +101,7 @@ class ModerationExtension(bot: ExtensibleBot) : Extension(bot) {
                         field {
                             name = "Moderator"
                             value = "${author.mention} (${author.tag} / " +
-                                    "`${author.id.longValue}`)"
+                                    "`${author.id}`)"
                         }
 
                         timestamp = Instant.now()
@@ -113,7 +114,7 @@ class ModerationExtension(bot: ExtensibleBot) : Extension(bot) {
                         description = "Channel locked for ${durationObj.toHuman()}: ${channelObj.mention}"
                     }
 
-                    val channelId = channelObj.id.longValue
+                    val channelId = channelObj.id
 
                     if (lockJobs.containsKey(channelId)) {
                         scheduler.cancelJob(lockJobs[channelId]!!)
@@ -185,7 +186,7 @@ class ModerationExtension(bot: ExtensibleBot) : Extension(bot) {
                         field {
                             name = "Moderator"
                             value = "${author.mention} (${author.tag} / " +
-                                    "`${author.id.longValue}`)"
+                                    "`${author.id}`)"
                         }
 
                         timestamp = Instant.now()
@@ -198,7 +199,7 @@ class ModerationExtension(bot: ExtensibleBot) : Extension(bot) {
                         description = "Channel unlocked: ${channelObj.mention}"
                     }
 
-                    val channelId = channelObj.id.longValue
+                    val channelId = channelObj.id
 
                     if (lockJobs.containsKey(channelId)) {
                         scheduler.cancelJob(lockJobs[channelId]!!)
@@ -272,7 +273,7 @@ class ModerationExtension(bot: ExtensibleBot) : Extension(bot) {
                             field {
                                 name = "Moderator"
                                 value = "${author.mention} (${author.tag} / " +
-                                        "`${author.id.longValue}`)"
+                                        "`${author.id}`)"
                             }
 
                             timestamp = Instant.now()
@@ -294,7 +295,7 @@ class ModerationExtension(bot: ExtensibleBot) : Extension(bot) {
                             field {
                                 name = "Moderator"
                                 value = "${author.mention} (${author.tag} / " +
-                                        "`${author.id.longValue}`)"
+                                        "`${author.id}`)"
                             }
 
                             timestamp = Instant.now()

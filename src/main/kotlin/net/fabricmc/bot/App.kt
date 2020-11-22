@@ -17,7 +17,7 @@ val bot = ExtensibleBot(
         prefix = config.prefix,
         token = config.token,
 
-        guildsToFill = listOf(config.guildSnowflake.value),
+        guildsToFill = listOf(config.guildSnowflake),
         fillPresences = true
 )
 

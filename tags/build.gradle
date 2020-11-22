@@ -48,7 +48,7 @@ dependencies {
     implementation 'org.jetbrains.kotlin:kotlin-reflect'
 
     // Kord Extensions framework (for Discord objects)
-    implementation 'com.kotlindiscord.kord.extensions:kord-extensions:1.2-SNAPSHOT'
+    implementation 'com.kotlindiscord.kord.extensions:kord-extensions:1.4-SNAPSHOT'
 
     // Logging deps
     implementation 'ch.qos.logback:logback-classic:1.2.3'
@@ -57,7 +57,7 @@ dependencies {
 
     // Tags
     api 'com.charleskorn.kaml:kaml:0.23.0'
-    implementation "org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.0.0-RC"
+    implementation "org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.0.0"
 }
 
 application {
@@ -83,7 +83,6 @@ jar {
 
 compileKotlin {
     kotlinOptions.freeCompilerArgs = [
-            "-XXLanguage:+NewInference",
             "-Xopt-in=kotlin.RequiresOptIn"
     ]
 }
