@@ -14,10 +14,10 @@ import net.fabricmc.bot.conf.config
 import net.fabricmc.bot.defaultCheck
 import net.fabricmc.bot.events.LatestMinecraftVersionsRetrieved
 import net.fabricmc.bot.extensions.mappings.*
-import net.fabricmc.bot.utils.requireBotChannel
+//import net.fabricmc.bot.utils.requireBotChannel
 import net.fabricmc.mapping.tree.MethodDef
 
-private const val DELETE_DELAY = 1000L * 15L // 15 seconds
+//private const val DELETE_DELAY = 1000L * 15L // 15 seconds
 private const val PAGE_TIMEOUT = 1000L * 60L * 5L  // 5 minutes
 private val VERSION_REGEX = "[a-z0-9.]+".toRegex(RegexOption.IGNORE_CASE)
 
@@ -62,9 +62,9 @@ class MappingsExtension(bot: ExtensibleBot) : Extension(bot) {
             signature(::MappingsClassArgs)
 
             action {
-                if (!message.requireBotChannel(delay = DELETE_DELAY)) {
-                    return@action
-                }
+//                if (!message.requireBotChannel(delay = DELETE_DELAY)) {
+//                    return@action
+//                }
 
                 with(parse(::MappingsClassArgs)) {
                     val mcVersion = when (version?.toLowerCase()) {
@@ -135,9 +135,9 @@ class MappingsExtension(bot: ExtensibleBot) : Extension(bot) {
             signature(::MappingsFieldArgs)
 
             action {
-                if (!message.requireBotChannel(delay = DELETE_DELAY)) {
-                    return@action
-                }
+//                if (!message.requireBotChannel(delay = DELETE_DELAY)) {
+//                    return@action
+//                }
 
                 with(parse(::MappingsFieldArgs)) {
                     val mcVersion = when (version?.toLowerCase()) {
@@ -208,9 +208,9 @@ class MappingsExtension(bot: ExtensibleBot) : Extension(bot) {
             signature(::MappingsMethodArgs)
 
             action {
-                if (!message.requireBotChannel(delay = DELETE_DELAY)) {
-                    return@action
-                }
+//                if (!message.requireBotChannel(delay = DELETE_DELAY)) {
+//                    return@action
+//                }
 
                 with(parse(::MappingsMethodArgs)) {
                     val mcVersion = when (version?.toLowerCase()) {
