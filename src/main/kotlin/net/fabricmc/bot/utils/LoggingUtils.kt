@@ -55,7 +55,7 @@ suspend fun actionLog(body: suspend EmbedBuilder.() -> Unit): Message {
     }
 
     return webhook.execute(webhook.token!!) {
-        embeds + builder.toRequest()
+        embeds.plusAssign(builder.toRequest())
     }
 }
 
@@ -77,7 +77,7 @@ suspend fun modLog(body: suspend EmbedBuilder.() -> Unit): Message {
     }
 
     return webhook.execute(webhook.token!!) {
-        embeds + builder.toRequest()
+        embeds.plusAssign(builder.toRequest())
     }
 }
 
