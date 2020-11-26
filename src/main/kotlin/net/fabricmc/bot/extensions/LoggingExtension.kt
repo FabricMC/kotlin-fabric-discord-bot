@@ -586,7 +586,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                     is GuildDeleteEvent -> logger.debug { "Ignoring event: $it" }
                     is GuildUpdateEvent -> logger.debug { "Ignoring event: $it" }
                     is IntegrationsUpdateEvent -> logger.debug { "Ignoring event: $it" }
-                    is MemberChunksEvent -> logger.debug { "Ignoring event: $it" }
+                    is MembersChunkEvent -> logger.debug { "Ignoring event: $it" }
                     is MessageCreateEvent -> logger.debug { "Ignoring event: $it" }
                     is NewsChannelUpdateEvent -> logger.debug { "Ignoring event: $it" }
                     is PresenceUpdateEvent -> logger.debug { "Ignoring event: $it" }
