@@ -6,6 +6,7 @@ package net.fabricmc.bot
 import com.gitlab.kordlib.gateway.Intents
 import com.gitlab.kordlib.gateway.PrivilegedIntent
 import com.kotlindiscord.kord.extensions.ExtensibleBot
+import io.sentry.Sentry
 import mu.KotlinLogging
 import net.fabricmc.bot.conf.buildInfo
 import net.fabricmc.bot.conf.config
@@ -29,6 +30,14 @@ suspend fun main() {
     val logger = KotlinLogging.logger {}
 
     logger.info { "Starting Fabric Discord Bot, version ${buildInfo.version}." }
+
+    if (System.getenv().getOrDefault("SENTRY_DSN", null) != null) {
+        val sentry = Sentry.init {
+            it.release = buildInfo.version
+            it.isEnableExternalConfiguration = true
+            it.dsn = System.getenv()["SENTRY_DSN"]
+        }
+    }
 
     Migrator.migrate()
 

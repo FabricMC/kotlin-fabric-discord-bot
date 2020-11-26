@@ -1,4 +1,6 @@
+import ch.qos.logback.classic.filter.ThresholdFilter
 import ch.qos.logback.core.joran.spi.ConsoleTarget
+import io.sentry.logback.SentryAppender
 
 def environment = System.getenv().getOrDefault("ENVIRONMENT", "production")
 
@@ -42,4 +44,16 @@ appender("FILE", FileAppender) {
     }
 }
 
-root(defaultLevel, ["CONSOLE", "FILE"])
+def sentry_dsn = System.getenv().getOrDefault("SENTRY_DSN", null)
+
+if (sentry_dsn != null) {
+    appender("SENTRY", SentryAppender) {
+        filter(ThresholdFilter) {
+            level = WARN
+        }
+    }
+
+    root(defaultLevel, ["CONSOLE", "FILE", "SENTRY"])
+} else {
+    root(defaultLevel, ["CONSOLE", "FILE"])
+}
