@@ -14,6 +14,7 @@ import com.kotlindiscord.kord.extensions.commands.converters.string
 import com.kotlindiscord.kord.extensions.commands.parser.Arguments
 import com.kotlindiscord.kord.extensions.extensions.Extension
 import com.kotlindiscord.kord.extensions.utils.deleteWithDelay
+import com.kotlindiscord.kord.extensions.utils.parse
 import com.kotlindiscord.kord.extensions.utils.respond
 import com.kotlindiscord.kord.extensions.utils.runSuspended
 import kotlinx.coroutines.Job
@@ -154,7 +155,11 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
                     return@action
                 }
 
-                val (tagName, args) = parseArgs(givenArgs)
+                val splitArgs = it.message.parse().toMutableList()
+
+                splitArgs[0] = splitArgs[0].removePrefix(config.tagPrefix)
+
+                val (tagName, args) = parseArgs(splitArgs)
 
                 val tags = parser.getTags(tagName)
 
@@ -239,7 +244,8 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
             aliases = arrayOf("tag", "tricks", "trick", "t")
             description = "Commands for querying the loaded tags.\n\n" +
                     "To get the content of a tag, use `${config.tagPrefix}<tagname>`. Some tags support " +
-                    "substitutions, which can be supplied as further arguments."
+                    "substitutions, which can be supplied as further arguments. If your substitution contains " +
+                    "a space, \"surround it with quotes\"."
 
             check(::defaultCheck)
 
@@ -538,11 +544,9 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
      *
      * @param args String of argument to parse.
      */
-    private fun parseArgs(args: String): Pair<String, List<String>> {
-        val split = args.trim().split("\\s".toRegex())
-
-        val tag = split.first()
-        val arguments = split.drop(1)
+    private fun parseArgs(args: List<String>): Pair<String, List<String>> {
+        val tag = args.first()
+        val arguments = args.drop(1)
 
         return Pair(tag, arguments)
     }
