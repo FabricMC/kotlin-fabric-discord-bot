@@ -26,11 +26,7 @@ import net.fabricmc.bot.constants.Colors
 import net.fabricmc.bot.defaultCheck
 import net.fabricmc.bot.enums.Channels
 import net.fabricmc.bot.extensions.infractions.instantToDisplay
-import net.fabricmc.bot.tags.AliasTag
-import net.fabricmc.bot.tags.EmbedTag
-import net.fabricmc.bot.tags.Tag
-import net.fabricmc.bot.tags.TagParser
-import net.fabricmc.bot.tags.TextTag
+import net.fabricmc.bot.tags.*
 import net.fabricmc.bot.utils.ensureRepo
 import net.fabricmc.bot.utils.requireBotChannel
 import org.eclipse.jgit.api.MergeResult
@@ -73,9 +69,9 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
                     var description = "The following errors were encountered while loading tags.\n\n"
 
                     description += errors.toList()
-                        .sortedBy { it.first }
-                        .take(MAX_ERRORS)
-                        .joinToString("\n\n") { "**${it.first} »** ${it.second}" }
+                            .sortedBy { it.first }
+                            .take(MAX_ERRORS)
+                            .joinToString("\n\n") { "**${it.first} »** ${it.second}" }
 
                     if (errors.size > MAX_ERRORS) {
                         description += "\n\n**...plus ${errors.size - MAX_ERRORS} more.**"
@@ -173,10 +169,10 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
 
                 if (tags.size > 1) {
                     it.message.respond(
-                        "Multiple tags have been found with that name. " +
-                                "Please pick one of the following:\n\n" +
+                            "Multiple tags have been found with that name. " +
+                                    "Please pick one of the following:\n\n" +
 
-                                tags.joinToString(", ") { t -> "`${t.name}`" }
+                                    tags.joinToString(", ") { t -> "`${t.name}`" }
                     ).deleteWithDelay(DELETE_DELAY)
                     it.message.deleteWithDelay(DELETE_DELAY)
 
@@ -192,16 +188,16 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
 
                     if (tag == null) {
                         it.message.respond(
-                            "Invalid alias - no such alias target: " +
-                                    "`$tagName` -> `${data.target}`"
+                                "Invalid alias - no such alias target: " +
+                                        "`$tagName` -> `${data.target}`"
                         )
                         return@action
                     }
 
                     if (tag.data is AliasTag) {
                         it.message.respond(
-                            "Invalid alias - this alias points to another alias: " +
-                                    "`$tagName` -> `${data.target}`"
+                                "Invalid alias - this alias points to another alias: " +
+                                        "`$tagName` -> `${data.target}`"
                         )
                         return@action
                     }
@@ -225,17 +221,7 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
 
                     it.message.channel.createEmbed {
                         Embed(data.embed, bot.kord).apply(this)
-                        /*
-                        data.embed.fields.forEach {
-                            // They'll fix this, but for now...
-                            field {
-                                inline = it.inline ?: false
 
-                                name = it.name
-                                value = it.value
-                            }
-                        }
-                        */
                         description = markdown ?: data.embed.description.value
 
                         if (data.color != null) {
@@ -285,62 +271,64 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
                         val log = git.log().addPath(path).setMaxCount(1).call()
                         val rev = log.firstOrNull()
 
-                        message.channel.createEmbed {
-                            title = "Tag: $tagName"
-                            color = Colors.BLURPLE
+                        message.respond {
+                            embed {
+                                title = "Tag: $tagName"
+                                color = Colors.BLURPLE
 
-                            description = when {
-                                tag.data is AliasTag -> {
-                                    val data = tag.data as AliasTag
+                                description = when {
+                                    tag.data is AliasTag -> {
+                                        val data = tag.data as AliasTag
 
-                                    "This **alias tag** targets the following tag: `${data.target}`"
+                                        "This **alias tag** targets the following tag: `${data.target}`"
+                                    }
+                                    tag.markdown != null -> "This **${tag.data.type} tag** contains " +
+                                            "**${tag.markdown!!.length} characters** of Markdown in its body."
+
+                                    else -> "This **${tag.data.type} tag** contains no Markdown body."
                                 }
-                                tag.markdown != null -> "This **${tag.data.type} tag** contains " +
-                                        "**${tag.markdown!!.length} characters** of Markdown in its body."
 
-                                else -> "This **${tag.data.type} tag** contains no Markdown body."
-                            }
+                                description += "\n\n:link: [Open tag file in browser]($url)"
 
-                            description += "\n\n:link: [Open tag file in browser]($url)"
+                                if (rev != null) {
+                                    val author = rev.authorIdent
 
-                            if (rev != null) {
-                                val author = rev.authorIdent
+                                    if (author != null) {
+                                        field {
+                                            name = "Last author"
+                                            value = author.name
 
-                                if (author != null) {
+                                            inline = true
+                                        }
+                                    }
+
+                                    val committer = rev.committerIdent
+
+                                    if (committer != null && committer.name != author.name) {
+                                        field {
+                                            name = "Last committer"
+                                            value = committer.name
+
+                                            inline = true
+                                        }
+                                    }
+
+                                    val committed = instantToDisplay(Instant.ofEpochSecond(rev.commitTime.toLong()))!!
+
                                     field {
-                                        name = "Last author"
-                                        value = author.name
+                                        name = "Last edit"
+                                        value = committed
 
                                         inline = true
                                     }
-                                }
 
-                                val committer = rev.committerIdent
-
-                                if (committer != null && committer.name != author.name) {
+                                    @Suppress("MagicNumber")
                                     field {
-                                        name = "Last committer"
-                                        value = committer.name
+                                        name = "Current SHA"
+                                        value = "`${rev.name.substring(0, 8)}`"
 
                                         inline = true
                                     }
-                                }
-
-                                val committed = instantToDisplay(Instant.ofEpochSecond(rev.commitTime.toLong()))!!
-
-                                field {
-                                    name = "Last edit"
-                                    value = committed
-
-                                    inline = true
-                                }
-
-                                @Suppress("MagicNumber")
-                                field {
-                                    name = "Current SHA"
-                                    value = "`${rev.name.substring(0, 8)}`"
-
-                                    inline = true
                                 }
                             }
                         }
@@ -402,10 +390,12 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
                                 markdownMatches.size
 
                         if (totalMatches < 1) {
-                            message.channel.createEmbed {
-                                title = "Search: No matches"
-                                description = "We tried our best, but we can't find a tag containing your query. " +
-                                        "Please try again with a different query!"
+                            message.respond {
+                                embed {
+                                    title = "Search: No matches"
+                                    description = "We tried our best, but we can't find a tag containing your query. " +
+                                            "Please try again with a different query!"
+                                }
                             }
                         } else {
                             val pages = mutableListOf<String>()
@@ -459,13 +449,13 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
                             }
 
                             val paginator = Paginator(
-                                bot,
-                                message.channel,
-                                "Search: $totalMatches match" + if (totalMatches > 1) "es" else "",
-                                pages,
-                                message.author,
-                                PAGE_TIMEOUT,
-                                true
+                                    bot,
+                                    message.channel,
+                                    "Search: $totalMatches match" + if (totalMatches > 1) "es" else "",
+                                    pages,
+                                    message.author,
+                                    PAGE_TIMEOUT,
+                                    true
                             )
 
                             paginator.send()
@@ -528,13 +518,13 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
                     }
 
                     val paginator = Paginator(
-                        bot,
-                        message.channel,
-                        "All tags (${parser.tags.size})",
-                        pages,
-                        message.author,
-                        PAGE_TIMEOUT,
-                        true
+                            bot,
+                            message.channel,
+                            "All tags (${parser.tags.size})",
+                            pages,
+                            message.author,
+                            PAGE_TIMEOUT,
+                            true
                     )
 
                     paginator.send()

@@ -1,8 +1,6 @@
 package net.fabricmc.bot.extensions.infractions
 
 import com.gitlab.kordlib.common.entity.Snowflake
-import com.gitlab.kordlib.core.behavior.channel.MessageChannelBehavior
-import com.gitlab.kordlib.core.behavior.channel.createEmbed
 import com.gitlab.kordlib.core.entity.Message
 import com.gitlab.kordlib.core.entity.User
 import com.gitlab.kordlib.core.event.message.MessageCreateEvent
@@ -13,6 +11,7 @@ import com.kotlindiscord.kord.extensions.commands.converters.*
 import com.kotlindiscord.kord.extensions.commands.parser.Arguments
 import com.kotlindiscord.kord.extensions.extensions.Extension
 import com.kotlindiscord.kord.extensions.utils.dm
+import com.kotlindiscord.kord.extensions.utils.respond
 import com.kotlindiscord.kord.extensions.utils.runSuspended
 import mu.KotlinLogging
 import net.fabricmc.bot.bot
@@ -139,30 +138,32 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
         return null
     }
 
-    private suspend fun sendInfractionToChannel(channel: MessageChannelBehavior, infraction: Infraction,
+    private suspend fun sendInfractionToChannel(message: Message, infraction: Infraction,
                                                 expires: Instant?, relayResult: Boolean? = null) {
-        channel.createEmbed {
-            color = Colors.POSITIVE
+        message.respond {
+            embed {
+                color = Colors.POSITIVE
 
-            author {
-                name = "User ${infraction.infraction_type.actionText}"
+                author {
+                    name = "User ${infraction.infraction_type.actionText}"
+
+                    if (relayResult == false) {
+                        icon = "https://cdn.discordapp.com/emojis/777986567993950239.png"
+                    }
+                }
+
+                description = getInfractionMessage(true, infraction, expires)
 
                 if (relayResult == false) {
-                    icon = "https://cdn.discordapp.com/emojis/777986567993950239.png"
+                    description += "\n\n**Note:** Failed to DM the user, they may have their DMs disabled."
                 }
+
+                footer {
+                    text = "ID: ${infraction.id}"
+                }
+
+                timestamp = Instant.now()
             }
-
-            description = getInfractionMessage(true, infraction, expires)
-
-            if (relayResult == false) {
-                description += "\n\n**Note:** Failed to DM the user, they may have their DMs disabled."
-            }
-
-            footer {
-                text = "ID: ${infraction.id}"
-            }
-
-            timestamp = Instant.now()
         }
     }
 
@@ -220,14 +221,14 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
         val (memberId, memberMessage) = getMemberId(memberObj, memberLong?.let { Snowflake(it) })
 
         if (memberId == null) {
-            message.channel.createMessage("${author.mention} $memberMessage")
+            message.respond(memberMessage!!)
             return
         }
 
         val memberMissingMessage = getUserMissingMessage(memberId.value)
 
         if (memberMissingMessage != null) {
-            message.channel.createMessage("${author.mention} $memberMissingMessage")
+            message.respond(memberMissingMessage)
             return
         }
 
@@ -267,7 +268,7 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
 
         infrAction.invoke(infraction, memberId, expires)
 
-        sendInfractionToChannel(message.channel, infraction, expires, relayResult)
+        sendInfractionToChannel(message, infraction, expires, relayResult)
         sendInfractionToModLog(infraction, expires, message.author!!, relayResult)
     }
 

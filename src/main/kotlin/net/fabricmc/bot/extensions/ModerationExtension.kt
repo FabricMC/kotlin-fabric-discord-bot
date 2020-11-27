@@ -2,7 +2,6 @@ package net.fabricmc.bot.extensions
 
 import com.gitlab.kordlib.common.entity.Permission
 import com.gitlab.kordlib.common.entity.Snowflake
-import com.gitlab.kordlib.core.behavior.channel.createEmbed
 import com.gitlab.kordlib.core.behavior.channel.edit
 import com.gitlab.kordlib.core.entity.PermissionOverwrite
 import com.gitlab.kordlib.core.entity.channel.*
@@ -14,6 +13,7 @@ import com.kotlindiscord.kord.extensions.commands.converters.optionalNumber
 import com.kotlindiscord.kord.extensions.commands.parser.Arguments
 import com.kotlindiscord.kord.extensions.extensions.Extension
 import com.kotlindiscord.kord.extensions.utils.Scheduler
+import com.kotlindiscord.kord.extensions.utils.respond
 import com.kotlindiscord.kord.extensions.utils.toHuman
 import net.fabricmc.bot.conf.config
 import net.fabricmc.bot.constants.Colors
@@ -107,11 +107,13 @@ class ModerationExtension(bot: ExtensibleBot) : Extension(bot) {
                         timestamp = Instant.now()
                     }
 
-                    message.channel.createEmbed {
-                        color = Colors.POSITIVE
-                        title = "Channel locked"
+                    message.respond {
+                        embed {
+                            color = Colors.POSITIVE
+                            title = "Channel locked"
 
-                        description = "Channel locked for ${durationObj.toHuman()}: ${channelObj.mention}"
+                            description = "Channel locked for ${durationObj.toHuman()}: ${channelObj.mention}"
+                        }
                     }
 
                     val channelId = channelObj.id
@@ -192,11 +194,13 @@ class ModerationExtension(bot: ExtensibleBot) : Extension(bot) {
                         timestamp = Instant.now()
                     }
 
-                    message.channel.createEmbed {
-                        color = Colors.POSITIVE
-                        title = "Channel unlocked"
+                    message.respond {
+                        embed {
+                            color = Colors.POSITIVE
+                            title = "Channel unlocked"
 
-                        description = "Channel unlocked: ${channelObj.mention}"
+                            description = "Channel unlocked: ${channelObj.mention}"
+                        }
                     }
 
                     val channelId = channelObj.id
@@ -238,9 +242,7 @@ class ModerationExtension(bot: ExtensibleBot) : Extension(bot) {
                     val author = message.author!!
 
                     if (this.duration != null && this.durationInt != null) {
-                        message.channel.createMessage(
-                                "${author.mention} Provide an integer or a duration with units, not both."
-                        )
+                        message.respond("Provide an integer or a duration with units, not both.")
 
                         return@action
                     }
@@ -254,9 +256,7 @@ class ModerationExtension(bot: ExtensibleBot) : Extension(bot) {
                     val seconds: Int = durationObj.seconds.toInt()
 
                     if (seconds > SLOWMODE_LIMIT) {
-                        message.channel.createMessage(
-                                "${author.mention} Duration should be no longer than 6 hours."
-                        )
+                        message.respond("Duration should be no longer than 6 hours.")
 
                         return@action
                     }
@@ -279,11 +279,13 @@ class ModerationExtension(bot: ExtensibleBot) : Extension(bot) {
                             timestamp = Instant.now()
                         }
 
-                        message.channel.createEmbed {
-                            color = Colors.POSITIVE
-                            title = "Slowmode enabled"
+                        message.respond {
+                            embed {
+                                color = Colors.POSITIVE
+                                title = "Slowmode enabled"
 
-                            description = "Slowmode set to ${durationObj.toHuman()} in ${channel.mention}"
+                                description = "Slowmode set to ${durationObj.toHuman()} in ${channel.mention}"
+                            }
                         }
                     } else {
                         modLog {
@@ -301,11 +303,13 @@ class ModerationExtension(bot: ExtensibleBot) : Extension(bot) {
                             timestamp = Instant.now()
                         }
 
-                        message.channel.createEmbed {
-                            color = Colors.POSITIVE
-                            title = "Slowmode disabled"
+                        message.respond {
+                            embed {
+                                color = Colors.POSITIVE
+                                title = "Slowmode disabled"
 
-                            description = "Slowmode disabled in ${channel.mention}"
+                                description = "Slowmode disabled in ${channel.mention}"
+                            }
                         }
                     }
 

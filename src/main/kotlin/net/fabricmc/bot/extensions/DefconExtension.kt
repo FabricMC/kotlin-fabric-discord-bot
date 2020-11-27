@@ -86,19 +86,19 @@ class DefconExtension(bot: ExtensibleBot) : Extension(bot) {
                 with(parse(::DefconArguments)) {
                     if (enable == null) {
                         message.respond(
-                                "Defcon status: **${statusText(isEnabled).capitalize()}**"
+                                "DEFCON status: **${statusText(isEnabled).capitalize()}**"
                         )
 
                         return@action
                     }
 
                     if (enable == isEnabled) {
-                        message.respond("Defcon is already ${statusText(isEnabled)}.")
+                        message.respond("DEFCON is already ${statusText(isEnabled)}.")
                     }
 
                     isEnabled = enable!!
 
-                    message.respond("Defcon is now ${statusText(isEnabled)}.")
+                    message.respond("DEFCON is now ${statusText(isEnabled)}.")
                 }
             }
         }

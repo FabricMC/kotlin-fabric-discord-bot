@@ -1,8 +1,6 @@
 package net.fabricmc.bot.extensions.infractions
 
 import com.gitlab.kordlib.common.entity.Snowflake
-import com.gitlab.kordlib.core.behavior.channel.MessageChannelBehavior
-import com.gitlab.kordlib.core.behavior.channel.createEmbed
 import com.gitlab.kordlib.core.entity.Message
 import com.gitlab.kordlib.core.entity.User
 import com.gitlab.kordlib.core.event.message.MessageCreateEvent
@@ -14,6 +12,7 @@ import com.kotlindiscord.kord.extensions.commands.converters.optionalUser
 import com.kotlindiscord.kord.extensions.commands.parser.Arguments
 import com.kotlindiscord.kord.extensions.extensions.Extension
 import com.kotlindiscord.kord.extensions.utils.dm
+import com.kotlindiscord.kord.extensions.utils.respond
 import com.kotlindiscord.kord.extensions.utils.runSuspended
 import mu.KotlinLogging
 import net.fabricmc.bot.bot
@@ -117,18 +116,20 @@ class InfractionUnsetCommand(extension: Extension, private val type: InfractionT
         }
     }
 
-    private suspend fun sendToChannel(channel: MessageChannelBehavior, infraction: Infraction) {
-        channel.createEmbed {
-            color = Colors.POSITIVE
-            title = "Infraction pardoned"
+    private suspend fun sendToChannel(message: Message, infraction: Infraction) {
+        message.respond {
+            embed {
+                color = Colors.POSITIVE
+                title = "Infraction pardoned"
 
-            description = getInfractionMessage(true, infraction)
+                description = getInfractionMessage(true, infraction)
 
-            footer {
-                text = "ID: ${infraction.id}"
+                footer {
+                    text = "ID: ${infraction.id}"
+                }
+
+                timestamp = Instant.now()
             }
-
-            timestamp = Instant.now()
         }
     }
 
@@ -155,7 +156,7 @@ class InfractionUnsetCommand(extension: Extension, private val type: InfractionT
         val (memberId, memberMessage) = getMemberId(memberObj, memberLong?.let { Snowflake(it) })
 
         if (memberId == null) {
-            message.channel.createMessage("${author.mention} $memberMessage")
+            message.respond(memberMessage!!)
             return
         }
 
@@ -164,8 +165,8 @@ class InfractionUnsetCommand(extension: Extension, private val type: InfractionT
         }.filter { it.infraction_type == type }
 
         if (infractions.isEmpty()) {
-            message.channel.createMessage(
-                    "${author.mention} Unable to find a matching active infraction for that user."
+            message.respond(
+                    "Unable to find a matching active infraction for that user."
             )
 
             return
@@ -177,7 +178,7 @@ class InfractionUnsetCommand(extension: Extension, private val type: InfractionT
             infrAction.invoke(infraction, memberId, null)
 
             sendToUser(infraction)
-            sendToChannel(message.channel, infraction)
+            sendToChannel(message, infraction)
             sendToModLog(infraction, message.author!!)
         }
     }

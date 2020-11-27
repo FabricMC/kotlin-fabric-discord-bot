@@ -1,7 +1,6 @@
 package net.fabricmc.bot.extensions
 
 import com.gitlab.kordlib.common.entity.Snowflake
-import com.gitlab.kordlib.core.behavior.channel.createMessage
 import com.gitlab.kordlib.core.behavior.edit
 import com.gitlab.kordlib.core.entity.User
 import com.gitlab.kordlib.core.event.guild.MemberUpdateEvent
@@ -302,7 +301,7 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                                 return@with
                             }
 
-                            message.channel.createMessage { embed = embedBuilder }
+                            message.respond { embed = embedBuilder }
                         }
                     }
                 }
@@ -527,9 +526,7 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                             val validateMessage = validateSearchArgs(this)
 
                             if (validateMessage != null) {
-                                message.channel.createMessage(
-                                        "${author.mention} $validateMessage"
-                                )
+                                message.respond(validateMessage)
 
                                 return@with
                             }

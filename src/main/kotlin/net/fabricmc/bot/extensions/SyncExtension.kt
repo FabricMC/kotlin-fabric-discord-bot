@@ -1,7 +1,6 @@
 package net.fabricmc.bot.extensions
 
 import com.gitlab.kordlib.common.entity.Snowflake
-import com.gitlab.kordlib.core.behavior.channel.createEmbed
 import com.gitlab.kordlib.core.entity.Member
 import com.gitlab.kordlib.core.entity.Role
 import com.gitlab.kordlib.core.entity.User
@@ -16,6 +15,7 @@ import com.gitlab.kordlib.core.event.user.UserUpdateEvent
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import com.kotlindiscord.kord.extensions.checks.topRoleHigherOrEqual
 import com.kotlindiscord.kord.extensions.extensions.Extension
+import com.kotlindiscord.kord.extensions.utils.respond
 import com.kotlindiscord.kord.extensions.utils.runSuspended
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.toList
@@ -81,31 +81,33 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
                 val (allInfractions, expiredInfractions) = infractionSync()
 
                 logger.debug { "Manual sync done." }
-                message.channel.createEmbed {
-                    title = "Sync statistics"
+                message.respond {
+                    embed {
+                        title = "Sync statistics"
 
-                    field {
-                        inline = false
+                        field {
+                            inline = false
 
-                        name = "Roles"
-                        value = "**Updated:** $rolesUpdated | **Removed:** $rolesRemoved"
+                            name = "Roles"
+                            value = "**Updated:** $rolesUpdated | **Removed:** $rolesRemoved"
+                        }
+
+                        field {
+                            inline = false
+
+                            name = "Users"
+                            value = "**Updated:** $usersUpdated | **Absent:** $usersAbsent"
+                        }
+
+                        field {
+                            inline = false
+
+                            name = "Infractions"
+                            value = "**All:** $allInfractions | **Expired now:** $expiredInfractions"
+                        }
+
+                        timestamp = Instant.now()
                     }
-
-                    field {
-                        inline = false
-
-                        name = "Users"
-                        value = "**Updated:** $usersUpdated | **Absent:** $usersAbsent"
-                    }
-
-                    field {
-                        inline = false
-
-                        name = "Infractions"
-                        value = "**All:** $allInfractions | **Expired now:** $expiredInfractions"
-                    }
-
-                    timestamp = Instant.now()
                 }
             }
         }

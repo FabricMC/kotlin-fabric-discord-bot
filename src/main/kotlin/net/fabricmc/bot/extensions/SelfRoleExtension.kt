@@ -1,10 +1,10 @@
 package net.fabricmc.bot.extensions
 
-import com.gitlab.kordlib.core.behavior.channel.createEmbed
 import com.gitlab.kordlib.rest.builder.message.EmbedBuilder
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import com.kotlindiscord.kord.extensions.extensions.Extension
 import com.kotlindiscord.kord.extensions.utils.hasRole
+import com.kotlindiscord.kord.extensions.utils.respond
 import net.fabricmc.bot.conf.config
 import net.fabricmc.bot.constants.Colors
 import net.fabricmc.bot.enums.Roles
@@ -50,7 +50,9 @@ class SelfRoleExtension(bot: ExtensibleBot) : Extension(bot) {
                     }
                 }
 
-                message.channel.createEmbed(confirmation)
+                message.respond {
+                    embed(confirmation)
+                }
             }
         }
     }

@@ -96,8 +96,8 @@ class CleanExtension(bot: ExtensibleBot) : Extension(bot) {
                 }
 
                 if (args.isEmpty()) {
-                    message.channel.createMessage(
-                            ":x: Please provide at least one filter"
+                    message.respond(
+                            "Please provide at least one filter."
                     )
 
                     return@action
@@ -123,7 +123,7 @@ class CleanExtension(bot: ExtensibleBot) : Extension(bot) {
                     val channels = when {
                         since != null -> {
                             if (!channels.isNullOrEmpty()) {
-                                message.channel.createMessage(":x: Cannot use the `in` and `since` options together")
+                                message.respond("Cannot use the `in` and `since` options together.")
                                 return@action
                             }
 
@@ -182,16 +182,16 @@ class CleanExtension(bot: ExtensibleBot) : Extension(bot) {
 
                         if (query.size > MAX_DELETION_SIZE && !dryRun) {
                             if (message.getAuthorAsMember()?.hasRole(config.getRole(Roles.ADMIN)) == false) {
-                                message.channel.createMessage(
-                                        ":x: Cannot delete more than $MAX_DELETION_SIZE, " +
-                                                "please ask an admin to run this command with the `force:true` flag."
+                                message.respond(
+                                        "Cannot delete more than $MAX_DELETION_SIZE, " +
+                                                "please ask an admin to run this command with the `force=true` flag."
                                 )
                                 return@action
                             } else {
                                 if (!force) {
-                                    message.channel.createMessage(
+                                    message.respond(
                                             ":x: Cannot delete more than $MAX_DELETION_SIZE, " +
-                                                    "run this command with the `force:true` flag to force it."
+                                                    "run this command with the `force=true` flag to force it."
                                     )
                                     return@action
                                 }

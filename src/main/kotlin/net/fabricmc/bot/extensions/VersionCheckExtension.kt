@@ -1,7 +1,6 @@
 package net.fabricmc.bot.extensions
 
 import com.gitlab.kordlib.common.entity.ChannelType
-import com.gitlab.kordlib.core.behavior.channel.createEmbed
 import com.gitlab.kordlib.core.event.gateway.ReadyEvent
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import com.kotlindiscord.kord.extensions.checks.topRoleHigherOrEqual
@@ -136,34 +135,38 @@ class VersionCheckExtension(bot: ExtensibleBot) : Extension(bot) {
                 try {
                     updateCheck()
 
-                    message.channel.createEmbed {
-                        title = "Version check success"
-                        color = Colors.POSITIVE
+                    message.respond {
+                        embed {
+                            title = "Version check success"
+                            color = Colors.POSITIVE
 
-                        description = "Successfully checked for new Minecraft versions and JIRA releases."
+                            description = "Successfully checked for new Minecraft versions and JIRA releases."
 
-                        field {
-                            name = "Latest (JIRA)"
-                            value = jiraVersions.last().name
+                            field {
+                                name = "Latest (JIRA)"
+                                value = jiraVersions.last().name
 
-                            inline = true
-                        }
+                                inline = true
+                            }
 
-                        field {
-                            name = "Latest (Minecraft)"
-                            value = minecraftVersions.first().id
+                            field {
+                                name = "Latest (Minecraft)"
+                                value = minecraftVersions.first().id
 
-                            inline = true
+                                inline = true
+                            }
                         }
                     }
                 } catch (e: Exception) {
-                    message.channel.createEmbed {
-                        title = "Version check error"
-                        color = Colors.NEGATIVE
+                    message.respond {
+                        embed {
+                            title = "Version check error"
+                            color = Colors.NEGATIVE
 
-                        description = "```" +
-                                "$e: ${e.stackTraceToString()}" +
-                                "```"
+                            description = "```" +
+                                    "$e: ${e.stackTraceToString()}" +
+                                    "```"
+                        }
                     }
                 }
 
