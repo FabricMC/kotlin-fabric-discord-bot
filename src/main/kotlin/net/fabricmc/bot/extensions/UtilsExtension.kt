@@ -20,7 +20,7 @@ import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.flow.toSet
 import net.fabricmc.bot.*
 import net.fabricmc.bot.conf.config
-import net.fabricmc.bot.constants.Colours
+import net.fabricmc.bot.constants.Colors
 import net.fabricmc.bot.enums.Emojis
 import net.fabricmc.bot.enums.InfractionTypes
 import net.fabricmc.bot.enums.Roles
@@ -90,10 +90,10 @@ class UtilsExtension(bot: ExtensibleBot) : Extension(bot) {
                         message.channel.createEmbed {
                             title = "User info: ${member.tag}"
 
-                            color = member.getTopRole()?.color ?: Colours.BLURPLE
+                            color = member.getTopRole()?.color ?: Colors.BLURPLE
 
                             description = "**ID:** `${memberId.value}`\n" +
-                                    "**PresenceStatus:** ${member.getStatusEmoji()}\n"
+                                    "**Status:** ${member.getStatusEmoji()}\n"
 
                             if (member.nickname != null) {
                                 description += "**Nickname:** ${member.nickname}\n"
@@ -182,11 +182,11 @@ class UtilsExtension(bot: ExtensibleBot) : Extension(bot) {
                     }
                 }
 
-                val newestEmoji = guild.emojis.toList().maxBy { it.id.timeStamp }
+                val newestEmoji = guild.emojis.toList().maxByOrNull { it.id.timeStamp }
 
                 message.channel.createEmbed {
                     title = guild.name
-                    color = Colours.BLURPLE
+                    color = Colors.BLURPLE
                     timestamp = Instant.now()
 
                     description = "**Created:** ${instantToDisplay(guild.id.timeStamp)}\n" +

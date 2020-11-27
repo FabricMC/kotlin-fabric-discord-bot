@@ -14,7 +14,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.encodeURLPath
 import net.fabricmc.bot.conf.config
-import net.fabricmc.bot.constants.Colours
+import net.fabricmc.bot.constants.Colors
 import net.fabricmc.bot.defaultCheck
 import net.fabricmc.bot.enums.Roles
 import net.fabricmc.bot.utils.requireMainGuild
@@ -58,7 +58,7 @@ class GitHubExtension(bot: ExtensibleBot) : Extension(bot) {
                         if (isBlocked(user)) {
                             message.channel.createEmbed {
                                 title = "$user is already blocked."
-                                color = Colours.NEGATIVE
+                                color = Colors.NEGATIVE
                             }
                         }
 
@@ -69,7 +69,7 @@ class GitHubExtension(bot: ExtensibleBot) : Extension(bot) {
                         if (resp.status == HttpStatusCode.NoContent) {
                             message.channel.createEmbed {
                                 title = "$user has been blocked from the ${config.githubOrganization} organization."
-                                color = Colours.POSITIVE
+                                color = Colors.POSITIVE
                             }
                         }
                     }
@@ -91,7 +91,7 @@ class GitHubExtension(bot: ExtensibleBot) : Extension(bot) {
                         if (!isBlocked(user)) {
                             message.channel.createEmbed {
                                 title = "$user is not blocked."
-                                color = Colours.NEGATIVE
+                                color = Colors.NEGATIVE
                             }
                         }
 
@@ -102,7 +102,7 @@ class GitHubExtension(bot: ExtensibleBot) : Extension(bot) {
                         if (resp.status == HttpStatusCode.NoContent) {
                             message.channel.createEmbed {
                                 title = "$user has been unblocked from the ${config.githubOrganization} organization."
-                                color = Colours.POSITIVE
+                                color = Colors.POSITIVE
                             }
                         }
                     }

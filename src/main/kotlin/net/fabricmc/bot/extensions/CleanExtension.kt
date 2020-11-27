@@ -13,7 +13,7 @@ import com.kotlindiscord.kord.extensions.utils.*
 import mu.KotlinLogging
 import net.fabricmc.bot.*
 import net.fabricmc.bot.conf.config
-import net.fabricmc.bot.constants.Colours
+import net.fabricmc.bot.constants.Colors
 import net.fabricmc.bot.enums.Roles
 import net.fabricmc.bot.utils.modLog
 import net.fabricmc.bot.utils.requireMainGuild
@@ -234,7 +234,7 @@ class CleanExtension(bot: ExtensibleBot) : Extension(bot) {
         val channel = message.channel
 
         modLog {
-            color = Colours.BLURPLE
+            color = Colors.BLURPLE
             title = "Clean command summary"
 
             description = "Clean command executed by ${author.mention} in ${channel.mention}."

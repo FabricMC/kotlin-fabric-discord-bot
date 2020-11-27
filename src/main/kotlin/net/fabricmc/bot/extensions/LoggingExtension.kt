@@ -22,7 +22,7 @@ import kotlinx.coroutines.flow.toSet
 import mu.KotlinLogging
 import net.fabricmc.bot.*
 import net.fabricmc.bot.conf.config
-import net.fabricmc.bot.constants.Colours
+import net.fabricmc.bot.constants.Colors
 import net.fabricmc.bot.enums.Channels
 import net.fabricmc.bot.extensions.infractions.instantToDisplay
 import net.fabricmc.bot.utils.actionLog
@@ -59,7 +59,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
             action {
                 when (it) {
                     is BanAddEvent -> modLog {
-                        color = Colours.NEGATIVE
+                        color = Colors.NEGATIVE
                         title = "User banned"
 
                         field { name = "Username"; value = it.user.username; inline = true }
@@ -70,7 +70,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                     }
 
                     is BanRemoveEvent -> modLog {
-                        color = Colours.POSITIVE
+                        color = Colors.POSITIVE
                         title = "User unbanned"
 
                         field { name = "Username"; value = it.user.username; inline = true }
@@ -81,7 +81,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                     }
 
                     is CategoryCreateEvent -> modLog {
-                        color = Colours.POSITIVE
+                        color = Colors.POSITIVE
                         title = "Category created"
 
                         field { name = "Name"; value = it.channel.name; inline = true }
@@ -91,7 +91,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                     }
 
                     is CategoryDeleteEvent -> modLog {
-                        color = Colours.NEGATIVE
+                        color = Colors.NEGATIVE
                         title = "Category deleted"
 
                         field { name = "Name"; value = it.channel.name; inline = true }
@@ -101,7 +101,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                     }
 
                     is InviteCreateEvent -> actionLog {
-                        color = Colours.POSITIVE
+                        color = Colors.POSITIVE
                         title = "Invite created"
 
                         field { name = "Channel"; value = it.channel.mention; inline = true }
@@ -110,7 +110,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                     }
 
                     is InviteDeleteEvent -> modLog {
-                        color = Colours.NEGATIVE
+                        color = Colors.NEGATIVE
                         title = "Invite deleted"
 
                         field { name = "Channel"; value = it.channel.mention; inline = true }
@@ -118,7 +118,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                     }
 
                     is MemberJoinEvent -> actionLog {
-                        color = Colours.POSITIVE
+                        color = Colors.POSITIVE
                         title = "Member joined"
 
                         field { name = "Username"; value = it.member.username; inline = true }
@@ -141,7 +141,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                     }
 
                     is MemberLeaveEvent -> actionLog {
-                        color = Colours.NEGATIVE
+                        color = Colors.NEGATIVE
                         title = "Member left"
 
                         field { name = "Username"; value = it.user.username; inline = true }
@@ -159,7 +159,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                             logger.debug { "No changes found." }
                         } else {
                             actionLog {
-                                color = Colours.BLURPLE
+                                color = Colors.BLURPLE
                                 title = "Member updated"
 
                                 field {
@@ -277,7 +277,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                         // TODO: There's a Flow<Message> we could use for something.
                         // I don't think outputting all the messages to the channel is a good idea, though.
 
-                        color = Colours.NEGATIVE
+                        color = Colors.NEGATIVE
                         title = "Bulk message delete"
 
                         field { name = "Channel"; value = it.channel.mention; inline = true }
@@ -285,7 +285,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                     }
 
                     is MessageDeleteEvent -> actionLog {
-                        color = Colours.NEGATIVE
+                        color = Colors.NEGATIVE
                         title = "Message deleted"
 
                         val message = it.message
@@ -323,7 +323,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
 
                     is MessageUpdateEvent -> if (it.getMessage().author != null) {
                         actionLog {
-                            color = Colours.BLURPLE
+                            color = Colors.BLURPLE
                             title = "Message edited"
 
                             val old = it.old
@@ -376,7 +376,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                     }
 
                     is NewsChannelCreateEvent -> modLog {
-                        color = Colours.POSITIVE
+                        color = Colors.POSITIVE
                         title = "News channel created"
 
                         val category = it.channel.category
@@ -392,7 +392,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                     }
 
                     is NewsChannelDeleteEvent -> modLog {
-                        color = Colours.NEGATIVE
+                        color = Colors.NEGATIVE
                         title = "News channel deleted"
 
                         val category = it.channel.category
@@ -408,7 +408,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
 
                     is ReactionRemoveAllEvent -> if (it.getMessage().author != null) {
                         modLog {
-                            color = Colours.NEGATIVE
+                            color = Colors.NEGATIVE
                             title = "All reactions removed"
 
                             val message = it.getMessage()
@@ -424,7 +424,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
 
                     is ReactionRemoveEmojiEvent -> if (it.getMessage().author != null) {
                         modLog {
-                            color = Colours.NEGATIVE
+                            color = Colors.NEGATIVE
                             title = "All reactions removed"
 
                             val message = it.getMessage()
@@ -440,7 +440,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                     }
 
                     is RoleCreateEvent -> modLog {
-                        color = Colours.POSITIVE
+                        color = Colors.POSITIVE
                         title = "Role created"
 
                         field { name = "Name"; value = it.role.name; inline = true }
@@ -449,7 +449,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                     }
 
                     is RoleDeleteEvent -> modLog {
-                        color = Colours.NEGATIVE
+                        color = Colors.NEGATIVE
                         title = "Role deleted"
 
                         val role = it.role
@@ -464,7 +464,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                     }
 
                     is StoreChannelCreateEvent -> modLog {
-                        color = Colours.POSITIVE
+                        color = Colors.POSITIVE
                         title = "Store channel created"
 
                         val category = it.channel.category
@@ -480,7 +480,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                     }
 
                     is StoreChannelDeleteEvent -> modLog {
-                        color = Colours.NEGATIVE
+                        color = Colors.NEGATIVE
                         title = "Store channel deleted"
 
                         val category = it.channel.category
@@ -502,7 +502,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                                 category.id != config.getChannel(Channels.ACTION_LOG_CATEGORY).id
                         ) {
                             modLog {
-                                color = Colours.POSITIVE
+                                color = Colors.POSITIVE
                                 title = "Text channel created"
 
                                 if (category != null) {
@@ -525,7 +525,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                                 category.id != config.getChannel(Channels.ACTION_LOG_CATEGORY).id
                         ) {
                             modLog {
-                                color = Colours.NEGATIVE
+                                color = Colors.NEGATIVE
                                 title = "Text channel deleted"
 
                                 if (category != null) {
@@ -540,7 +540,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                     }
 
                     is VoiceChannelCreateEvent -> modLog {
-                        color = Colours.POSITIVE
+                        color = Colors.POSITIVE
                         title = "Voice channel created"
 
                         val category = it.channel.category
@@ -556,7 +556,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                     }
 
                     is VoiceChannelDeleteEvent -> modLog {
-                        color = Colours.NEGATIVE
+                        color = Colors.NEGATIVE
                         title = "Voice channel deleted"
 
                         val category = it.channel.category

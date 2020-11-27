@@ -20,7 +20,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import mu.KotlinLogging
 import net.fabricmc.bot.conf.config
-import net.fabricmc.bot.constants.Colours
+import net.fabricmc.bot.constants.Colors
 import net.fabricmc.bot.defaultCheck
 import net.fabricmc.bot.enums.Roles
 import net.fabricmc.bot.events.LatestMinecraftVersionsRetrieved
@@ -138,7 +138,7 @@ class VersionCheckExtension(bot: ExtensibleBot) : Extension(bot) {
 
                     message.channel.createEmbed {
                         title = "Version check success"
-                        color = Colours.POSITIVE
+                        color = Colors.POSITIVE
 
                         description = "Successfully checked for new Minecraft versions and JIRA releases."
 
@@ -159,7 +159,7 @@ class VersionCheckExtension(bot: ExtensibleBot) : Extension(bot) {
                 } catch (e: Exception) {
                     message.channel.createEmbed {
                         title = "Version check error"
-                        color = Colours.NEGATIVE
+                        color = Colors.NEGATIVE
 
                         description = "```" +
                                 "$e: ${e.stackTraceToString()}" +

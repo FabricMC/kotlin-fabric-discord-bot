@@ -17,7 +17,7 @@ import com.kotlindiscord.kord.extensions.utils.runSuspended
 import mu.KotlinLogging
 import net.fabricmc.bot.bot
 import net.fabricmc.bot.conf.config
-import net.fabricmc.bot.constants.Colours
+import net.fabricmc.bot.constants.Colors
 import net.fabricmc.bot.database.Infraction
 import net.fabricmc.bot.defaultCheck
 import net.fabricmc.bot.enums.InfractionTypes
@@ -116,7 +116,7 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
 
             targetObj?.dm {
                 embed {
-                    color = Colours.NEGATIVE
+                    color = Colors.NEGATIVE
                     title = type.actionText.capitalize() + "!"
 
                     description = getInfractionMessage(false, infraction, expires)
@@ -142,7 +142,7 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
     private suspend fun sendInfractionToChannel(channel: MessageChannelBehavior, infraction: Infraction,
                                                 expires: Instant?, relayResult: Boolean? = null) {
         channel.createEmbed {
-            color = Colours.POSITIVE
+            color = Colors.POSITIVE
 
             author {
                 name = "User ${infraction.infraction_type.actionText}"
@@ -174,7 +174,7 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
         descriptionText += "\n**Moderator:** ${actor.mention} (${actor.tag} / `${actor.id}`)"
 
         modLog {
-            color = Colours.NEGATIVE
+            color = Colors.NEGATIVE
 
             author {
                 name = "User ${infraction.infraction_type.actionText}"

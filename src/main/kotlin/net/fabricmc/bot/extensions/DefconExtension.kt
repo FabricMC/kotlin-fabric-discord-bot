@@ -11,7 +11,7 @@ import com.kotlindiscord.kord.extensions.extensions.Extension
 import com.kotlindiscord.kord.extensions.utils.dm
 import com.kotlindiscord.kord.extensions.utils.respond
 import net.fabricmc.bot.conf.config
-import net.fabricmc.bot.constants.Colours
+import net.fabricmc.bot.constants.Colors
 import net.fabricmc.bot.defaultCheck
 import net.fabricmc.bot.enums.Roles
 import net.fabricmc.bot.extensions.infractions.instantToDisplay
@@ -60,7 +60,7 @@ class DefconExtension(bot: ExtensibleBot) : Extension(bot) {
                             "**User tag:** `${it.member.tag}`\n" +
                             "**Creation date:** `${instantToDisplay(it.member.id.timeStamp)}`"
 
-                    color = Colours.NEGATIVE
+                    color = Colors.NEGATIVE
                 }
             }
         }

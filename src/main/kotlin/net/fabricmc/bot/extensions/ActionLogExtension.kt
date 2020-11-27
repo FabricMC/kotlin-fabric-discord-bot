@@ -18,7 +18,7 @@ import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
 import net.fabricmc.bot.conf.config
-import net.fabricmc.bot.constants.Colours
+import net.fabricmc.bot.constants.Colors
 import net.fabricmc.bot.defaultCheck
 import net.fabricmc.bot.enums.Channels
 import net.fabricmc.bot.enums.Roles
@@ -242,11 +242,10 @@ class ActionLogExtension(bot: ExtensibleBot) : Extension(bot) {
             if (!currentChannelExists) {
                 logger.debug { "Creating this week's channel." }
 
-                val c = config.getGuild().createTextChannel {
-                    val yearPadded = thisYear.toString().padStart(4, '0')
-                    val weekPadded = thisWeek.toString().padStart(2, '0')
+                val yearPadded = thisYear.toString().padStart(4, '0')
+                val weekPadded = thisWeek.toString().padStart(2, '0')
 
-                    name = "action-log-$yearPadded-$weekPadded"
+                val c = config.getGuild().createTextChannel("action-log-$yearPadded-$weekPadded") {
                     parentId = category.id
                 }
 
@@ -293,14 +292,14 @@ class ActionLogExtension(bot: ExtensibleBot) : Extension(bot) {
 
     private suspend fun logCreation(channel: GuildMessageChannel) = modLog {
         title = "Action log rotation"
-        color = Colours.POSITIVE
+        color = Colors.POSITIVE
 
         description = "Channel created: **#${channel.name} (`${channel.id}`)**"
     }
 
     private suspend fun logDeletion(channel: GuildMessageChannel) = modLog {
         title = "Action log rotation"
-        color = Colours.NEGATIVE
+        color = Colors.NEGATIVE
 
         description = "Channel removed: **#${channel.name} (`${channel.id}`)**"
     }

@@ -5,7 +5,7 @@ import com.kotlindiscord.kord.extensions.utils.Scheduler
 import com.kotlindiscord.kord.extensions.utils.runSuspended
 import mu.KotlinLogging
 import net.fabricmc.bot.conf.config
-import net.fabricmc.bot.constants.Colours
+import net.fabricmc.bot.constants.Colors
 import net.fabricmc.bot.database.Infraction
 import net.fabricmc.bot.enums.InfractionTypes
 import net.fabricmc.bot.enums.Roles
@@ -181,7 +181,7 @@ private fun schedule(delay: Long, infraction: Infraction, manual: Boolean, callb
         if (!manual) {
             modLog {
                 title = "Infraction Expired"
-                color = Colours.BLURPLE
+                color = Colors.BLURPLE
 
                 description = "<@${infraction.target_id}> (`${infraction.target_id}`) is no longer " +
                         "${infraction.infraction_type.actionText}."

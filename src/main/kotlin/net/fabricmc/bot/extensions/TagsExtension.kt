@@ -22,7 +22,7 @@ import kotlinx.coroutines.launch
 import mu.KotlinLogging
 import net.fabricmc.bot.TagMissingArgumentException
 import net.fabricmc.bot.conf.config
-import net.fabricmc.bot.constants.Colours
+import net.fabricmc.bot.constants.Colors
 import net.fabricmc.bot.defaultCheck
 import net.fabricmc.bot.enums.Channels
 import net.fabricmc.bot.extensions.infractions.instantToDisplay
@@ -84,7 +84,7 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
                     description += "\n\n${parser.tags.size} tags loaded successfully."
 
                     (config.getChannel(Channels.ALERTS) as GuildMessageChannel).createEmbed {
-                        color = Colours.NEGATIVE
+                        color = Colors.NEGATIVE
                         title = "Tag-loading errors"
 
                         this.description = description
@@ -238,10 +238,10 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
                         */
                         description = markdown ?: data.embed.description.value
 
-                        if (data.colour != null) {
-                            val colourString = data.colour!!.toLowerCase()
+                        if (data.color != null) {
+                            val colorString = data.color!!.toLowerCase()
 
-                            color = Colours.fromName(colourString) ?: Color.decode(colourString).kColor
+                            color = Colors.fromName(colorString) ?: Color.decode(colorString).kColor
                         }
                     }
                 }
@@ -287,7 +287,7 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
 
                         message.channel.createEmbed {
                             title = "Tag: $tagName"
-                            color = Colours.BLURPLE
+                            color = Colors.BLURPLE
 
                             description = when {
                                 tag.data is AliasTag -> {

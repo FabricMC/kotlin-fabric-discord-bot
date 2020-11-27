@@ -16,7 +16,7 @@ import com.kotlindiscord.kord.extensions.extensions.Extension
 import com.kotlindiscord.kord.extensions.utils.Scheduler
 import com.kotlindiscord.kord.extensions.utils.toHuman
 import net.fabricmc.bot.conf.config
-import net.fabricmc.bot.constants.Colours
+import net.fabricmc.bot.constants.Colors
 import net.fabricmc.bot.defaultCheck
 import net.fabricmc.bot.enums.Roles
 import net.fabricmc.bot.utils.modLog
@@ -93,7 +93,7 @@ class ModerationExtension(bot: ExtensibleBot) : Extension(bot) {
                     channelObj.addOverwrite(permsObj)
 
                     modLog {
-                        color = Colours.BLURPLE
+                        color = Colors.BLURPLE
                         title = "Channel locked"
 
                         description = "Channel locked for ${durationObj.toHuman()}: ${channelObj.mention}"
@@ -108,7 +108,7 @@ class ModerationExtension(bot: ExtensibleBot) : Extension(bot) {
                     }
 
                     message.channel.createEmbed {
-                        color = Colours.POSITIVE
+                        color = Colors.POSITIVE
                         title = "Channel locked"
 
                         description = "Channel locked for ${durationObj.toHuman()}: ${channelObj.mention}"
@@ -131,7 +131,7 @@ class ModerationExtension(bot: ExtensibleBot) : Extension(bot) {
                         )
 
                         modLog {
-                            color = Colours.BLURPLE
+                            color = Colors.BLURPLE
                             title = "Channel unlocked"
 
                             description = "Channel unlocked automatically: ${channelObj.mention}"
@@ -178,7 +178,7 @@ class ModerationExtension(bot: ExtensibleBot) : Extension(bot) {
                     channelObj.addOverwrite(permsObj)
 
                     modLog {
-                        color = Colours.BLURPLE
+                        color = Colors.BLURPLE
                         title = "Channel unlocked"
 
                         description = "Channel unlocked: ${channelObj.mention}"
@@ -193,7 +193,7 @@ class ModerationExtension(bot: ExtensibleBot) : Extension(bot) {
                     }
 
                     message.channel.createEmbed {
-                        color = Colours.POSITIVE
+                        color = Colors.POSITIVE
                         title = "Channel unlocked"
 
                         description = "Channel unlocked: ${channelObj.mention}"
@@ -265,7 +265,7 @@ class ModerationExtension(bot: ExtensibleBot) : Extension(bot) {
 
                     if (seconds > 0) {
                         modLog {
-                            color = Colours.BLURPLE
+                            color = Colors.BLURPLE
                             title = "Slowmode enabled"
 
                             description = "Slowmode set to ${durationObj.toHuman()} in ${channel.mention}"
@@ -280,14 +280,14 @@ class ModerationExtension(bot: ExtensibleBot) : Extension(bot) {
                         }
 
                         message.channel.createEmbed {
-                            color = Colours.POSITIVE
+                            color = Colors.POSITIVE
                             title = "Slowmode enabled"
 
                             description = "Slowmode set to ${durationObj.toHuman()} in ${channel.mention}"
                         }
                     } else {
                         modLog {
-                            color = Colours.BLURPLE
+                            color = Colors.BLURPLE
                             title = "Slowmode disabled"
 
                             description = "Slowmode disabled in ${channel.mention}"
@@ -302,7 +302,7 @@ class ModerationExtension(bot: ExtensibleBot) : Extension(bot) {
                         }
 
                         message.channel.createEmbed {
-                            color = Colours.POSITIVE
+                            color = Colors.POSITIVE
                             title = "Slowmode disabled"
 
                             description = "Slowmode disabled in ${channel.mention}"

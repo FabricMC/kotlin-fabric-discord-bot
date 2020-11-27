@@ -62,7 +62,6 @@ fun pardonInfraction(infraction: Infraction, id: Snowflake,
  * Apply an ban infraction on the Discord server.
  *
  * @param id The ID of the user this infraction applies to.
- * @param reason The reason given for this infraction.
  * @param expires An [Instant] representing when this infraction should expire, if it does. Null otherwise.
  * @param infraction The [Infraction] object from the database.
  */
@@ -79,7 +78,6 @@ suspend fun ban(infraction: Infraction, id: Snowflake, expires: Instant?, manual
  * Apply a mute infraction on the Discord server.
  *
  * @param id The ID of the user this infraction applies to.
- * @param reason The reason given for this infraction.
  * @param expires An [Instant] representing when this infraction should expire, if it does. Null otherwise.
  * @param infraction The [Infraction] object from the database.
  */
@@ -96,7 +94,6 @@ suspend fun mute(infraction: Infraction, id: Snowflake, expires: Instant?, manua
  * Apply a meta-mute infraction on the Discord server.
  *
  * @param id The ID of the user this infraction applies to.
- * @param reason The reason given for this infraction.
  * @param expires An [Instant] representing when this infraction should expire, if it does. Null otherwise.
  * @param infraction The [Infraction] object from the database.
  */
@@ -113,7 +110,6 @@ suspend fun metaMute(infraction: Infraction, id: Snowflake, expires: Instant?, m
  * Apply a reaction-mute infraction on the Discord server.
  *
  * @param id The ID of the user this infraction applies to.
- * @param reason The reason given for this infraction.
  * @param expires An [Instant] representing when this infraction should expire, if it does. Null otherwise.
  * @param infraction The [Infraction] object from the database.
  */
@@ -130,7 +126,6 @@ suspend fun reactionMute(infraction: Infraction, id: Snowflake, expires: Instant
  * Apply a requests-mute infraction on the Discord server.
  *
  * @param id The ID of the user this infraction applies to.
- * @param reason The reason given for this infraction.
  * @param expires An [Instant] representing when this infraction should expire, if it does. Null otherwise.
  * @param infraction The [Infraction] object from the database.
  */
@@ -147,7 +142,6 @@ suspend fun requestsMute(infraction: Infraction, id: Snowflake, expires: Instant
  * Apply a support-mute infraction on the Discord server.
  *
  * @param id The ID of the user this infraction applies to.
- * @param reason The reason given for this infraction.
  * @param expires An [Instant] representing when this infraction should expire, if it does. Null otherwise.
  * @param infraction The [Infraction] object from the database.
  */
@@ -164,7 +158,6 @@ suspend fun supportMute(infraction: Infraction, id: Snowflake, expires: Instant?
  * Apply a support-mute infraction on the Discord server.
  *
  * @param id The ID of the user this infraction applies to.
- * @param reason The reason given for this infraction.
  * @param expires An [Instant] representing when this infraction should expire, if it does. Null otherwise.
  * @param infraction The [Infraction] object from the database.
  */
@@ -177,7 +170,6 @@ fun nickLock(infraction: Infraction, id: Snowflake, expires: Instant?, manual: B
  * Apply a kick infraction on the Discord server.
  *
  * @param id The ID of the user this infraction applies to.
- * @param reason The reason given for this infraction.
  * @param expires An [Instant] representing when this infraction should expire, if it does. Null otherwise.
  * @param infraction The [Infraction] object from the database.
  */
