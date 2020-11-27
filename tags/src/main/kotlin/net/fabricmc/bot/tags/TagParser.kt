@@ -3,6 +3,8 @@ package net.fabricmc.bot.tags
 import com.charleskorn.kaml.PolymorphismStyle
 import com.charleskorn.kaml.Yaml
 import com.charleskorn.kaml.YamlConfiguration
+import com.gitlab.kordlib.common.entity.optional.Optional
+import com.gitlab.kordlib.common.entity.optional.OptionalInt
 import mu.KotlinLogging
 import java.io.File
 import java.nio.file.Path
@@ -106,7 +108,7 @@ class TagParser(private val rootPath: String) {
     /**
      * Create a tag. Expects
      *
-     * @return Pair of Tag object (if it parsed properly) and list of error strings.
+     * @return Pair of Tag object (if it loaded properly) and error string (if it failed to load).
      */
     fun createTag(content: String): Pair<Tag?, MutableList<String>> {
         var yaml: String = ""
@@ -137,9 +139,9 @@ class TagParser(private val rootPath: String) {
                 "contains Markdown content, despite being an alias. Please consider removing it."
             )
         } else if (tagData is EmbedTag) {
-            if (tagData.embed.color != null) {
+            if (tagData.embed.color is OptionalInt.Value) {
                 errors.add(
-                    "has the colour property set in the embed object. Set it at root level instead."
+                    "has the color property set in the embed object. Set it at root level instead."
                 )
                 return Pair(
                     null,
@@ -147,7 +149,7 @@ class TagParser(private val rootPath: String) {
                 )
             }
 
-            if (tagData.embed.description != null) {
+            if (tagData.embed.description is Optional.Value) {
                 errors.add(
                     "has the description property set in the embed object. " +
                             "Markdown content should instead be provided after the separator, '---'."

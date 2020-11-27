@@ -9,10 +9,7 @@ import com.gitlab.kordlib.core.event.message.MessageCreateEvent
 import com.kotlindiscord.kord.extensions.checks.topRoleHigherOrEqual
 import com.kotlindiscord.kord.extensions.commands.Command
 import com.kotlindiscord.kord.extensions.commands.CommandContext
-import com.kotlindiscord.kord.extensions.commands.converters.coalescedString
-import com.kotlindiscord.kord.extensions.commands.converters.defaultingDuration
-import com.kotlindiscord.kord.extensions.commands.converters.optionalNumber
-import com.kotlindiscord.kord.extensions.commands.converters.optionalUser
+import com.kotlindiscord.kord.extensions.commands.converters.*
 import com.kotlindiscord.kord.extensions.commands.parser.Arguments
 import com.kotlindiscord.kord.extensions.extensions.Extension
 import com.kotlindiscord.kord.extensions.utils.dm
@@ -20,7 +17,7 @@ import com.kotlindiscord.kord.extensions.utils.runSuspended
 import mu.KotlinLogging
 import net.fabricmc.bot.bot
 import net.fabricmc.bot.conf.config
-import net.fabricmc.bot.constants.Colours
+import net.fabricmc.bot.constants.Colors
 import net.fabricmc.bot.database.Infraction
 import net.fabricmc.bot.defaultCheck
 import net.fabricmc.bot.enums.InfractionTypes
@@ -49,7 +46,7 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
                            aliasList: Array<String> = arrayOf(),
         // This can't be suspending, see comment in InfractionActions.applyInfraction
                            private val infrAction: Infraction.(
-                                   targetId: Long, expires: Instant?
+                                   targetId: Snowflake, expires: Instant?
                            ) -> Unit
 ) : Command(extension) {
     private val queries = config.db.infractionQueries
@@ -63,7 +60,7 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
                         args.member,
                         args.memberLong,
                         args.duration,
-                        args.reason ?: "",
+                        args.reason,
                         message
                 )
             } else {
@@ -73,7 +70,7 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
                         args.member,
                         args.memberLong,
                         null,
-                        args.reason ?: "",
+                        args.reason,
                         message
                 )
             }
@@ -113,16 +110,20 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
         return message
     }
 
-    private suspend fun relayInfraction(infraction: Infraction, expires: Instant?) {
+    private suspend fun relayInfraction(infraction: Infraction, expires: Instant?): Boolean? {
         if (type.relay) {
             val targetObj = bot.kord.getUser(Snowflake(infraction.target_id))
 
             targetObj?.dm {
                 embed {
-                    color = Colours.NEGATIVE
+                    color = Colors.NEGATIVE
                     title = type.actionText.capitalize() + "!"
 
                     description = getInfractionMessage(false, infraction, expires)
+
+                    description += "\n\nIf you believe this infraction was applied in error or you'd like to " +
+                            "appeal it, please " +
+                            "[feel free to fill out this form](https://airtable.com/shrzEYjRF4lBteEij)."
 
                     footer {
                         text = "Infraction ID: ${infraction.id}"
@@ -130,17 +131,32 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
 
                     timestamp = Instant.now()
                 }
-            }
+            } ?: return false
+
+            return true
         }
+
+        return null
     }
 
     private suspend fun sendInfractionToChannel(channel: MessageChannelBehavior, infraction: Infraction,
-                                                expires: Instant?) {
+                                                expires: Instant?, relayResult: Boolean? = null) {
         channel.createEmbed {
-            color = Colours.POSITIVE
-            title = "Infraction created"
+            color = Colors.POSITIVE
+
+            author {
+                name = "User ${infraction.infraction_type.actionText}"
+
+                if (relayResult == false) {
+                    icon = "https://cdn.discordapp.com/emojis/777986567993950239.png"
+                }
+            }
 
             description = getInfractionMessage(true, infraction, expires)
+
+            if (relayResult == false) {
+                description += "\n\n**Note:** Failed to DM the user, they may have their DMs disabled."
+            }
 
             footer {
                 text = "ID: ${infraction.id}"
@@ -150,17 +166,29 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
         }
     }
 
-    private suspend fun sendInfractionToModLog(infraction: Infraction, expires: Instant?, actor: User) {
+    private suspend fun sendInfractionToModLog(infraction: Infraction, expires: Instant?,
+                                               actor: User, relayResult: Boolean? = null) {
         var descriptionText = getInfractionMessage(true, infraction, expires)
 
         descriptionText += "\n\n**User ID:** `${infraction.target_id}`"
-        descriptionText += "\n**Moderator:** ${actor.mention} (${actor.tag} / `${actor.id.longValue}`)"
+        descriptionText += "\n**Moderator:** ${actor.mention} (${actor.tag} / `${actor.id}`)"
 
         modLog {
-            color = Colours.NEGATIVE
-            title = "User ${infraction.infraction_type.actionText}"
+            color = Colors.NEGATIVE
+
+            author {
+                name = "User ${infraction.infraction_type.actionText}"
+
+                if (relayResult == false) {
+                    icon = "https://cdn.discordapp.com/emojis/777986567993950239.png"
+                }
+            }
 
             description = descriptionText
+
+            if (relayResult == false) {
+                description += "\n\n**Note:** Failed to DM the user, they may have their DMs disabled."
+            }
 
             footer {
                 text = "ID: ${infraction.id}"
@@ -189,21 +217,21 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
     private suspend fun applyInfraction(memberObj: User?, memberLong: Long?, duration: Duration?,
                                         reason: String, message: Message) {
         val author = message.author!!
-        val (memberId, memberMessage) = getMemberId(memberObj, memberLong)
+        val (memberId, memberMessage) = getMemberId(memberObj, memberLong?.let { Snowflake(it) })
 
         if (memberId == null) {
             message.channel.createMessage("${author.mention} $memberMessage")
             return
         }
 
-        val memberMissingMessage = getUserMissingMessage(memberId)
+        val memberMissingMessage = getUserMissingMessage(memberId.value)
 
         if (memberMissingMessage != null) {
             message.channel.createMessage("${author.mention} $memberMissingMessage")
             return
         }
 
-        ensureUser(memberObj, memberId)
+        ensureUser(memberObj, memberId.value)
 
         val expires = if (duration != Duration.ZERO && duration != null) {
             Instant.now().plus(duration)
@@ -215,8 +243,8 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
             if (expires != null) {
                 queries.addInfraction(
                         reason,
-                        author.id.longValue,
-                        memberId,
+                        author.id.value,
+                        memberId.value,
                         instantToMysql(expires),
                         true,
                         type
@@ -224,8 +252,8 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
             } else {
                 queries.addInfraction(
                         reason,
-                        author.id.longValue,
-                        memberId,
+                        author.id.value,
+                        memberId.value,
                         null,  // null for forever
                         true,
                         type
@@ -235,12 +263,12 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
             queries.getLastInfraction().executeAsOne()
         }
 
-        relayInfraction(infraction, expires)
+        val relayResult = relayInfraction(infraction, expires)
 
         infrAction.invoke(infraction, memberId, expires)
 
-        sendInfractionToChannel(message.channel, infraction, expires)
-        sendInfractionToModLog(infraction, expires, message.author!!)
+        sendInfractionToChannel(message.channel, infraction, expires, relayResult)
+        sendInfractionToModLog(infraction, expires, message.author!!, relayResult)
     }
 
     override val checkList: MutableList<suspend (MessageCreateEvent) -> Boolean> = mutableListOf(
@@ -292,7 +320,7 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
     class InfractionSetExpiringCommandArgs : Arguments() {
         val member by optionalUser("member")
         val memberLong by optionalNumber("memberId")
-        val duration by defaultingDuration("duration", Duration.ZERO)
+        val duration by defaultingCoalescedDuration("duration", Duration.ZERO)
         val reason by coalescedString("reason")
     }
 }

@@ -18,7 +18,7 @@ import com.kotlindiscord.kord.extensions.utils.runSuspended
 import mu.KotlinLogging
 import net.fabricmc.bot.bot
 import net.fabricmc.bot.conf.config
-import net.fabricmc.bot.constants.Colours
+import net.fabricmc.bot.constants.Colors
 import net.fabricmc.bot.database.Infraction
 import net.fabricmc.bot.defaultCheck
 import net.fabricmc.bot.enums.InfractionTypes
@@ -28,10 +28,10 @@ import net.fabricmc.bot.utils.requireMainGuild
 import java.time.Instant
 import java.util.*
 
-/** Data class representing the arguments for the infraction pardoning command.
+/** Class representing the arguments for the infraction pardoning command.
  *
- * @param member The member to pardon.
- * @param memberLong The ID of the member to pardon, if they're not on the server.
+ * @property member The member to pardon.
+ * @property memberLong The ID of the member to pardon, if they're not on the server.
  */
 @Suppress("UndocumentedPublicProperty")
 class InfractionUnsetCommandArgs : Arguments() {
@@ -58,7 +58,7 @@ class InfractionUnsetCommand(extension: Extension, private val type: InfractionT
                              aliasList: Array<String> = arrayOf(),
         // This can't be suspending, see comment in InfractionActions.applyInfraction
                              private val infrAction: Infraction.(
-                                     targetId: Long, expires: Instant?
+                                     targetId: Snowflake, expires: Instant?
                              ) -> Unit
 ) : Command(extension) {
     private val queries = config.db.infractionQueries
@@ -101,7 +101,7 @@ class InfractionUnsetCommand(extension: Extension, private val type: InfractionT
 
             targetObj?.dm {
                 embed {
-                    color = Colours.POSITIVE
+                    color = Colors.POSITIVE
                     title = type.actionText.capitalize() + "!"
 
                     description = getInfractionMessage(false, infraction, true)
@@ -119,7 +119,7 @@ class InfractionUnsetCommand(extension: Extension, private val type: InfractionT
 
     private suspend fun sendToChannel(channel: MessageChannelBehavior, infraction: Infraction) {
         channel.createEmbed {
-            color = Colours.POSITIVE
+            color = Colors.POSITIVE
             title = "Infraction pardoned"
 
             description = getInfractionMessage(true, infraction)
@@ -136,10 +136,10 @@ class InfractionUnsetCommand(extension: Extension, private val type: InfractionT
         var descriptionText = getInfractionMessage(true, infraction, true)
 
         descriptionText += "\n\n**User ID:** `${infraction.target_id}`"
-        descriptionText += "\n**Moderator:** ${actor.mention} (${actor.tag} / `${actor.id.longValue}`)"
+        descriptionText += "\n**Moderator:** ${actor.mention} (${actor.tag} / `${actor.id}`)"
 
         modLog {
-            color = Colours.POSITIVE
+            color = Colors.POSITIVE
             title = "Infraction Pardoned"
 
             description = descriptionText
@@ -152,7 +152,7 @@ class InfractionUnsetCommand(extension: Extension, private val type: InfractionT
 
     private suspend fun undoInfraction(memberObj: User?, memberLong: Long?, message: Message) {
         val author = message.author!!
-        val (memberId, memberMessage) = getMemberId(memberObj, memberLong)
+        val (memberId, memberMessage) = getMemberId(memberObj, memberLong?.let { Snowflake(it) })
 
         if (memberId == null) {
             message.channel.createMessage("${author.mention} $memberMessage")
@@ -160,7 +160,7 @@ class InfractionUnsetCommand(extension: Extension, private val type: InfractionT
         }
 
         val infractions = runSuspended {
-            queries.getActiveInfractionsByUser(memberId).executeAsList()
+            queries.getActiveInfractionsByUser(memberId.value).executeAsList()
         }.filter { it.infraction_type == type }
 
         if (infractions.isEmpty()) {

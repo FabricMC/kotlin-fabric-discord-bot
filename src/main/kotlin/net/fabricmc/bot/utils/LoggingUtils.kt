@@ -5,8 +5,8 @@ import com.gitlab.kordlib.core.behavior.execute
 import com.gitlab.kordlib.core.entity.Message
 import com.gitlab.kordlib.core.entity.channel.GuildMessageChannel
 import com.gitlab.kordlib.rest.builder.message.EmbedBuilder
-import com.gitlab.kordlib.rest.builder.message.MentionTypes
 import com.gitlab.kordlib.rest.builder.message.MessageCreateBuilder
+import com.gitlab.kordlib.rest.json.request.AllowedMentionType
 import com.kotlindiscord.kord.extensions.utils.ensureWebhook
 import kotlinx.coroutines.delay
 import mu.KotlinLogging
@@ -55,7 +55,7 @@ suspend fun actionLog(body: suspend EmbedBuilder.() -> Unit): Message {
     }
 
     return webhook.execute(webhook.token!!) {
-        embeds += builder.toRequest()
+        embeds.plusAssign(builder.toRequest())
     }
 }
 
@@ -77,7 +77,7 @@ suspend fun modLog(body: suspend EmbedBuilder.() -> Unit): Message {
     }
 
     return webhook.execute(webhook.token!!) {
-        embeds += builder.toRequest()
+        embeds.plusAssign(builder.toRequest())
     }
 }
 
@@ -104,7 +104,7 @@ suspend fun alert(mention: Boolean = true, body: suspend EmbedBuilder.() -> Unit
         embed = builder
 
         allowedMentions {
-            types += MentionTypes.Everyone
+            types += AllowedMentionType.EveryoneMentions
         }
     }
 }
@@ -122,7 +122,7 @@ suspend fun alertMessage(body: suspend MessageCreateBuilder.() -> Unit): Message
     return channel.createMessage {
         body()
 
-        allowedMentions { types += MentionTypes.Everyone }
+        allowedMentions { types += AllowedMentionType.EveryoneMentions }
         embed?.timestamp = Instant.now()
     }
 }

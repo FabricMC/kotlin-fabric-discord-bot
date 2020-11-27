@@ -33,18 +33,20 @@ class AliasTag(
  *
  * This tag makes use of Kord's [EmbedData] class.
  *
- * @param colour Optional embed colour
- * @param embed Embed definition, excluding colour and description
+ * @param color Optional embed color
+ * @param embed Embed definition, excluding color and description
  */
 @Serializable
 @SerialName("embed")
 class EmbedTag(
-        val colour: String? = null,
+        @SerialName("colour")  // TODO: Remove this later
+        val color: String? = null,
+
         val embed: EmbedData
 ) : TagData() {
     @Transient override val type: String = "embed"
 
-    override fun toString(): String = "Embed [color: $colour, embed: $embed]"
+    override fun toString(): String = "Embed [color: $color, embed: $embed]"
 }
 
 /**

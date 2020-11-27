@@ -1,5 +1,6 @@
 package net.fabricmc.bot.extensions
 
+import com.gitlab.kordlib.common.kColor
 import com.gitlab.kordlib.core.behavior.channel.createEmbed
 import com.gitlab.kordlib.core.behavior.channel.createMessage
 import com.gitlab.kordlib.core.entity.Embed
@@ -22,7 +23,7 @@ import kotlinx.coroutines.launch
 import mu.KotlinLogging
 import net.fabricmc.bot.TagMissingArgumentException
 import net.fabricmc.bot.conf.config
-import net.fabricmc.bot.constants.Colours
+import net.fabricmc.bot.constants.Colors
 import net.fabricmc.bot.defaultCheck
 import net.fabricmc.bot.enums.Channels
 import net.fabricmc.bot.extensions.infractions.instantToDisplay
@@ -73,9 +74,9 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
                     var description = "The following errors were encountered while loading tags.\n\n"
 
                     description += errors.toList()
-                            .sortedBy { it.first }
-                            .take(MAX_ERRORS)
-                            .joinToString("\n\n") { "**${it.first} »** ${it.second}" }
+                        .sortedBy { it.first }
+                        .take(MAX_ERRORS)
+                        .joinToString("\n\n") { "**${it.first} »** ${it.second}" }
 
                     if (errors.size > MAX_ERRORS) {
                         description += "\n\n**...plus ${errors.size - MAX_ERRORS} more.**"
@@ -84,7 +85,7 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
                     description += "\n\n${parser.tags.size} tags loaded successfully."
 
                     (config.getChannel(Channels.ALERTS) as GuildMessageChannel).createEmbed {
-                        color = Colours.NEGATIVE
+                        color = Colors.NEGATIVE
                         title = "Tag-loading errors"
 
                         this.description = description
@@ -228,7 +229,7 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
 
                         message.channel.createEmbed {
                             title = "Tag: $tagName"
-                            color = Colours.BLURPLE
+                            color = Colors.BLURPLE
 
                             description = when {
                                 tag.data is AliasTag -> {
@@ -310,32 +311,28 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
                         val markdownMatches = mutableSetOf<String>()
 
                         parser.tags.forEach { (name, tag) ->
-                            if (name.contains(query!!)) {
+                            if (name.contains(query)) {
                                 nameMatches.add(name)
                             }
 
-                            if (tag.markdown?.contains(query!!) == true) {
+                            if (tag.markdown?.contains(query) == true) {
                                 markdownMatches.add(name)
                             }
 
                             if (tag.data is AliasTag) {
                                 val data = tag.data as AliasTag
 
-                                if (data.target.contains(query!!)) {
+                                if (data.target.contains(query)) {
                                     aliasTargetMatches.add(Pair(name, data.target))
                                 }
                             } else if (tag.data is EmbedTag) {
                                 val data = tag.data as EmbedTag
 
-                                for (field in data.embed.fields) {
-                                    if (field.name.contains(query!!)) {
+                                data.embed.fields.value?.forEach { field ->
+                                    if (field.name.contains(query)) {
                                         embedFieldMatches.add(name)
-                                        break
-                                    }
-
-                                    if (field.value.contains(query!!)) {
+                                    } else if (field.value.contains(query)) {
                                         embedFieldMatches.add(name)
-                                        break
                                     }
                                 }
                             }
@@ -404,13 +401,13 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
                             }
 
                             val paginator = Paginator(
-                                    bot,
-                                    message.channel,
-                                    "Search: $totalMatches match" + if (totalMatches > 1) "es" else "",
-                                    pages,
-                                    message.author,
-                                    PAGE_TIMEOUT,
-                                    true
+                                bot,
+                                message.channel,
+                                "Search: $totalMatches match" + if (totalMatches > 1) "es" else "",
+                                pages,
+                                message.author,
+                                PAGE_TIMEOUT,
+                                true
                             )
 
                             paginator.send()
@@ -471,13 +468,13 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
                     }
 
                     val paginator = Paginator(
-                            bot,
-                            message.channel,
-                            "All tags (${parser.tags.size})",
-                            pages,
-                            message.author,
-                            PAGE_TIMEOUT,
-                            true
+                        bot,
+                        message.channel,
+                        "All tags (${parser.tags.size})",
+                        pages,
+                        message.author,
+                        PAGE_TIMEOUT,
+                        true
                     )
 
                     paginator.send()
@@ -511,7 +508,7 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
 
                             message.respond {
                                 embed {
-                                    color = Colours.NEGATIVE
+                                    color = Colors.NEGATIVE
                                     title = "Tag-loading errors"
 
                                     this.description = description
@@ -636,22 +633,12 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
             msg.channel.createEmbed {
                 Embed(data.embed, bot.kord).apply(this)
 
-                data.embed.fields.forEach {
-                    // They'll fix this, but for now...
-                    field {
-                        inline = it.inline ?: false
+                description = markdown ?: data.embed.description.value
 
-                        name = it.name
-                        value = it.value
-                    }
-                }
+                if (data.color != null) {
+                    val colorString = data.color!!.toLowerCase()
 
-                description = markdown ?: data.embed.description
-
-                if (data.colour != null) {
-                    val colourString = data.colour!!.toLowerCase()
-
-                    color = Colours.fromName(colourString) ?: Color.decode(colourString)
+                    color = Colors.fromName(colorString) ?: Color.decode(colorString).kColor
                 }
             }
         }

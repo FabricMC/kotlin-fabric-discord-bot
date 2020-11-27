@@ -1,7 +1,6 @@
 package net.fabricmc.bot.extensions
 
 import com.gitlab.kordlib.cache.api.query
-import com.gitlab.kordlib.common.entity.Snowflake
 import com.gitlab.kordlib.core.cache.data.MessageData
 import com.gitlab.kordlib.core.entity.Message
 import com.gitlab.kordlib.core.entity.channel.GuildMessageChannel
@@ -14,7 +13,7 @@ import com.kotlindiscord.kord.extensions.utils.*
 import mu.KotlinLogging
 import net.fabricmc.bot.*
 import net.fabricmc.bot.conf.config
-import net.fabricmc.bot.constants.Colours
+import net.fabricmc.bot.constants.Colors
 import net.fabricmc.bot.enums.Roles
 import net.fabricmc.bot.utils.modLog
 import net.fabricmc.bot.utils.requireMainGuild
@@ -110,12 +109,12 @@ class CleanExtension(bot: ExtensibleBot) : Extension(bot) {
                         Regex: ${regexes.joinToString(", ")}
                         Channels: ${
                         if (channels.isNotEmpty()) {
-                            channels.joinToString(", ") { it.id.longValue.toString() }
+                            channels.joinToString(", ") { it.id.toString() }
                         } else {
-                            message.channelId.longValue
+                            message.channelId
                         }
                     }
-                        Since: ${since?.id?.longValue}
+                        Since: ${since?.id}
                         Bot-only: $botOnly
                         Count: $count
                         Force: $force
@@ -128,14 +127,14 @@ class CleanExtension(bot: ExtensibleBot) : Extension(bot) {
                                 return@action
                             }
 
-                            listOf(since!!.channelId.longValue)
+                            listOf(since!!.channelId)
                         }
 
-                        channels.isNullOrEmpty() -> listOf(message.channelId.longValue)
-                        else -> channels.map { it.id.longValue }
+                        channels.isNullOrEmpty() -> listOf(message.channelId)
+                        else -> channels.map { it.id }
                     }
 
-                    val userIds = users.map { it.id.longValue }
+                    val userIds = users.map { it.id }
                     val sinceTimestamp = since?.timestamp?.minusMillis(SINCE_OFFSET)
 
                     logger.debug { cleanNotice }
@@ -204,11 +203,11 @@ class CleanExtension(bot: ExtensibleBot) : Extension(bot) {
                         logger.debug { cleanCount }
                         // TODO: Log the cleanNotice and cleanCount to #moderator-log
 
-                        val channel = bot.kord.getChannel(Snowflake(channelId))
+                        val channel = bot.kord.getChannel(channelId)
 
                         if (channel is GuildMessageChannel) {
                             if (!dryRun) {
-                                channel.bulkDelete(query.map { Snowflake(it.id) })
+                                channel.bulkDelete(query.map { it.id })
                             }
 
                             removalCount += query.size
@@ -235,7 +234,7 @@ class CleanExtension(bot: ExtensibleBot) : Extension(bot) {
         val channel = message.channel
 
         modLog {
-            color = Colours.BLURPLE
+            color = Colors.BLURPLE
             title = "Clean command summary"
 
             description = "Clean command executed by ${author.mention} in ${channel.mention}."
@@ -257,7 +256,7 @@ class CleanExtension(bot: ExtensibleBot) : Extension(bot) {
                     inline = true
 
                     value = args.channels.joinToString(", ") {
-                        "${it.mention} (`${it.id.longValue}`)"
+                        "${it.mention} (`${it.id}`)"
                     }
                 }
             }
@@ -315,7 +314,7 @@ class CleanExtension(bot: ExtensibleBot) : Extension(bot) {
                     inline = true
 
                     value = args.users.joinToString(", ") {
-                        "${it.mention} (${it.tag} / ${it.id.longValue})"
+                        "${it.mention} (${it.tag} / ${it.id})"
                     }
                 }
             }

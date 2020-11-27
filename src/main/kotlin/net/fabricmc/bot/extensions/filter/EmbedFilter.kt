@@ -1,6 +1,7 @@
 package net.fabricmc.bot.extensions.filter
 
 import com.gitlab.kordlib.common.entity.ChannelType
+import com.gitlab.kordlib.common.entity.optional.Optional
 import com.gitlab.kordlib.core.entity.Message
 import com.gitlab.kordlib.core.entity.User
 import com.gitlab.kordlib.core.entity.channel.Channel
@@ -42,7 +43,7 @@ class EmbedFilter(bot: ExtensibleBot) : Filter(bot) {
                 embed {
                     if (messageEmbed.color != null) color = messageEmbed.color
                     if (messageEmbed.description != null) description = messageEmbed.description
-                    if (messageEmbed.data.image != null) image = messageEmbed.data.image!!.url
+                    if (messageEmbed.data.image is Optional.Value) image = messageEmbed.data.image.value?.url?.value
                     if (messageEmbed.timestamp != null) timestamp = messageEmbed.timestamp
                     if (messageEmbed.title != null) title = messageEmbed.title
                     if (messageEmbed.url != null) url = messageEmbed.url

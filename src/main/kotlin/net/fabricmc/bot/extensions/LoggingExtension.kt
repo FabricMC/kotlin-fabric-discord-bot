@@ -8,6 +8,9 @@ import com.gitlab.kordlib.core.event.message.*
 import com.gitlab.kordlib.core.event.role.RoleCreateEvent
 import com.gitlab.kordlib.core.event.role.RoleDeleteEvent
 import com.gitlab.kordlib.core.event.role.RoleUpdateEvent
+import com.gitlab.kordlib.core.event.user.PresenceUpdateEvent
+import com.gitlab.kordlib.core.event.user.UserUpdateEvent
+import com.gitlab.kordlib.core.event.user.VoiceStateUpdateEvent
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import com.kotlindiscord.kord.extensions.checks.inGuild
 import com.kotlindiscord.kord.extensions.extensions.Extension
@@ -19,7 +22,7 @@ import kotlinx.coroutines.flow.toSet
 import mu.KotlinLogging
 import net.fabricmc.bot.*
 import net.fabricmc.bot.conf.config
-import net.fabricmc.bot.constants.Colours
+import net.fabricmc.bot.constants.Colors
 import net.fabricmc.bot.enums.Channels
 import net.fabricmc.bot.extensions.infractions.instantToDisplay
 import net.fabricmc.bot.utils.actionLog
@@ -56,58 +59,58 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
             action {
                 when (it) {
                     is BanAddEvent -> modLog {
-                        color = Colours.NEGATIVE
+                        color = Colors.NEGATIVE
                         title = "User banned"
 
                         field { name = "Username"; value = it.user.username; inline = true }
                         field { name = "Discrim"; value = it.user.discriminator; inline = true }
 
-                        footer { text = it.user.id.value }
+                        footer { text = it.user.id.asString }
                         thumbnail { url = it.user.avatar.url }
                     }
 
                     is BanRemoveEvent -> modLog {
-                        color = Colours.POSITIVE
+                        color = Colors.POSITIVE
                         title = "User unbanned"
 
                         field { name = "Username"; value = it.user.username; inline = true }
                         field { name = "Discrim"; value = it.user.discriminator; inline = true }
 
-                        footer { text = it.user.id.value }
+                        footer { text = it.user.id.asString }
                         thumbnail { url = it.user.avatar.url }
                     }
 
                     is CategoryCreateEvent -> modLog {
-                        color = Colours.POSITIVE
+                        color = Colors.POSITIVE
                         title = "Category created"
 
                         field { name = "Name"; value = it.channel.name; inline = true }
                         field { name = "Mention"; value = it.channel.mention; inline = true }
 
-                        footer { text = it.channel.id.value }
+                        footer { text = it.channel.id.asString }
                     }
 
                     is CategoryDeleteEvent -> modLog {
-                        color = Colours.NEGATIVE
+                        color = Colors.NEGATIVE
                         title = "Category deleted"
 
                         field { name = "Name"; value = it.channel.name; inline = true }
                         field { name = "Mention"; value = it.channel.mention; inline = true }
 
-                        footer { text = it.channel.id.value }
+                        footer { text = it.channel.id.asString }
                     }
 
                     is InviteCreateEvent -> actionLog {
-                        color = Colours.POSITIVE
+                        color = Colors.POSITIVE
                         title = "Invite created"
 
                         field { name = "Channel"; value = it.channel.mention; inline = true }
                         field { name = "Code"; value = "`${it.code}`"; inline = true }
-                        field { name = "Inviter"; value = it.inviter.mention; inline = true }
+                        field { name = "Inviter"; value = it.inviter?.mention ?: "Unknown" ; inline = true }
                     }
 
                     is InviteDeleteEvent -> modLog {
-                        color = Colours.NEGATIVE
+                        color = Colors.NEGATIVE
                         title = "Invite deleted"
 
                         field { name = "Channel"; value = it.channel.mention; inline = true }
@@ -115,7 +118,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                     }
 
                     is MemberJoinEvent -> actionLog {
-                        color = Colours.POSITIVE
+                        color = Colors.POSITIVE
                         title = "Member joined"
 
                         field { name = "Username"; value = it.member.username; inline = true }
@@ -127,36 +130,36 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                             name = "Created"
 
                             value = if (it.member.isNew()) {
-                                "**New:** $createdAt"
+                                ":new: $createdAt"
                             } else {
                                 createdAt
                             }
                         }
 
-                        footer { text = it.member.id.value }
+                        footer { text = it.member.id.asString }
                         thumbnail { url = it.member.avatar.url }
                     }
 
                     is MemberLeaveEvent -> actionLog {
-                        color = Colours.NEGATIVE
+                        color = Colors.NEGATIVE
                         title = "Member left"
 
                         field { name = "Username"; value = it.user.username; inline = true }
                         field { name = "Discrim"; value = it.user.discriminator; inline = true }
 
-                        footer { text = it.user.id.value }
+                        footer { text = it.user.id.asString }
                         thumbnail { url = it.user.avatar.url }
                     }
 
                     is MemberUpdateEvent -> {
-                        val new = it.getMember()
+                        val new = it.member
                         val delta = MemberDelta.from(it.old, new)
 
                         if (delta?.changes?.isEmpty() == true) {
                             logger.debug { "No changes found." }
                         } else {
                             actionLog {
-                                color = Colours.BLURPLE
+                                color = Colors.BLURPLE
                                 title = "Member updated"
 
                                 field {
@@ -259,9 +262,9 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
 
                                 footer {
                                     text = if (delta == null) {
-                                        "Not cached: ${new.id.longValue}"
+                                        "Not cached: ${new.id}"
                                     } else {
-                                        new.id.value
+                                        new.id.asString
                                     }
                                 }
 
@@ -274,7 +277,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                         // TODO: There's a Flow<Message> we could use for something.
                         // I don't think outputting all the messages to the channel is a good idea, though.
 
-                        color = Colours.NEGATIVE
+                        color = Colors.NEGATIVE
                         title = "Bulk message delete"
 
                         field { name = "Channel"; value = it.channel.mention; inline = true }
@@ -282,7 +285,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                     }
 
                     is MessageDeleteEvent -> actionLog {
-                        color = Colours.NEGATIVE
+                        color = Colors.NEGATIVE
                         title = "Message deleted"
 
                         val message = it.message
@@ -315,12 +318,12 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                             field { name = "Created"; value = instantToDisplay(it.messageId.timeStamp)!! }
                         }
 
-                        footer { text = it.messageId.value }
+                        footer { text = it.messageId.toString() }
                     }
 
                     is MessageUpdateEvent -> if (it.getMessage().author != null) {
                         actionLog {
-                            color = Colours.BLURPLE
+                            color = Colors.BLURPLE
                             title = "Message edited"
 
                             val old = it.old
@@ -368,12 +371,12 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                                 else -> "**__Message content not edited__**"
                             }
 
-                            footer { text = it.messageId.value }
+                            footer { text = it.messageId.toString() }
                         }
                     }
 
                     is NewsChannelCreateEvent -> modLog {
-                        color = Colours.POSITIVE
+                        color = Colors.POSITIVE
                         title = "News channel created"
 
                         val category = it.channel.category
@@ -385,11 +388,11 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                         field { name = "Mention"; value = it.channel.mention; inline = true }
                         field { name = "Name"; value = "#${it.channel.name}"; inline = true }
 
-                        footer { text = it.channel.id.value }
+                        footer { text = it.channel.id.asString }
                     }
 
                     is NewsChannelDeleteEvent -> modLog {
-                        color = Colours.NEGATIVE
+                        color = Colors.NEGATIVE
                         title = "News channel deleted"
 
                         val category = it.channel.category
@@ -400,12 +403,12 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
 
                         field { name = "Channel"; value = "#${it.channel.name}"; inline = true }
 
-                        footer { text = it.channel.id.value }
+                        footer { text = it.channel.id.asString }
                     }
 
                     is ReactionRemoveAllEvent -> if (it.getMessage().author != null) {
                         modLog {
-                            color = Colours.NEGATIVE
+                            color = Colors.NEGATIVE
                             title = "All reactions removed"
 
                             val message = it.getMessage()
@@ -415,13 +418,13 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
 
                             field { name = "Message"; value = message.getUrl() }
 
-                            footer { text = it.messageId.value }
+                            footer { text = it.messageId.toString() }
                         }
                     }
 
                     is ReactionRemoveEmojiEvent -> if (it.getMessage().author != null) {
                         modLog {
-                            color = Colours.NEGATIVE
+                            color = Colors.NEGATIVE
                             title = "All reactions removed"
 
                             val message = it.getMessage()
@@ -432,21 +435,21 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
 
                             field { name = "Message"; value = message.getUrl() }
 
-                            footer { text = it.messageId.value }
+                            footer { text = it.messageId.toString() }
                         }
                     }
 
                     is RoleCreateEvent -> modLog {
-                        color = Colours.POSITIVE
+                        color = Colors.POSITIVE
                         title = "Role created"
 
                         field { name = "Name"; value = it.role.name; inline = true }
 
-                        footer { text = it.role.id.value }
+                        footer { text = it.role.id.asString }
                     }
 
                     is RoleDeleteEvent -> modLog {
-                        color = Colours.NEGATIVE
+                        color = Colors.NEGATIVE
                         title = "Role deleted"
 
                         val role = it.role
@@ -457,11 +460,11 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                             field { name = "Name"; value = role.name; inline = true }
                         }
 
-                        footer { text = it.roleId.value }
+                        footer { text = it.roleId.toString() }
                     }
 
                     is StoreChannelCreateEvent -> modLog {
-                        color = Colours.POSITIVE
+                        color = Colors.POSITIVE
                         title = "Store channel created"
 
                         val category = it.channel.category
@@ -473,11 +476,11 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                         field { name = "Mention"; value = it.channel.mention; inline = true }
                         field { name = "Name"; value = "#${it.channel.name}"; inline = true }
 
-                        footer { text = it.channel.id.value }
+                        footer { text = it.channel.id.asString }
                     }
 
                     is StoreChannelDeleteEvent -> modLog {
-                        color = Colours.NEGATIVE
+                        color = Colors.NEGATIVE
                         title = "Store channel deleted"
 
                         val category = it.channel.category
@@ -488,7 +491,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
 
                         field { name = "Channel"; value = "#${it.channel.name}"; inline = true }
 
-                        footer { text = it.channel.id.value }
+                        footer { text = it.channel.id.asString }
                     }
 
                     is TextChannelCreateEvent -> {
@@ -496,10 +499,10 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
 
                         if (
                                 category == null ||
-                                category.id.longValue != config.getChannel(Channels.ACTION_LOG_CATEGORY).id.longValue
+                                category.id != config.getChannel(Channels.ACTION_LOG_CATEGORY).id
                         ) {
                             modLog {
-                                color = Colours.POSITIVE
+                                color = Colors.POSITIVE
                                 title = "Text channel created"
 
                                 if (category != null) {
@@ -509,7 +512,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                                 field { name = "Mention"; value = it.channel.mention; inline = true }
                                 field { name = "Name"; value = "#${it.channel.name}"; inline = true }
 
-                                footer { text = it.channel.id.value }
+                                footer { text = it.channel.id.asString }
                             }
                         }
                     }
@@ -519,10 +522,10 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
 
                         if (
                                 category == null ||
-                                category.id.longValue != config.getChannel(Channels.ACTION_LOG_CATEGORY).id.longValue
+                                category.id != config.getChannel(Channels.ACTION_LOG_CATEGORY).id
                         ) {
                             modLog {
-                                color = Colours.NEGATIVE
+                                color = Colors.NEGATIVE
                                 title = "Text channel deleted"
 
                                 if (category != null) {
@@ -531,13 +534,13 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
 
                                 field { name = "Channel"; value = "#${it.channel.name}"; inline = true }
 
-                                footer { text = it.channel.id.value }
+                                footer { text = it.channel.id.asString }
                             }
                         }
                     }
 
                     is VoiceChannelCreateEvent -> modLog {
-                        color = Colours.POSITIVE
+                        color = Colors.POSITIVE
                         title = "Voice channel created"
 
                         val category = it.channel.category
@@ -549,11 +552,11 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                         field { name = "Mention"; value = it.channel.mention; inline = true }
                         field { name = "Name"; value = ""; inline = true }
 
-                        footer { text = it.channel.id.value }
+                        footer { text = it.channel.id.asString }
                     }
 
                     is VoiceChannelDeleteEvent -> modLog {
-                        color = Colours.NEGATIVE
+                        color = Colors.NEGATIVE
                         title = "Voice channel deleted"
 
                         val category = it.channel.category
@@ -564,7 +567,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
 
                         field { name = "Channel"; value = "#${it.channel.name}"; inline = true }
 
-                        footer { text = it.channel.id.value }
+                        footer { text = it.channel.id.asString }
                     }
 
                     // We're not logging these events, they're either irrelevant or don't
@@ -583,7 +586,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                     is GuildDeleteEvent -> logger.debug { "Ignoring event: $it" }
                     is GuildUpdateEvent -> logger.debug { "Ignoring event: $it" }
                     is IntegrationsUpdateEvent -> logger.debug { "Ignoring event: $it" }
-                    is MemberChunksEvent -> logger.debug { "Ignoring event: $it" }
+                    is MembersChunkEvent -> logger.debug { "Ignoring event: $it" }
                     is MessageCreateEvent -> logger.debug { "Ignoring event: $it" }
                     is NewsChannelUpdateEvent -> logger.debug { "Ignoring event: $it" }
                     is PresenceUpdateEvent -> logger.debug { "Ignoring event: $it" }
@@ -661,9 +664,9 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
 
                             footer {
                                 text = if (delta == null) {
-                                    "Not cached: ${user.id.longValue}"
+                                    "Not cached: ${user.id}"
                                 } else {
-                                    user.id.value
+                                    user.id.asString
                                 }
                             }
 

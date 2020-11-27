@@ -8,6 +8,7 @@ import com.kotlindiscord.kord.extensions.commands.converters.string
 import com.kotlindiscord.kord.extensions.commands.parser.Arguments
 import com.kotlindiscord.kord.extensions.extensions.Extension
 import com.kotlindiscord.kord.extensions.utils.respond
+import io.ktor.client.features.ClientRequestException
 import mu.KotlinLogging
 import net.fabricmc.bot.conf.config
 import net.fabricmc.bot.defaultCheck
@@ -92,7 +93,16 @@ class MappingsExtension(bot: ExtensibleBot) : Extension(bot) {
                         return@action
                     }
 
-                    val mappingsData = mappings.getClassMappings(mcVersion, className)
+                    val mappingsData = try {
+                        mappings.getClassMappings(mcVersion, className)
+                    } catch (e: ClientRequestException) {
+                        message.respond(
+                                "Unable to download Yarn for Minecraft `$mcVersion` - " +
+                                        "it may not yet be supported."
+                        )
+
+                        return@action
+                    }
 
                     if (mappingsData == null) {
                         message.respond(
@@ -156,7 +166,16 @@ class MappingsExtension(bot: ExtensibleBot) : Extension(bot) {
                         return@action
                     }
 
-                    val mappingsData = mappings.getFieldMappings(mcVersion, field)
+                    val mappingsData = try {
+                        mappings.getFieldMappings(mcVersion, field)
+                    } catch (e: ClientRequestException) {
+                        message.respond(
+                                "Unable to download Yarn for Minecraft `$mcVersion` - " +
+                                        "it may not yet be supported."
+                        )
+
+                        return@action
+                    }
 
                     if (mappingsData == null) {
                         message.respond(
@@ -220,7 +239,16 @@ class MappingsExtension(bot: ExtensibleBot) : Extension(bot) {
                         return@action
                     }
 
-                    val mappingsData = mappings.getMethodMappings(mcVersion, method)
+                    val mappingsData = try {
+                        mappings.getMethodMappings(mcVersion, method)
+                    } catch (e: ClientRequestException) {
+                        message.respond(
+                                "Unable to download Yarn for Minecraft `$mcVersion` - " +
+                                        "it may not yet be supported."
+                        )
+
+                        return@action
+                    }
 
                     if (mappingsData == null) {
                         message.respond(

@@ -6,6 +6,7 @@ import com.gitlab.kordlib.core.event.guild.EmojisUpdateEvent
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import com.kotlindiscord.kord.extensions.checks.inGuild
 import com.kotlindiscord.kord.extensions.extensions.Extension
+import kotlinx.coroutines.flow.toSet
 import net.fabricmc.bot.conf.config
 import net.fabricmc.bot.enums.Emojis
 
@@ -43,7 +44,7 @@ class EmojiExtension(bot: ExtensibleBot) : Extension(bot) {
                 val emojiGuild = config.getEmojiGuild()
                 emojis.clear()
 
-                populateEmojis(emojiGuild.emojis)
+                populateEmojis(emojiGuild.emojis.toSet())
             }
         }
 
