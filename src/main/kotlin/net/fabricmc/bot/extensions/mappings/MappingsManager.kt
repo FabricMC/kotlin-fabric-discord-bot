@@ -115,7 +115,8 @@ class MappingsManager {
         */
 
         // Try intermediary path first.
-        // Since a method name per the Java Compiler cannot start with a number, we can assume the syntax is `xxxx` -> `method_xxxx`
+        // Since a method name per the Java Compiler cannot start with a number,
+        // we can assume the syntax is `xxxx` -> `method_xxxx`
         if (query.isNotEmpty() && Character.isDigit(query[0])) {
             // Exit fast if the contents contain anything that is not a number
             if (query.contains(CONTAINS_NON_DIGITS)) {
@@ -161,7 +162,8 @@ class MappingsManager {
         */
 
         // Try intermediary path first.
-        // Since a field name per the Java Compiler cannot start with a number, we can assume the syntax is `xxxx` -> `method_xxxx`
+        // Since a field name per the Java Compiler cannot start with a number,
+        // we can assume the syntax is `xxxx` -> `method_xxxx`
         if (query.isNotEmpty() && Character.isDigit(query[0])) {
             // Exit fast if the contents contain anything that is not a number
             if (query.contains(CONTAINS_NON_DIGITS)) {
