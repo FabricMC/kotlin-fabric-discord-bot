@@ -85,22 +85,18 @@ class MappingsManager {
 
     /**
      * Preprocesses a class mapping query, adapting the query value to make more ergonomic lookups possible.
+     *
+     * For allowing more ergonomic lookup of methods, we allow several parsing cases.
+     * More preprocessing cases may be added in the future.
+     * Methods may be specified as shown below:
+     *
+     * Obfuscated: aac
+     *
+     * Intermediary: class_xxxx, xxxx -> class_xxxx
+     *
+     * Named: MinecraftClient
      */
     private fun preProcessClassQuery(query: String): String {
-        /*
-         * For allowing more ergonomic lookup of classes, we allow several parsing cases.
-         * More preprocessing cases may be added in the future.
-         * Methods may be specified as shown below:
-         * ====================================
-         * Obfuscated:
-         *  aac
-         * Intermediary:
-         *  class_310
-         *  310
-         * Named:
-         *  MinecraftClient
-        */
-
         // Try intermediary path first.
         // Since a method name per the Java Compiler cannot start with a number,
         // we can assume the syntax is `xxxx` -> `class_xxxx`
@@ -128,22 +124,18 @@ class MappingsManager {
 
     /**
      * Preprocesses a method mapping query, adapting the query value to make more ergonomic lookups possible.
+     *
+     * For allowing more ergonomic lookup of methods, we allow several parsing cases.
+     * More preprocessing cases may be added in the future.
+     * Methods may be specified as shown below:
+     *
+     * Obfuscated: aZ_
+     *
+     * Intermediary: method_xxxx, xxxx -> method_xxxx
+     *
+     * Named: blah
      */
     private fun preProcessMethodQuery(query: String): String {
-        /*
-         * For allowing more ergonomic lookup of methods, we allow several parsing cases.
-         * More preprocessing cases may be added in the future.
-         * Methods may be specified as shown below:
-         * ====================================
-         * Obfuscated:
-         *  aZ_
-         * Intermediary:
-         *  method_xxxx
-         *  xxxx -> method_xxxx
-         * Named:
-         *  blah
-        */
-
         // Try intermediary path first.
         // Since a method name per the Java Compiler cannot start with a number,
         // we can assume the syntax is `xxxx` -> `method_xxxx`
@@ -171,22 +163,18 @@ class MappingsManager {
 
     /**
      * Preprocesses a field mapping query, adapting the query value to make more ergonomic lookups possible.
+     *
+     * For allowing more ergonomic lookup of methods, we allow several parsing cases.
+     * More preprocessing cases may be added in the future.
+     * Methods may be specified as shown below:
+     *
+     * Obfuscated: aB
+     *
+     * Intermediary: field_xxxx, xxxx -> field_xxxx
+     *
+     * Named: blah
      */
     private fun preProcessFieldQuery(query: String): String {
-        /*
-         * For allowing more ergonomic lookup of fields, we allow several parsing cases.
-         * More preprocessing cases may be added in the future.
-         * Fields may be specified as shown below:
-         * ====================================
-         * Obfuscated:
-         *  aB
-         * Intermediary:
-         *  field_xxxx
-         *  xxxx -> field_xxxx
-         * Named:
-         *  blah
-        */
-
         // Try intermediary path first.
         // Since a field name per the Java Compiler cannot start with a number,
         // we can assume the syntax is `xxxx` -> `method_xxxx`
