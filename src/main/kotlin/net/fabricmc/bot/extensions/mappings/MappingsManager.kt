@@ -98,9 +98,6 @@ class MappingsManager {
      */
     private fun preProcessClassQuery(query: String): String {
         // Try intermediary path first.
-        // Since a method name per the Java Compiler cannot start with a number,
-        // we can assume the syntax is `xxxx` -> `class_xxxx`
-        // Exit fast if the contents contain anything that is not a number
         if (query.contains(ONLY_DIGITS)) {
             // Since we know the query is just numbers, rewrite the query to include the class_ prefix
             return "class_$query"
@@ -137,9 +134,6 @@ class MappingsManager {
      */
     private fun preProcessMethodQuery(query: String): String {
         // Try intermediary path first.
-        // Since a method name per the Java Compiler cannot start with a number,
-        // we can assume the syntax is `xxxx` -> `method_xxxx`
-        // Exit fast if the contents contain anything that is not a number
         if (query.contains(ONLY_DIGITS)) {
             // Since we know the query is just numbers, rewrite the query to include the method_ prefix
             return "method_$query"
@@ -176,8 +170,6 @@ class MappingsManager {
      */
     private fun preProcessFieldQuery(query: String): String {
         // Try intermediary path first.
-        // Since a field name per the Java Compiler cannot start with a number,
-        // we can assume the syntax is `xxxx` -> `method_xxxx`
         if (query.contains(ONLY_DIGITS)) {
             // Since we know the query is just numbers, rewrite the query to include the field_ prefix
             return "field_$query"
