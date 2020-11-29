@@ -26,7 +26,7 @@ const val NS_INTERMEDIARY = "intermediary"
 /** Namespace for yarn names. **/
 const val NS_NAMED = "named"
 
-private val CONTAINS_NON_DIGITS = """[^\d]""".toRegex()
+private val ONLY_DIGITS = """[\d]""".toRegex()
 
 private val logger = KotlinLogging.logger {}
 
@@ -78,9 +78,39 @@ class MappingsManager {
         val mappings = openMappings(minecraftVersion) ?: return null
 
         return mappings.classes
-                .filter { matches(it, query) }
+                .filter { matches(it, preProcessClassQuery(query)) }
                 .map { MappingsResult(it, null) }
                 .toList()
+    }
+
+    /**
+     * Preprocesses a class mapping query, adapting the query value to make more ergonomic lookups possible.
+     */
+    private fun preProcessClassQuery(query: String): String {
+        /*
+         * For allowing more ergonomic lookup of classes, we allow several parsing cases.
+         * More preprocessing cases may be added in the future.
+         * Methods may be specified as shown below:
+         * ====================================
+         * Obfuscated:
+         *  aac
+         * Intermediary:
+         *  class_310
+         *  310
+         * Named:
+         *  MinecraftClient
+        */
+
+        // Try intermediary path first.
+        // Since a method name per the Java Compiler cannot start with a number,
+        // we can assume the syntax is `xxxx` -> `class_xxxx`
+        // Exit fast if the contents contain anything that is not a number
+        if (query.contains(ONLY_DIGITS)) {
+            // Since we know the query is just numbers, rewrite the query to include the class_ prefix
+            return "class_$query"
+        }
+
+        return query
     }
 
     /**
@@ -117,12 +147,8 @@ class MappingsManager {
         // Try intermediary path first.
         // Since a method name per the Java Compiler cannot start with a number,
         // we can assume the syntax is `xxxx` -> `method_xxxx`
-        if (query.isNotEmpty() && Character.isDigit(query[0])) {
-            // Exit fast if the contents contain anything that is not a number
-            if (query.contains(CONTAINS_NON_DIGITS)) {
-                return query
-            }
-
+        // Exit fast if the contents contain anything that is not a number
+        if (query.contains(ONLY_DIGITS)) {
             // Since we know the query is just numbers, rewrite the query to include the method_ prefix
             return "method_$query"
         }
@@ -164,12 +190,7 @@ class MappingsManager {
         // Try intermediary path first.
         // Since a field name per the Java Compiler cannot start with a number,
         // we can assume the syntax is `xxxx` -> `method_xxxx`
-        if (query.isNotEmpty() && Character.isDigit(query[0])) {
-            // Exit fast if the contents contain anything that is not a number
-            if (query.contains(CONTAINS_NON_DIGITS)) {
-                return query
-            }
-
+        if (query.contains(ONLY_DIGITS)) {
             // Since we know the query is just numbers, rewrite the query to include the field_ prefix
             return "field_$query"
         }
