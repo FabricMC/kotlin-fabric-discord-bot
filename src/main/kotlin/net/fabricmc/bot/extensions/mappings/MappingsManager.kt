@@ -26,6 +26,8 @@ const val NS_INTERMEDIARY = "intermediary"
 /** Namespace for yarn names. **/
 const val NS_NAMED = "named"
 
+private val CONTAINS_NON_DIGITS = """[^\d]""".toRegex()
+
 private val logger = KotlinLogging.logger {}
 
 /**
@@ -91,7 +93,40 @@ class MappingsManager {
     suspend fun getMethodMappings(minecraftVersion: String, query: String): List<MappingsResult>? {
         val mappings = openMappings(minecraftVersion) ?: return null
 
-        return getMappingsResults(mappings, query, ClassDef::getMethods)
+        return getMappingsResults(mappings, preProcessMethodQuery(query), ClassDef::getMethods)
+    }
+
+    /**
+     * Preprocesses a method mapping query, adapting the query value to make more ergonomic lookups possible.
+     */
+    private fun preProcessMethodQuery(query: String): String {
+        /*
+         * For allowing more ergonomic lookup of methods, we allow several parsing cases.
+         * More preprocessing cases may be added in the future.
+         * Methods may be specified as shown below:
+         * ====================================
+         * Obfuscated:
+         *  aZ_
+         * Intermediary:
+         *  method_xxxx
+         *  xxxx -> method_xxxx
+         * Named:
+         *  blah
+        */
+
+        // Try intermediary path first.
+        // Since a method name per the Java Compiler cannot start with a number, we can assume the syntax is `xxxx` -> `method_xxxx`
+        if (query.isNotEmpty() && Character.isDigit(query[0])) {
+            // Exit fast if the contents contain anything that is not a number
+            if (query.contains(CONTAINS_NON_DIGITS)) {
+                return query
+            }
+
+            // Since we know the query is just numbers, rewrite the query to include the method_ prefix
+            return "method_$query"
+        }
+
+        return query
     }
 
     /**
@@ -104,7 +139,40 @@ class MappingsManager {
     suspend fun getFieldMappings(minecraftVersion: String, query: String): List<MappingsResult>? {
         val mappings = openMappings(minecraftVersion) ?: return null
 
-        return getMappingsResults(mappings, query, ClassDef::getFields)
+        return getMappingsResults(mappings, preProcessFieldQuery(query), ClassDef::getFields)
+    }
+
+    /**
+     * Preprocesses a field mapping query, adapting the query value to make more ergonomic lookups possible.
+     */
+    private fun preProcessFieldQuery(query: String): String {
+        /*
+         * For allowing more ergonomic lookup of fields, we allow several parsing cases.
+         * More preprocessing cases may be added in the future.
+         * Fields may be specified as shown below:
+         * ====================================
+         * Obfuscated:
+         *  aB
+         * Intermediary:
+         *  field_xxxx
+         *  xxxx -> field_xxxx
+         * Named:
+         *  blah
+        */
+
+        // Try intermediary path first.
+        // Since a field name per the Java Compiler cannot start with a number, we can assume the syntax is `xxxx` -> `method_xxxx`
+        if (query.isNotEmpty() && Character.isDigit(query[0])) {
+            // Exit fast if the contents contain anything that is not a number
+            if (query.contains(CONTAINS_NON_DIGITS)) {
+                return query
+            }
+
+            // Since we know the query is just numbers, rewrite the query to include the field_ prefix
+            return "field_$query"
+        }
+
+        return query
     }
 
     private fun getMappingsResults(
