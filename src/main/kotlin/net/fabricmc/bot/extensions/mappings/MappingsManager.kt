@@ -76,9 +76,10 @@ class MappingsManager {
      */
     suspend fun getClassMappings(minecraftVersion: String, query: String): List<MappingsResult>? {
         val mappings = openMappings(minecraftVersion) ?: return null
+        val rewrittenQuery = preProcessClassQuery(query)
 
         return mappings.classes
-                .filter { matches(it, preProcessClassQuery(query)) }
+                .filter { matches(it, rewrittenQuery) }
                 .map { MappingsResult(it, null) }
                 .toList()
     }
