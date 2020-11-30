@@ -26,6 +26,8 @@ const val NS_INTERMEDIARY = "intermediary"
 /** Namespace for yarn names. **/
 const val NS_NAMED = "named"
 
+private val ONLY_DIGITS = """[\d]""".toRegex()
+
 private val logger = KotlinLogging.logger {}
 
 /**
@@ -74,11 +76,35 @@ class MappingsManager {
      */
     suspend fun getClassMappings(minecraftVersion: String, query: String): List<MappingsResult>? {
         val mappings = openMappings(minecraftVersion) ?: return null
+        val rewrittenQuery = preProcessClassQuery(query)
 
         return mappings.classes
-                .filter { matches(it, query) }
+                .filter { matches(it, rewrittenQuery) }
                 .map { MappingsResult(it, null) }
                 .toList()
+    }
+
+    /**
+     * Preprocesses a class mapping query, adapting the query value to make more ergonomic lookups possible.
+     *
+     * For allowing more ergonomic lookup of methods, we allow several parsing cases.
+     * More preprocessing cases may be added in the future.
+     * Methods may be specified as shown below:
+     *
+     * Obfuscated: aac
+     *
+     * Intermediary: class_xxxx, xxxx -> class_xxxx
+     *
+     * Named: MinecraftClient
+     */
+    private fun preProcessClassQuery(query: String): String {
+        // Try intermediary path first.
+        if (query.contains(ONLY_DIGITS)) {
+            // Since we know the query is just numbers, rewrite the query to include the class_ prefix
+            return "class_$query"
+        }
+
+        return query
     }
 
     /**
@@ -91,7 +117,30 @@ class MappingsManager {
     suspend fun getMethodMappings(minecraftVersion: String, query: String): List<MappingsResult>? {
         val mappings = openMappings(minecraftVersion) ?: return null
 
-        return getMappingsResults(mappings, query, ClassDef::getMethods)
+        return getMappingsResults(mappings, preProcessMethodQuery(query), ClassDef::getMethods)
+    }
+
+    /**
+     * Preprocesses a method mapping query, adapting the query value to make more ergonomic lookups possible.
+     *
+     * For allowing more ergonomic lookup of methods, we allow several parsing cases.
+     * More preprocessing cases may be added in the future.
+     * Methods may be specified as shown below:
+     *
+     * Obfuscated: aZ_
+     *
+     * Intermediary: method_xxxx, xxxx -> method_xxxx
+     *
+     * Named: blah
+     */
+    private fun preProcessMethodQuery(query: String): String {
+        // Try intermediary path first.
+        if (query.contains(ONLY_DIGITS)) {
+            // Since we know the query is just numbers, rewrite the query to include the method_ prefix
+            return "method_$query"
+        }
+
+        return query
     }
 
     /**
@@ -104,7 +153,30 @@ class MappingsManager {
     suspend fun getFieldMappings(minecraftVersion: String, query: String): List<MappingsResult>? {
         val mappings = openMappings(minecraftVersion) ?: return null
 
-        return getMappingsResults(mappings, query, ClassDef::getFields)
+        return getMappingsResults(mappings, preProcessFieldQuery(query), ClassDef::getFields)
+    }
+
+    /**
+     * Preprocesses a field mapping query, adapting the query value to make more ergonomic lookups possible.
+     *
+     * For allowing more ergonomic lookup of methods, we allow several parsing cases.
+     * More preprocessing cases may be added in the future.
+     * Methods may be specified as shown below:
+     *
+     * Obfuscated: aB
+     *
+     * Intermediary: field_xxxx, xxxx -> field_xxxx
+     *
+     * Named: blah
+     */
+    private fun preProcessFieldQuery(query: String): String {
+        // Try intermediary path first.
+        if (query.contains(ONLY_DIGITS)) {
+            // Since we know the query is just numbers, rewrite the query to include the field_ prefix
+            return "field_$query"
+        }
+
+        return query
     }
 
     private fun getMappingsResults(
