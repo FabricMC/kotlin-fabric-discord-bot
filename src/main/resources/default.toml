@@ -11,6 +11,7 @@ botCommands = 523633816078647296
 moderatorLog = 722561981990699129
 
 ignoredChannels = [
+    782940637124362281,  # Moderator Applications
     565822936712347658,  # Moderators
     722561981990699129,  # Moderation Log
     722698715697119243,  # Botland
