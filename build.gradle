@@ -151,12 +151,18 @@ processResources {
     from "src/main/resources/build.properties"
 }
 
+// https://gist.github.com/JonasGroeger/7620911
+static def gitHash() {
+    'git rev-parse --verify --short HEAD'.execute().text.trim()
+}
+
 task generateBuildInfo() {
     outputs.files "src/main/resources/build.properties"
 
     doLast {
         new File("src/main/resources/build.properties").text = """
             version=$project.version
+            commit=${gitHash()}
         """.stripIndent().strip()
     }
 }

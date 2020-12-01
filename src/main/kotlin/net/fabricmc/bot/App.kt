@@ -34,7 +34,7 @@ suspend fun main() {
     if (System.getenv().getOrDefault("SENTRY_DSN", null) != null) {
         val sentry = Sentry.init()
 
-        sentry.release = buildInfo.version
+        sentry.release = buildInfo.sentryVersion
     }
 
     Migrator.migrate()
