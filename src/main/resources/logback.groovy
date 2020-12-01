@@ -3,6 +3,7 @@ import ch.qos.logback.core.joran.spi.ConsoleTarget
 import io.sentry.logback.SentryAppender
 
 def environment = System.getenv().getOrDefault("ENVIRONMENT", "production")
+def sentry_dsn = System.getenv().getOrDefault("SENTRY_DSN", null)
 
 def defaultLevel = DEBUG
 
@@ -43,8 +44,6 @@ appender("FILE", FileAppender) {
         pattern = "%d{yyyy-MM-dd HH:mm:ss:SSS Z} | %5level | %40.40logger{40} | %msg%n"
     }
 }
-
-def sentry_dsn = System.getenv().getOrDefault("SENTRY_DSN", null)
 
 if (sentry_dsn != null) {
     appender("SENTRY", SentryAppender) {

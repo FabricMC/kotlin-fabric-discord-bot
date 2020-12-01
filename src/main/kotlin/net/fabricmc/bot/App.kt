@@ -32,11 +32,9 @@ suspend fun main() {
     logger.info { "Starting Fabric Discord Bot, version ${buildInfo.version}." }
 
     if (System.getenv().getOrDefault("SENTRY_DSN", null) != null) {
-        val sentry = Sentry.init {
-            it.release = buildInfo.version
-            it.isEnableExternalConfiguration = true
-            it.dsn = System.getenv()["SENTRY_DSN"]
-        }
+        val sentry = Sentry.init()
+
+        sentry.release = buildInfo.version
     }
 
     Migrator.migrate()
