@@ -24,6 +24,7 @@
 
 # Source code
 !/src
+/src/main/resources/config.toml
 !/Tags
 
 # Ignore Gradle project-specific cache directory and build output directory
