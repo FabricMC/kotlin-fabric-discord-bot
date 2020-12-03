@@ -158,7 +158,7 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
                 val tags = parser.getTags(tagName)
 
                 if (tags.isEmpty()) {
-                    if (tagName.replace("?", "").isNotEmpty()) {
+                    if (tagName.replace("?", "").isNotBlank()) {
                         it.message.respond("No such tag: `$tagName`").deleteWithDelay(DELETE_DELAY)
                         it.message.deleteWithDelay(DELETE_DELAY)
                     }
@@ -548,7 +548,7 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
      * @param args String of argument to parse.
      */
     private fun parseArgs(args: String): Pair<String, List<String>> {
-        val split = args.trim().split("\\s".toRegex())
+        val split = args.split("\\s".toRegex())
 
         val tag = split.first()
         val arguments = split.drop(1)
