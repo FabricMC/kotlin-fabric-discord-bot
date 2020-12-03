@@ -178,6 +178,13 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                     return@action
                 }
 
+                breadcrumb(
+                    category = "command.nick",
+                    type = "debug",
+
+                    message = "Parsing arguments"
+                )
+
                 with(parse(::InfractionNickCommandArgs)) {
                     if (target != null && targetId != null) {
                         message.respond("Please specify a user mention or user ID - not both.")
@@ -190,6 +197,14 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                         message.respond("Please specify a user to change the nick for.")
                         return@action
                     }
+
+                    breadcrumb(
+                        category = "command.nick",
+                        type = "debug",
+
+                        message = "Retrieving guild member",
+                        data = mapOf("id" to memberId)
+                    )
 
                     val member = config.getGuild().getMemberOrNull(Snowflake(memberId))
 
@@ -208,9 +223,28 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
 
                     sanctionedNickChanges.put(memberId, newNick)
 
+                    breadcrumb(
+                        category = "command.nick",
+                        type = "debug",
+
+                        message = "Attempting to change nickname",
+                        data = mapOf(
+                            "old" to (oldNick ?: member.username),
+                            "new" to newNick,
+                            "member.tag" to member.tag
+                        )
+                    )
+
                     member.edit {
                         this.nickname = newNick
                     }
+
+                    breadcrumb(
+                        category = "command.nick",
+                        type = "debug",
+
+                        message = "Sending mod-log message"
+                    )
 
                     modLog {
                         title = "Nickname set"
@@ -239,17 +273,19 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                         }
                     }
 
+                    breadcrumb(
+                        category = "command.nick",
+                        type = "debug",
+
+                        message = "Attempting to private message the user"
+                    )
+
                     member.dm {
                         embed {
                             title = "Nickname set"
                             color = Colors.NEGATIVE
 
-                            description = if (newNick != null) {
-                                "A moderator has updated your nickname to: $newNick"
-                            } else {
-                                "A moderator has removed your nickname."
-                            }
-
+                            description = "A moderator has updated your nickname to: $newNick"
                             timestamp = Instant.now()
                         }
                     }
