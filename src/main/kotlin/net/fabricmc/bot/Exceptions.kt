@@ -1,6 +1,6 @@
 package net.fabricmc.bot
 
-import com.gitlab.kordlib.common.entity.Snowflake
+import dev.kord.common.entity.Snowflake
 
 /** A base class for all custom exceptions in our bot framework. **/
 open class FabricBotException : Exception()

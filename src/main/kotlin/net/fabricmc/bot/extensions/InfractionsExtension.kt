@@ -1,10 +1,10 @@
 package net.fabricmc.bot.extensions
 
-import com.gitlab.kordlib.common.entity.Snowflake
-import com.gitlab.kordlib.core.behavior.edit
-import com.gitlab.kordlib.core.entity.User
-import com.gitlab.kordlib.core.event.guild.MemberUpdateEvent
-import com.gitlab.kordlib.rest.builder.message.EmbedBuilder
+import dev.kord.common.entity.Snowflake
+import dev.kord.core.behavior.edit
+import dev.kord.core.entity.User
+import dev.kord.core.event.guild.MemberUpdateEvent
+import dev.kord.rest.builder.message.EmbedBuilder
 import com.google.common.collect.HashMultimap
 import com.google.common.collect.Multimap
 import com.kotlindiscord.kord.extensions.ExtensibleBot

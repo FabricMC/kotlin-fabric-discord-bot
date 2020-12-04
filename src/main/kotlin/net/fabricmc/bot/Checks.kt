@@ -1,7 +1,7 @@
 package net.fabricmc.bot
 
-import com.gitlab.kordlib.core.entity.channel.DmChannel
-import com.gitlab.kordlib.core.event.Event
+import dev.kord.core.entity.channel.DmChannel
+import dev.kord.core.event.Event
 import com.kotlindiscord.kord.extensions.checks.*
 import mu.KotlinLogging
 import net.fabricmc.bot.conf.config

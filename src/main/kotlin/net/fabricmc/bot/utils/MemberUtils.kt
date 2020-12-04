@@ -1,7 +1,7 @@
 package net.fabricmc.bot.utils
 
-import com.gitlab.kordlib.common.entity.PresenceStatus
-import com.gitlab.kordlib.core.entity.Member
+import dev.kord.common.entity.PresenceStatus
+import dev.kord.core.entity.Member
 import net.fabricmc.bot.enums.Emojis
 import net.fabricmc.bot.extensions.EmojiExtension
 

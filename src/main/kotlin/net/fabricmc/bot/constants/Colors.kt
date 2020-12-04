@@ -1,6 +1,6 @@
 package net.fabricmc.bot.constants
 
-import com.gitlab.kordlib.common.kColor
+import dev.kord.common.kColor
 import java.awt.Color
 
 /**

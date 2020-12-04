@@ -1,7 +1,7 @@
 package net.fabricmc.bot.extensions.infractions
 
-import com.gitlab.kordlib.common.entity.Snowflake
-import com.gitlab.kordlib.core.behavior.ban
+import dev.kord.common.entity.Snowflake
+import dev.kord.core.behavior.ban
 import kotlinx.coroutines.launch
 import net.fabricmc.bot.bot
 import net.fabricmc.bot.conf.config

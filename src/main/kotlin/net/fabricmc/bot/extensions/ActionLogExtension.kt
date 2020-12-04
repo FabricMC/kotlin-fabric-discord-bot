@@ -1,11 +1,11 @@
 package net.fabricmc.bot.extensions
 
-import com.gitlab.kordlib.core.behavior.channel.edit
-import com.gitlab.kordlib.core.behavior.createTextChannel
-import com.gitlab.kordlib.core.entity.channel.Category
-import com.gitlab.kordlib.core.entity.channel.GuildMessageChannel
-import com.gitlab.kordlib.core.entity.channel.TextChannel
-import com.gitlab.kordlib.core.event.gateway.ReadyEvent
+import dev.kord.core.behavior.channel.edit
+import dev.kord.core.behavior.createTextChannel
+import dev.kord.core.entity.channel.Category
+import dev.kord.core.entity.channel.GuildMessageChannel
+import dev.kord.core.entity.channel.TextChannel
+import dev.kord.core.event.gateway.ReadyEvent
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import com.kotlindiscord.kord.extensions.checks.topRoleHigherOrEqual
 import com.kotlindiscord.kord.extensions.commands.converters.defaultingNumber

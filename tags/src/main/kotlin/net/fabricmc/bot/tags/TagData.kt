@@ -1,6 +1,6 @@
 package net.fabricmc.bot.tags
 
-import com.gitlab.kordlib.core.cache.data.EmbedData
+import dev.kord.core.cache.data.EmbedData
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient

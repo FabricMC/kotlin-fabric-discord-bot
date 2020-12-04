@@ -1,7 +1,7 @@
 package net.fabricmc.bot.utils
 
-import com.gitlab.kordlib.core.entity.Message
-import com.gitlab.kordlib.core.entity.channel.GuildMessageChannel
+import dev.kord.core.entity.Message
+import dev.kord.core.entity.channel.GuildMessageChannel
 import com.kotlindiscord.kord.extensions.utils.requireChannel
 import com.kotlindiscord.kord.extensions.utils.requireGuildChannel
 import net.fabricmc.bot.conf.config

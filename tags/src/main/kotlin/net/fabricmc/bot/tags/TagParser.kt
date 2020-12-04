@@ -3,8 +3,8 @@ package net.fabricmc.bot.tags
 import com.charleskorn.kaml.PolymorphismStyle
 import com.charleskorn.kaml.Yaml
 import com.charleskorn.kaml.YamlConfiguration
-import com.gitlab.kordlib.common.entity.optional.Optional
-import com.gitlab.kordlib.common.entity.optional.OptionalInt
+import dev.kord.common.entity.optional.Optional
+import dev.kord.common.entity.optional.OptionalInt
 import mu.KotlinLogging
 import java.io.File
 import java.nio.file.Path

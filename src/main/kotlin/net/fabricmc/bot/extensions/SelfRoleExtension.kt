@@ -1,6 +1,6 @@
 package net.fabricmc.bot.extensions
 
-import com.gitlab.kordlib.rest.builder.message.EmbedBuilder
+import dev.kord.rest.builder.message.EmbedBuilder
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import com.kotlindiscord.kord.extensions.extensions.Extension
 import com.kotlindiscord.kord.extensions.utils.hasRole

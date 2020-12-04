@@ -3,8 +3,8 @@
  */
 package net.fabricmc.bot
 
-import com.gitlab.kordlib.gateway.Intents
-import com.gitlab.kordlib.gateway.PrivilegedIntent
+import dev.kord.gateway.Intents
+import dev.kord.gateway.PrivilegedIntent
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import mu.KotlinLogging
 import net.fabricmc.bot.conf.buildInfo

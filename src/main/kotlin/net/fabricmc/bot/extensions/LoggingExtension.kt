@@ -1,16 +1,16 @@
 package net.fabricmc.bot.extensions
 
-import com.gitlab.kordlib.core.event.*
-import com.gitlab.kordlib.core.event.channel.*
-import com.gitlab.kordlib.core.event.gateway.*
-import com.gitlab.kordlib.core.event.guild.*
-import com.gitlab.kordlib.core.event.message.*
-import com.gitlab.kordlib.core.event.role.RoleCreateEvent
-import com.gitlab.kordlib.core.event.role.RoleDeleteEvent
-import com.gitlab.kordlib.core.event.role.RoleUpdateEvent
-import com.gitlab.kordlib.core.event.user.PresenceUpdateEvent
-import com.gitlab.kordlib.core.event.user.UserUpdateEvent
-import com.gitlab.kordlib.core.event.user.VoiceStateUpdateEvent
+import dev.kord.core.event.*
+import dev.kord.core.event.channel.*
+import dev.kord.core.event.gateway.*
+import dev.kord.core.event.guild.*
+import dev.kord.core.event.message.*
+import dev.kord.core.event.role.RoleCreateEvent
+import dev.kord.core.event.role.RoleDeleteEvent
+import dev.kord.core.event.role.RoleUpdateEvent
+import dev.kord.core.event.user.PresenceUpdateEvent
+import dev.kord.core.event.user.UserUpdateEvent
+import dev.kord.core.event.user.VoiceStateUpdateEvent
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import com.kotlindiscord.kord.extensions.checks.inGuild
 import com.kotlindiscord.kord.extensions.extensions.Extension

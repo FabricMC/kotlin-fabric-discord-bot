@@ -10,7 +10,7 @@ def defaultLevel = DEBUG
 if (environment == "production") {
     defaultLevel = INFO
 } else if (environment == "spam") {
-    logger("com.gitlab.kordlib.gateway.DefaultGateway", TRACE)
+    logger("dev.kord.gateway.DefaultGateway", TRACE)
     logger("net.fabricmc.bot.tags.TagParser", TRACE)
 } else {
     // Silence warning about missing native PRNG

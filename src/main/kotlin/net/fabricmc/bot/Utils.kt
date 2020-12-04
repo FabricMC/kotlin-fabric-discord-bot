@@ -1,7 +1,7 @@
 package net.fabricmc.bot
 
-import com.gitlab.kordlib.core.entity.Role
-import com.gitlab.kordlib.core.entity.User
+import dev.kord.core.entity.Role
+import dev.kord.core.entity.User
 import com.kotlindiscord.kord.extensions.utils.createdAt
 import net.fabricmc.bot.conf.config
 import net.fabricmc.bot.enums.Roles

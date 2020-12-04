@@ -1,8 +1,8 @@
 package net.fabricmc.bot.extensions
 
-import com.gitlab.kordlib.core.entity.GuildEmoji
-import com.gitlab.kordlib.core.event.gateway.ReadyEvent
-import com.gitlab.kordlib.core.event.guild.EmojisUpdateEvent
+import dev.kord.core.entity.GuildEmoji
+import dev.kord.core.event.gateway.ReadyEvent
+import dev.kord.core.event.guild.EmojisUpdateEvent
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import com.kotlindiscord.kord.extensions.checks.inGuild
 import com.kotlindiscord.kord.extensions.extensions.Extension

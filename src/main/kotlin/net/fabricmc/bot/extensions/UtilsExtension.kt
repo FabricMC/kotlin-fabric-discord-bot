@@ -1,13 +1,13 @@
 package net.fabricmc.bot.extensions
 
-import com.gitlab.kordlib.common.entity.GuildFeature
-import com.gitlab.kordlib.common.entity.Snowflake
-import com.gitlab.kordlib.common.entity.PresenceStatus
-import com.gitlab.kordlib.core.entity.channel.Category
-import com.gitlab.kordlib.core.entity.channel.NewsChannel
-import com.gitlab.kordlib.core.entity.channel.TextChannel
-import com.gitlab.kordlib.core.entity.channel.VoiceChannel
-import com.gitlab.kordlib.rest.Image
+import dev.kord.common.entity.GuildFeature
+import dev.kord.common.entity.Snowflake
+import dev.kord.common.entity.PresenceStatus
+import dev.kord.core.entity.channel.Category
+import dev.kord.core.entity.channel.NewsChannel
+import dev.kord.core.entity.channel.TextChannel
+import dev.kord.core.entity.channel.VoiceChannel
+import dev.kord.rest.Image
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import com.kotlindiscord.kord.extensions.checks.topRoleHigherOrEqual
 import com.kotlindiscord.kord.extensions.commands.converters.optionalNumber

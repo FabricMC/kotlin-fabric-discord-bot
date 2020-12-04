@@ -1,9 +1,9 @@
 package net.fabricmc.bot.extensions
 
 import com.gitlab.kordlib.cache.api.query
-import com.gitlab.kordlib.core.cache.data.MessageData
-import com.gitlab.kordlib.core.entity.Message
-import com.gitlab.kordlib.core.entity.channel.GuildMessageChannel
+import dev.kord.core.cache.data.MessageData
+import dev.kord.core.entity.Message
+import dev.kord.core.entity.channel.GuildMessageChannel
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import com.kotlindiscord.kord.extensions.checks.topRoleHigherOrEqual
 import com.kotlindiscord.kord.extensions.commands.converters.*

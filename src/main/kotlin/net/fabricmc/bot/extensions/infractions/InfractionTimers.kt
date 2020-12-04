@@ -1,6 +1,6 @@
 package net.fabricmc.bot.extensions.infractions
 
-import com.gitlab.kordlib.common.entity.Snowflake
+import dev.kord.common.entity.Snowflake
 import com.kotlindiscord.kord.extensions.utils.Scheduler
 import com.kotlindiscord.kord.extensions.utils.runSuspended
 import mu.KotlinLogging

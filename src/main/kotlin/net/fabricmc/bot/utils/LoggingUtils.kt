@@ -1,12 +1,12 @@
 package net.fabricmc.bot.utils
 
-import com.gitlab.kordlib.core.behavior.channel.createMessage
-import com.gitlab.kordlib.core.behavior.execute
-import com.gitlab.kordlib.core.entity.Message
-import com.gitlab.kordlib.core.entity.channel.GuildMessageChannel
-import com.gitlab.kordlib.rest.builder.message.EmbedBuilder
-import com.gitlab.kordlib.rest.builder.message.MessageCreateBuilder
-import com.gitlab.kordlib.rest.json.request.AllowedMentionType
+import dev.kord.core.behavior.channel.createMessage
+import dev.kord.core.behavior.execute
+import dev.kord.core.entity.Message
+import dev.kord.core.entity.channel.GuildMessageChannel
+import dev.kord.rest.builder.message.EmbedBuilder
+import dev.kord.rest.builder.message.MessageCreateBuilder
+import dev.kord.rest.json.request.AllowedMentionType
 import com.kotlindiscord.kord.extensions.utils.ensureWebhook
 import kotlinx.coroutines.delay
 import mu.KotlinLogging

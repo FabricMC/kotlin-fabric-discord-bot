@@ -1,7 +1,7 @@
 package net.fabricmc.bot.extensions
 
-import com.gitlab.kordlib.core.event.gateway.ReadyEvent
-import com.gitlab.kordlib.core.event.guild.MemberJoinEvent
+import dev.kord.core.event.gateway.ReadyEvent
+import dev.kord.core.event.guild.MemberJoinEvent
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import com.kotlindiscord.kord.extensions.checks.inGuild
 import com.kotlindiscord.kord.extensions.checks.topRoleHigherOrEqual

@@ -1,7 +1,7 @@
 package net.fabricmc.bot.extensions
 
-import com.gitlab.kordlib.common.entity.ChannelType
-import com.gitlab.kordlib.core.event.gateway.ReadyEvent
+import dev.kord.common.entity.ChannelType
+import dev.kord.core.event.gateway.ReadyEvent
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import com.kotlindiscord.kord.extensions.checks.topRoleHigherOrEqual
 import com.kotlindiscord.kord.extensions.commands.converters.string

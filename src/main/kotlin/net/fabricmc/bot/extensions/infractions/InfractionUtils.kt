@@ -1,7 +1,7 @@
 package net.fabricmc.bot.extensions.infractions
 
-import com.gitlab.kordlib.common.entity.Snowflake
-import com.gitlab.kordlib.core.entity.User
+import dev.kord.common.entity.Snowflake
+import dev.kord.core.entity.User
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
