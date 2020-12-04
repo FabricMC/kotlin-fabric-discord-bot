@@ -52,7 +52,7 @@ class EmojiExtension(bot: ExtensibleBot) : Extension(bot) {
             check(inGuild(config.getEmojiGuild()))
 
             action {
-                populateEmojis(it.emojis)
+                populateEmojis(event.emojis)
             }
         }
     }

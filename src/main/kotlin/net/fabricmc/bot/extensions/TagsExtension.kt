@@ -149,13 +149,13 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
             check { it.message.content.startsWith(config.tagPrefix) }
 
             action {
-                val givenArgs = it.message.content.removePrefix(config.tagPrefix)
+                val givenArgs = event.message.content.removePrefix(config.tagPrefix)
 
                 if (givenArgs.isEmpty() || givenArgs.startsWith(' ')) {
                     return@action
                 }
 
-                val splitArgs = it.message.parse().toMutableList()
+                val splitArgs = event.message.parse().toMutableList()
 
                 splitArgs[0] = splitArgs[0].removePrefix(config.tagPrefix)
 
@@ -165,21 +165,21 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
 
                 if (tags.isEmpty()) {
                     if (tagName.replace("?", "").isNotEmpty()) {
-                        it.message.respond("No such tag: `$tagName`").deleteWithDelay(DELETE_DELAY)
-                        it.message.deleteWithDelay(DELETE_DELAY)
+                        event.message.respond("No such tag: `$tagName`").deleteWithDelay(DELETE_DELAY)
+                        event.message.deleteWithDelay(DELETE_DELAY)
                     }
 
                     return@action
                 }
 
                 if (tags.size > 1) {
-                    it.message.respond(
+                    event.message.respond(
                             "Multiple tags have been found with that name. " +
                                     "Please pick one of the following:\n\n" +
 
                                     tags.joinToString(", ") { t -> "`${t.name}`" }
                     ).deleteWithDelay(DELETE_DELAY)
-                    it.message.deleteWithDelay(DELETE_DELAY)
+                    event.message.deleteWithDelay(DELETE_DELAY)
 
                     return@action
                 }
@@ -192,7 +192,7 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
                     tag = parser.getTag(data.target)
 
                     if (tag == null) {
-                        it.message.respond(
+                        event.message.respond(
                                 "Invalid alias - no such alias target: " +
                                         "`$tagName` -> `${data.target}`"
                         )
@@ -200,7 +200,7 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
                     }
 
                     if (tag.data is AliasTag) {
-                        it.message.respond(
+                        event.message.respond(
                                 "Invalid alias - this alias points to another alias: " +
                                         "`$tagName` -> `${data.target}`"
                         )
@@ -211,12 +211,12 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
                 val markdown = try {
                     substitute(tag.markdown, args)
                 } catch (e: TagMissingArgumentException) {
-                    it.message.respond(e.toString())
+                    event.message.respond(e.toString())
                     return@action
                 }
 
                 if (tag.data is TextTag) {
-                    it.message.channel.createMessage {
+                    event.message.channel.createMessage {
                         content = markdown!!  // If it's a text tag, the markdown is not null
 
                         allowedMentions { }  // Nope
@@ -224,7 +224,7 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
                 } else if (tag.data is EmbedTag) {
                     val data = tag.data as EmbedTag
 
-                    it.message.channel.createEmbed {
+                    event.message.channel.createEmbed {
                         Embed(data.embed, bot.kord).apply(this)
 
                         description = markdown ?: data.embed.description.value

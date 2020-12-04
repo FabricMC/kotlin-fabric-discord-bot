@@ -58,7 +58,7 @@ class FilterExtension(bot: ExtensibleBot) : Extension(bot) {
             )
 
             action {
-                with(it) {
+                with(event) {
                     for (filter in filters) {
                         var matchedConcerns = false
 
@@ -94,7 +94,7 @@ class FilterExtension(bot: ExtensibleBot) : Extension(bot) {
             )
 
             action {
-                with(it) {
+                with(event) {
                     for (filter in filters) {
                         var matchedConcerns = false
 

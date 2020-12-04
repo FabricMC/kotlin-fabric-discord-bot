@@ -57,14 +57,14 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
             }
         }
 
-        event<RoleCreateEvent> { action { runSuspended { roleUpdated(it.role) } } }
-        event<RoleUpdateEvent> { action { runSuspended { roleUpdated(it.role) } } }
-        event<RoleDeleteEvent> { action { runSuspended { roleDeleted(it.roleId) } } }
+        event<RoleCreateEvent> { action { runSuspended { roleUpdated(event.role) } } }
+        event<RoleUpdateEvent> { action { runSuspended { roleUpdated(event.role) } } }
+        event<RoleDeleteEvent> { action { runSuspended { roleDeleted(event.roleId) } } }
 
-        event<MemberJoinEvent> { action { runSuspended { memberJoined(it.member) } } }
-        event<MemberUpdateEvent> { action { runSuspended { memberUpdated(it.member) } } }
-        event<MemberLeaveEvent> { action { runSuspended { memberLeft(it.user.id) } } }
-        event<UserUpdateEvent> { action { runSuspended { userUpdated(it.user) } } }
+        event<MemberJoinEvent> { action { runSuspended { memberJoined(event.member) } } }
+        event<MemberUpdateEvent> { action { runSuspended { memberUpdated(event.member) } } }
+        event<MemberLeaveEvent> { action { runSuspended { memberLeft(event.user.id) } } }
+        event<UserUpdateEvent> { action { runSuspended { userUpdated(event.user) } } }
 
         command {
             name = "sync"

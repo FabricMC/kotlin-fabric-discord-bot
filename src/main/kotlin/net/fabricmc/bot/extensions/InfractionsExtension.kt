@@ -839,8 +839,8 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
 
             action {
                 runSuspended {
-                    val oldMember = it.old
-                    val newMember = it.member
+                    val oldMember = event.old
+                    val newMember = event.member
 
                     logger.debug { "Checking out nick change for user: ${newMember.tag} -> ${newMember.nickname}" }
 
@@ -859,7 +859,7 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                     if (delta?.nickname != null) {  // We've got the old one if there's a delta
                         val oldNick = oldMember!!.nickname ?: oldMember.username
                         val newNick = newMember.nickname ?: newMember.username
-                        val memberId = it.member.id
+                        val memberId = event.member.id
 
                         if (newNick in sanctionedNickChanges.get(memberId.value)) {
                             logger.debug { "This was a sanctioned nickname change, not reverting." }

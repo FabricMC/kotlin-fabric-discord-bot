@@ -39,11 +39,11 @@ class MappingsExtension(bot: ExtensibleBot) : Extension(bot) {
 
         event<LatestMinecraftVersionsRetrieved> {
             action {
-                logger.debug { "Caching latest versions: ${it.versions.release} / ${it.versions.snapshot}" }
+                logger.debug { "Caching latest versions: ${event.versions.release} / ${event.versions.snapshot}" }
 
                 @Suppress("TooGenericExceptionCaught")
                 try {
-                    mappings.cacheMappings(it.versions.release, it.versions.snapshot)
+                    mappings.cacheMappings(event.versions.release, event.versions.snapshot)
                 } catch (t: Throwable) {
                     logger.error(t) { "Failed to cache mappings." }
                 }

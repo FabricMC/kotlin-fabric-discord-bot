@@ -48,17 +48,17 @@ class DefconExtension(bot: ExtensibleBot) : Extension(bot) {
             check { it.member.isNew() }
 
             action {
-                it.member.dm(KICK_MESSAGE)
-                it.member.kick("DEFCON enforcement")
+                event.member.dm(KICK_MESSAGE)
+                event.member.kick("DEFCON enforcement")
 
                 alert(false) {
                     title = "DEFCON enforcement"
                     description = "Prevented a user from joining as their account was created within the last " +
                             "three days.\n\n" +
 
-                            "**User ID:** `${it.member.id}`\n" +
-                            "**User tag:** `${it.member.tag}`\n" +
-                            "**Creation date:** `${instantToDisplay(it.member.id.timeStamp)}`"
+                            "**User ID:** `${event.member.id}`\n" +
+                            "**User tag:** `${event.member.tag}`\n" +
+                            "**Creation date:** `${instantToDisplay(event.member.id.timeStamp)}`"
 
                     color = Colors.NEGATIVE
                 }
