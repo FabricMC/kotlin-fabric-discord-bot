@@ -58,14 +58,14 @@ class MappingsManager {
 
     // TODO: Modmuss says there's probably better ways to do this.
     private fun exactMatches(mapped: Mapped, query: String): Boolean =
-            mapped.getName(NS_INTERMEDIARY) == query
-                    || mapped.getName(NS_NAMED) == query
-                    || mapped.getName(NS_OFFICIAL) == query
+            mapped.getName(NS_INTERMEDIARY).equals(query, true)
+                    || mapped.getName(NS_NAMED).equals(query, true)
+                    || mapped.getName(NS_OFFICIAL).equals(query, true)
 
     private fun matches(mapped: Mapped, query: String): Boolean =
-            mapped.getName(NS_INTERMEDIARY).endsWith(query)
-                    || mapped.getName(NS_NAMED).endsWith(query)
-                    || mapped.getName(NS_OFFICIAL) == query
+            mapped.getName(NS_INTERMEDIARY).endsWith(query, true)
+                    || mapped.getName(NS_NAMED).endsWith(query, true)
+                    || mapped.getName(NS_OFFICIAL).equals(query, true)
 
     /**
      * Given a Minecraft version and query, attempt to retrieve a list of matching class mappings.
@@ -214,7 +214,7 @@ class MappingsManager {
         }
 
         if (!versionCache.containsKey(release)) {
-            logger.debug { "Caching release version: $release." }
+            logger.debug { "Caching release version: $release" }
 
             if (releaseYarnVersion != null) {
                 var releaseVersion = openMappings(release)
@@ -238,7 +238,7 @@ class MappingsManager {
         }
 
         if (!versionCache.containsKey(snapshot)) {
-            logger.debug { "Caching snapshot version: $snapshot." }
+            logger.debug { "Caching snapshot version: $snapshot" }
 
             if (snapshotYarnVersion != null) {
                 var snapshotVersion = openMappings(snapshot)
