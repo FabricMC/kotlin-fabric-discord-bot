@@ -99,7 +99,7 @@ class MappingsManager {
      */
     private fun preProcessClassQuery(query: String): String {
         // Try intermediary path first.
-        if (query.contains(ONLY_DIGITS)) {
+        if (query.matches(ONLY_DIGITS)) {
             // Since we know the query is just numbers, rewrite the query to include the class_ prefix
             return "class_$query"
         }
@@ -135,7 +135,7 @@ class MappingsManager {
      */
     private fun preProcessMethodQuery(query: String): String {
         // Try intermediary path first.
-        if (query.contains(ONLY_DIGITS)) {
+        if (query.matches(ONLY_DIGITS)) {
             // Since we know the query is just numbers, rewrite the query to include the method_ prefix
             return "method_$query"
         }
@@ -171,7 +171,7 @@ class MappingsManager {
      */
     private fun preProcessFieldQuery(query: String): String {
         // Try intermediary path first.
-        if (query.contains(ONLY_DIGITS)) {
+        if (query.matches(ONLY_DIGITS)) {
             // Since we know the query is just numbers, rewrite the query to include the field_ prefix
             return "field_$query"
         }
