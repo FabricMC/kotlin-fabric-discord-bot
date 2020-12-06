@@ -87,9 +87,9 @@ class MappingsManager {
     /**
      * Preprocesses a class mapping query, adapting the query value to make more ergonomic lookups possible.
      *
-     * For allowing more ergonomic lookup of methods, we allow several parsing cases.
+     * For allowing more ergonomic lookup of classes, we allow several parsing cases.
      * More preprocessing cases may be added in the future.
-     * Methods may be specified as shown below:
+     * Classes may be specified as shown below:
      *
      * Obfuscated: aac
      *
