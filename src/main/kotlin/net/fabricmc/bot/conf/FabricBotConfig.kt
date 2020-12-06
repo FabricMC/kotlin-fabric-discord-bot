@@ -148,8 +148,6 @@ class FabricBotConfig {
             Roles.NO_REACTIONS -> Snowflake(config[RolesSpec.noReactions])
             Roles.NO_REQUESTS -> Snowflake(config[RolesSpec.noRequests])
             Roles.NO_SUPPORT -> Snowflake(config[RolesSpec.noSupport])
-
-            Roles.DEV_LIFE -> Snowflake(config[RolesSpec.devLife])
         }
     }
 

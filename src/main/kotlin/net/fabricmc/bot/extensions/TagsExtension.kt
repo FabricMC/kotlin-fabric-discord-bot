@@ -164,7 +164,7 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
                 val tags = parser.getTags(tagName)
 
                 if (tags.isEmpty()) {
-                    if (tagName.replace("?", "").isNotEmpty()) {
+                    if (tagName.replace("?", "").isNotBlank()) {
                         event.message.respond("No such tag: `$tagName`").deleteWithDelay(DELETE_DELAY)
                         event.message.deleteWithDelay(DELETE_DELAY)
                     }

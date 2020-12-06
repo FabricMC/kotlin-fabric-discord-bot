@@ -1,16 +1,8 @@
 package net.fabricmc.bot.extensions
 
-import dev.kord.rest.builder.message.EmbedBuilder
+import dev.kord.core.behavior.channel.createEmbed
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import com.kotlindiscord.kord.extensions.extensions.Extension
-import com.kotlindiscord.kord.extensions.utils.hasRole
-import com.kotlindiscord.kord.extensions.utils.respond
-import net.fabricmc.bot.conf.config
-import net.fabricmc.bot.constants.Colors
-import net.fabricmc.bot.enums.Roles
-import net.fabricmc.bot.utils.requireBotChannel
-
-private const val DELETE_DELAY = 10_000L  // 10 seconds
 
 /**
  * Extension to allow users to apply roles to themselves.
@@ -21,37 +13,30 @@ class SelfRoleExtension(bot: ExtensibleBot) : Extension(bot) {
     override suspend fun setup() {
         command {
             name = "devlife"
-            description = "Toggle hiding community channels, leaving only ones about development."
+            description = "Learn how to hide channels"
 
             action {
-                if (!message.requireBotChannel(delay = DELETE_DELAY, allowDm = false)) {
-                    return@action
-                }
+                message.channel.createEmbed {
+                    title = "Here's how to hide muted channels:"
+                    image = "https://cdn.discordapp.com/attachments/565822936712347658/784465611152425040/guide.png"
 
-                val member = config.getGuild().getMemberOrNull(message.author!!.id) ?: return@action
-                val devLife = config.getRole(Roles.DEV_LIFE)
-                val alreadyLivingTheDevLife = member.hasRole(devLife)
-                val confirmation: EmbedBuilder.() -> Unit
+                    description = "**1)** Right-click on a channel you'd like to hide, and then click on " +
+                            "**Mute Channel** (or hover it and click **Until I turn it back on**). You can also " +
+                            "click on the channel to view it and click on **the bell icon** at the top of the " +
+                            "window.\n\n" +
 
-                confirmation = if (!alreadyLivingTheDevLife) {
-                    member.addRole(devLife.id, "Requested via !devlife");
-                    {
-                        color = Colors.POSITIVE
-                        title = "Living the dev life!"
-                        description = "You will no longer see community channels. Run the command again to toggle back."
-                    }
-                } else {
-                    member.removeRole(devLife.id, "Requested via !devlife");
-                    {
-                        color = Colors.POSITIVE
-                        title = "No longer living the dev life."
-                        description =
-                                "You will once again see community channels. Run the command again to toggle back."
-                    }
-                }
+                            "**2)** Observe that the channel has now been muted.\n\n" +
 
-                message.respond {
-                    embed(confirmation)
+                            "**3)** Right-click the space above any category or below the channels list, and " +
+                            "then click on **Hide Muted Channels**.\n\n" +
+
+                            "**4)** Success! Your least-favourite channel has been muted. If you'd like to view " +
+                            "any channels that you've hidden, simply reverse the above process.\n\n\n" +
+
+
+                            "If you're on mobile, you can still do this by holding down on the channel you'd " +
+                            "like to hide to mute it, and then tapping the server name at the top of the list " +
+                            "of channels to hide your muted channels."
                 }
             }
         }
