@@ -268,7 +268,6 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
 
                         if (tag == null) {
                             message.respond("No such tag: `$tagName`").deleteWithDelay(DELETE_DELAY)
-                            message.deleteWithDelay(DELETE_DELAY)
                             return@action
                         }
 

@@ -30,6 +30,8 @@ import net.fabricmc.bot.utils.requireBotChannel
 import java.time.Instant
 
 private const val DELETE_DELAY = 10_000L  // 10 seconds
+private const val LATEST_EMOJI_COUNT = 6
+private const val LATEST_EMOJI_CHUNK_BY = 3
 
 /**
  * Extension providing useful utility commands.
@@ -183,7 +185,7 @@ class UtilsExtension(bot: ExtensibleBot) : Extension(bot) {
                     }
                 }
 
-                val newestEmoji = guild.emojis.toList().maxByOrNull { it.id.timeStamp }
+                val newestEmojis = guild.emojis.toList().sortedBy { it.id.timeStamp }.take(LATEST_EMOJI_COUNT)
                 val totalEmojis = guild.emojis.toSet().size
 
                 message.respond {
@@ -226,8 +228,12 @@ class UtilsExtension(bot: ExtensibleBot) : Extension(bot) {
 
                             value = "**Total:** $totalEmojis"
 
-                            if (newestEmoji != null) {
-                                value += "\n**Latest:** ${newestEmoji.mention}"
+                            if (newestEmojis.isNotEmpty()) {
+                                value += "\n\n" +
+                                        "**Newest**\n\n" +
+                                        newestEmojis.chunked(LATEST_EMOJI_CHUNK_BY).joinToString("\n") {
+                                            it.joinToString(" ") { emoji -> emoji.mention }
+                                        }
                             }
                         }
 

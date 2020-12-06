@@ -9,6 +9,7 @@ import dev.kord.core.event.message.MessageUpdateEvent
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import com.kotlindiscord.kord.extensions.utils.deleteIgnoringNotFound
 import com.kotlindiscord.kord.extensions.utils.getUrl
+import net.fabricmc.bot.utils.readable
 import org.nibor.autolink.LinkExtractor
 import org.nibor.autolink.LinkType
 
@@ -124,7 +125,7 @@ class UrlFilter(bot: ExtensibleBot) : Filter(bot) {
         }
 
         return "Domain filter triggered by " +
-                "${user.mention} (`${user.id.value}`) $channelMessage, " +
+                "${user.readable()} $channelMessage, " +
                 "with $jumpMessage:\n\n" +
                 message.content
     }

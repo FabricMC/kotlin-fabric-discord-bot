@@ -16,6 +16,7 @@ import net.fabricmc.bot.conf.config
 import net.fabricmc.bot.constants.Colors
 import net.fabricmc.bot.enums.Roles
 import net.fabricmc.bot.utils.modLog
+import net.fabricmc.bot.utils.readable
 import net.fabricmc.bot.utils.requireMainGuild
 import java.time.Instant
 
@@ -114,7 +115,7 @@ class CleanExtension(bot: ExtensibleBot) : Extension(bot) {
                             message.channelId
                         }
                     }
-                        Since: ${since?.id}
+                        Since: ${since?.id?.asString}
                         Bot-only: $botOnly
                         Count: $count
                         Force: $force
@@ -198,7 +199,7 @@ class CleanExtension(bot: ExtensibleBot) : Extension(bot) {
                             }
                         }
 
-                        val cleanCount = "Messages to clean: ${query.joinToString(", ") { it.id.toString() }}"
+                        val cleanCount = "Messages to clean: ${query.joinToString(", ") { it.id.asString }}"
 
                         logger.debug { cleanCount }
                         // TODO: Log the cleanNotice and cleanCount to #moderator-log
@@ -256,7 +257,7 @@ class CleanExtension(bot: ExtensibleBot) : Extension(bot) {
                     inline = true
 
                     value = args.channels.joinToString(", ") {
-                        "${it.mention} (`${it.id}`)"
+                        "${it.mention} (`${it.id.asString}`)"
                     }
                 }
             }
@@ -314,7 +315,7 @@ class CleanExtension(bot: ExtensibleBot) : Extension(bot) {
                     inline = true
 
                     value = args.users.joinToString(", ") {
-                        "${it.mention} (${it.tag} / ${it.id})"
+                        it.readable()
                     }
                 }
             }

@@ -68,6 +68,7 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
 
         command {
             name = "sync"
+            description = "Manually synchronise users and roles to the database."
 
             check(
                     ::defaultCheck,

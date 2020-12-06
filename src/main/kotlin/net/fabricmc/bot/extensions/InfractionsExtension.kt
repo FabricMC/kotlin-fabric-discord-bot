@@ -1,10 +1,5 @@
 package net.fabricmc.bot.extensions
 
-import dev.kord.common.entity.Snowflake
-import dev.kord.core.behavior.edit
-import dev.kord.core.entity.User
-import dev.kord.core.event.guild.MemberUpdateEvent
-import dev.kord.rest.builder.message.EmbedBuilder
 import com.google.common.collect.HashMultimap
 import com.google.common.collect.Multimap
 import com.kotlindiscord.kord.extensions.ExtensibleBot
@@ -19,6 +14,11 @@ import com.kotlindiscord.kord.extensions.utils.deltas.MemberDelta
 import com.kotlindiscord.kord.extensions.utils.dm
 import com.kotlindiscord.kord.extensions.utils.respond
 import com.kotlindiscord.kord.extensions.utils.runSuspended
+import dev.kord.common.entity.Snowflake
+import dev.kord.core.behavior.edit
+import dev.kord.core.entity.User
+import dev.kord.core.event.guild.MemberUpdateEvent
+import dev.kord.rest.builder.message.EmbedBuilder
 import mu.KotlinLogging
 import net.fabricmc.bot.conf.config
 import net.fabricmc.bot.constants.Colors
@@ -169,8 +169,8 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
             signature = "<user> [nickname ...]"
 
             check(
-                    ::defaultCheck,
-                    topRoleHigherOrEqual(config.getRole(Roles.TRAINEE_MODERATOR))
+                ::defaultCheck,
+                topRoleHigherOrEqual(config.getRole(Roles.TRAINEE_MODERATOR))
             )
 
             action {
@@ -185,113 +185,130 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                     message = "Parsing arguments"
                 )
 
-                with(parse(::InfractionNickCommandArgs)) {
-                    if (target != null && targetId != null) {
-                        message.respond("Please specify a user mention or user ID - not both.")
-                        return@action
-                    }
+                val args = parse(::InfractionNickCommandArgs)
 
-                    val memberId = getMemberId(target, targetId)
-
-                    if (memberId == null) {
-                        message.respond("Please specify a user to change the nick for.")
-                        return@action
-                    }
-
-                    breadcrumb(
-                        category = "command.nick",
-                        type = "debug",
-
-                        message = "Retrieving guild member",
-                        data = mapOf("id" to memberId)
-                    )
-
-                    val member = config.getGuild().getMemberOrNull(Snowflake(memberId))
-
-                    if (member == null) {
-                        message.respond("Unable to find that user - are they on the server?")
-                        return@action
-                    }
-
-                    val oldNick = member.nickname
-
-                    val newNick = if (nickname == null) {
-                        member.username  // Until Kord figures out this null/missing stuff
-                    } else {
-                        nickname!!
-                    }
-
-                    sanctionedNickChanges.put(memberId, newNick)
-
-                    breadcrumb(
-                        category = "command.nick",
-                        type = "debug",
-
-                        message = "Attempting to change nickname",
-                        data = mapOf(
-                            "old" to (oldNick ?: member.username),
-                            "new" to newNick,
-                            "member.tag" to member.tag
-                        )
-                    )
-
-                    member.edit {
-                        this.nickname = newNick
-                    }
-
-                    breadcrumb(
-                        category = "command.nick",
-                        type = "debug",
-
-                        message = "Sending mod-log message"
-                    )
-
-                    modLog {
-                        title = "Nickname set"
-                        color = Colors.POSITIVE
-
-                        // Until Kord figures out this null/missing stuff
-                        description = if (newNick == member.username) {
-                            "Nickname for ${member.mention} (${member.tag} / " +
-                                    "`${member.id}`) updated to: $newNick"
-                        } else {
-                            "Nickname for ${member.mention} (${member.tag} / " +
-                                    "`${member.id}`) removed."
-                        }
-
-                        field {
-                            name = "Moderator"
-                            value = "${message.author!!.mention} (${message.author!!.tag} / " +
-                                    "`${message.author!!.id}`)"
-                        }
-
-                        if (oldNick != null) {
-                            field {
-                                name = "Old Nick"
-                                value = oldNick
-                            }
-                        }
-                    }
-
-                    breadcrumb(
-                        category = "command.nick",
-                        type = "debug",
-
-                        message = "Attempting to private message the user"
-                    )
-
-                    member.dm {
-                        embed {
-                            title = "Nickname set"
-                            color = Colors.NEGATIVE
-
-                            description = "A moderator has updated your nickname to: $newNick"
-                            timestamp = Instant.now()
-                        }
-                    }
-
-                    message.respond("User's nickname has been updated.")
+                if (args.target != null && args.targetId != null) {
+                    message.respond("Please specify a user mention or user ID - not both.")
+                    return@action
                 }
+
+                val memberId = getMemberId(args.target, args.targetId)
+
+                if (memberId == null) {
+                    message.respond("Please specify a user to change the nick for.")
+                    return@action
+                }
+
+                breadcrumb(
+                    category = "command.nick",
+                    type = "debug",
+
+                    message = "Retrieving guild member",
+                    data = mapOf("id" to memberId)
+                )
+
+                val member = config.getGuild().getMemberOrNull(Snowflake(memberId))
+
+                if (member == null) {
+                    message.respond("Unable to find that user - are they on the server?")
+                    return@action
+                }
+
+                val oldNick = member.nickname
+
+                val newNick = if (args.nickname == null) {
+                    member.username
+                } else {
+                    args.nickname!!
+                }
+
+                sanctionedNickChanges.put(memberId, newNick)
+
+                breadcrumb(
+                    category = "command.nick",
+                    type = "debug",
+
+                    message = "Attempting to change nickname",
+                    data = mapOf(
+                        "old" to (oldNick ?: member.username),
+                        "new" to newNick,
+                        "member.tag" to member.tag
+                    )
+                )
+
+                member.edit {
+                    this.nickname = newNick
+                }
+
+                breadcrumb(
+                    category = "command.nick",
+                    type = "debug",
+
+                    message = "Sending mod-log message"
+                )
+
+                modLog {
+                    color = Colors.POSITIVE
+
+                    title = if (args.nickname != null) {
+                        "Nickname set"
+                    } else {
+                        "Nickname removed"
+                    }
+
+                    description = if (args.nickname != null) {
+                        "Nickname for ${member.readable()} updated to `$newNick`"
+                    } else {
+                        "Nickname for ${member.readable()} removed"
+                    }
+
+                    field {
+                        name = "Moderator"
+                        value = message.author!!.readable()
+                    }
+
+                    if (oldNick != null) {
+                        field {
+                            name = "Old Nick"
+                            value = oldNick
+                        }
+                    }
+                }
+
+                breadcrumb(
+                    category = "command.nick",
+                    type = "debug",
+
+                    message = "Attempting to private message the user"
+                )
+
+                member.dm {
+                    embed {
+                        color = Colors.NEGATIVE
+
+                        title = if (args.nickname != null) {
+                            "Nickname set"
+                        } else {
+                            "Nickname removed"
+                        }
+
+                        description = if (args.nickname != null) {
+                            "A moderator has updated your nickname to `$newNick`"
+                        } else {
+                            "A moderator has removed your nickname"
+                        }
+
+                        timestamp = Instant.now()
+                    }
+                }
+
+                message.respond(
+                    if (args.nickname != null) {
+                        "User's nickname has been updated."
+                    } else {
+                        "User's nickname has been removed."
+                    }
+                )
             }
         }
 
@@ -306,8 +323,8 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                     "${bot.prefix}help inf <subcommand>` for more information on each subcommand."
 
             check(
-                    ::defaultCheck,
-                    topRoleHigherOrEqual(config.getRole(Roles.TRAINEE_MODERATOR))
+                ::defaultCheck,
+                topRoleHigherOrEqual(config.getRole(Roles.TRAINEE_MODERATOR))
             )
 
             command {
@@ -331,7 +348,7 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
 
                             if (embedBuilder == null) {
                                 message.respond(
-                                        "No such infraction: `$id`"
+                                    "No such infraction: `$id`"
                                 )
 
                                 return@with
@@ -350,7 +367,7 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                 description = "Manually expire an infraction by ID."
 
                 check(
-                        topRoleHigherOrEqual(config.getRole(Roles.MODERATOR))
+                    topRoleHigherOrEqual(config.getRole(Roles.MODERATOR))
                 )
 
                 signature(::InfractionIDCommandArgs)
@@ -366,7 +383,7 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
 
                             if (inf == null) {
                                 message.respond(
-                                        "No such infraction: `$id`"
+                                    "No such infraction: `$id`"
                                 )
 
                                 return@with
@@ -387,8 +404,7 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
 
                                 field {
                                     name = "Moderator"
-                                    value = "${message.author!!.mention} (${message.author!!.tag} / " +
-                                            "`${message.author!!.id}`)"
+                                    value = message.author!!.readable()
                                 }
 
                                 footer {
@@ -397,7 +413,7 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                             }
 
                             message.respond(
-                                    "Infraction has been manually expired: `$id`"
+                                "Infraction has been manually expired: `$id`"
                             )
                         }
                     }
@@ -411,7 +427,7 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                 description = "Manually reactivate an infraction by ID, if it hasn't yet expired."
 
                 check(
-                        topRoleHigherOrEqual(config.getRole(Roles.MODERATOR))
+                    topRoleHigherOrEqual(config.getRole(Roles.MODERATOR))
                 )
 
                 signature(::InfractionIDCommandArgs)
@@ -427,7 +443,7 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
 
                             if (inf == null) {
                                 message.respond(
-                                        "No such infraction: `$id`"
+                                    "No such infraction: `$id`"
                                 )
 
                                 return@with
@@ -438,8 +454,8 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
 
                             if (expires != null && delay < 1) {
                                 message.respond(
-                                        "Infraction already expired, " +
-                                                "not reactivating: `$id`"
+                                    "Infraction already expired, " +
+                                            "not reactivating: `$id`"
                                 )
 
                                 return@with
@@ -460,8 +476,7 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
 
                                 field {
                                     name = "Moderator"
-                                    value = "${message.author!!.mention} (${message.author!!.tag} / " +
-                                            "`${message.author!!.id}`)"
+                                    value = message.author!!.readable()
                                 }
 
                                 footer {
@@ -470,7 +485,7 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                             }
 
                             message.respond(
-                                    "Infraction has been manually reactivated: `$id`"
+                                "Infraction has been manually reactivated: `$id`"
                             )
                         }
                     }
@@ -484,7 +499,7 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                 description = "Get or update the reason for a specific infraction."
 
                 check(
-                        topRoleHigherOrEqual(config.getRole(Roles.MODERATOR))
+                    topRoleHigherOrEqual(config.getRole(Roles.MODERATOR))
                 )
 
                 signature(::InfractionReasonCommandArgs)
@@ -500,7 +515,7 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
 
                             if (inf == null) {
                                 message.respond(
-                                        "No such infraction: `$id`"
+                                    "No such infraction: `$id`"
                                 )
 
                                 return@with
@@ -508,8 +523,8 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
 
                             if (reason.isEmpty()) {
                                 message.respond(
-                                        "Reason for infraction `$id` is:\n" +
-                                                ">>> ${inf.reason}"
+                                    "Reason for infraction `$id` is:\n" +
+                                            ">>> ${inf.reason}"
                                 )
 
                                 return@with
@@ -518,8 +533,8 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                             infQ.setInfractionReason(reason, id)
 
                             message.respond(
-                                    "Reason for infraction `$id` updated to:\n" +
-                                            ">>> $reason"
+                                "Reason for infraction `$id` updated to:\n" +
+                                        ">>> $reason"
                             )
 
                             modLog {
@@ -530,8 +545,7 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
 
                                 field {
                                     name = "Moderator"
-                                    value = "${message.author!!.mention} (${message.author!!.tag} / " +
-                                            "`${message.author!!.id}`)"
+                                    value = message.author!!.readable()
                                 }
 
                                 footer {
@@ -597,8 +611,8 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                                 message.respond("No matching infractions found.")
                             } else {
                                 val paginator = Paginator(
-                                        bot, message.channel, "Infractions",
-                                        pages, author, PAGINATOR_TIMEOUT, true
+                                    bot, message.channel, "Infractions",
+                                    pages, author, PAGINATOR_TIMEOUT, true
                                 )
 
                                 paginator.send()
@@ -612,220 +626,221 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
 
         // region: Infraction creation commands
         command(
-                InfractionSetCommand(
-                        this,
-                        InfractionTypes.BAN,
-                        "Permanently or temporarily ban a user.\n\n$UNITS",
-                        "ban",
-                        arrayOf("b"),
-                        ::applyInfraction
-                )
+            InfractionSetCommand(
+                this,
+                InfractionTypes.BAN,
+                "Permanently or temporarily ban a user.\n\n$UNITS",
+                "ban",
+                arrayOf("b"),
+                ::applyInfraction
+            )
         )
 
         command(
-                InfractionSetCommand(
-                        this,
-                        InfractionTypes.KICK,
-                        "Kick a user from the server.",
-                        "kick",
-                        arrayOf("k"),
-                        ::applyInfraction
-                )
+            InfractionSetCommand(
+                this,
+                InfractionTypes.KICK,
+                "Kick a user from the server.",
+                "kick",
+                arrayOf("k"),
+                ::applyInfraction
+            )
         )
 
         command(
-                InfractionSetCommand(
-                        this,
-                        InfractionTypes.NICK_LOCK,
-                        "Prevent a user from changing their nickname.",
-                        "nick-lock",
-                        arrayOf("nicklock", "nl"),
-                        ::applyInfraction
-                )
+            InfractionSetCommand(
+                this,
+                InfractionTypes.NICK_LOCK,
+                "Prevent a user from changing their nickname.",
+                "nick-lock",
+                arrayOf("nicklock", "nl"),
+                ::applyInfraction
+            )
         )
 
         command(
-                InfractionSetCommand(
-                        this,
-                        InfractionTypes.MUTE,
-                        "Permanently or temporarily mute a user, server-wide." +
-                                "\n\n$UNITS",
-                        "mute",
-                        arrayOf("m"),
-                        ::applyInfraction
-                )
+            InfractionSetCommand(
+                this,
+                InfractionTypes.MUTE,
+                "Permanently or temporarily mute a user, server-wide." +
+                        "\n\n$UNITS",
+                "mute",
+                arrayOf("m"),
+                ::applyInfraction
+            )
         )
 
         command(
-                InfractionSetCommand(
-                        this,
-                        InfractionTypes.META_MUTE,
-                        "Permanently or temporarily mute a user, from the meta channel only." +
-                                "\n\n$UNITS",
-                        "mute-meta",
-                        arrayOf("meta-mute", "mutemeta", "metamute"),
-                        ::applyInfraction
-                )
+            InfractionSetCommand(
+                this,
+                InfractionTypes.META_MUTE,
+                "Permanently or temporarily mute a user, from the meta channel only." +
+                        "\n\n$UNITS",
+                "mute-meta",
+                arrayOf("meta-mute", "mutemeta", "metamute"),
+                ::applyInfraction
+            )
         )
 
         command(
-                InfractionSetCommand(
-                        this,
-                        InfractionTypes.REACTION_MUTE,
-                        "Permanently or temporarily prevent a user from adding reactions to " +
-                                "messages.\n\n$UNITS",
-                        "mute-reactions",
-                        arrayOf(
-                                "mute-reaction", "reactions-mute", "reaction-mute",
-                                "mutereactions", "mutereaction", "reactionsmute", "reactionmute"),
-                        ::applyInfraction
-                )
+            InfractionSetCommand(
+                this,
+                InfractionTypes.REACTION_MUTE,
+                "Permanently or temporarily prevent a user from adding reactions to " +
+                        "messages.\n\n$UNITS",
+                "mute-reactions",
+                arrayOf(
+                    "mute-reaction", "reactions-mute", "reaction-mute",
+                    "mutereactions", "mutereaction", "reactionsmute", "reactionmute"
+                ),
+                ::applyInfraction
+            )
         )
 
         command(
-                InfractionSetCommand(
-                        this,
-                        InfractionTypes.REQUESTS_MUTE,
-                        "Permanently or temporarily mute a user, from the requests channel only." +
-                                "\n\n$UNITS",
-                        "mute-requests",
-                        arrayOf(
-                                "mute-request", "requests-mute", "request-mute",
-                                "muterequests", "muterequest", "requestsmute", "requestmute"
-                        ),
-                        ::applyInfraction
-                )
+            InfractionSetCommand(
+                this,
+                InfractionTypes.REQUESTS_MUTE,
+                "Permanently or temporarily mute a user, from the requests channel only." +
+                        "\n\n$UNITS",
+                "mute-requests",
+                arrayOf(
+                    "mute-request", "requests-mute", "request-mute",
+                    "muterequests", "muterequest", "requestsmute", "requestmute"
+                ),
+                ::applyInfraction
+            )
         )
 
         command(
-                InfractionSetCommand(
-                        this,
-                        InfractionTypes.SUPPORT_MUTE,
-                        "Permanently or temporarily mute a user, from the player-support channel " +
-                                "only.\n\n$UNITS",
-                        "mute-support",
-                        arrayOf("support-mute", "mutesupport", "supportmute"),
-                        ::applyInfraction
-                )
+            InfractionSetCommand(
+                this,
+                InfractionTypes.SUPPORT_MUTE,
+                "Permanently or temporarily mute a user, from the player-support channel " +
+                        "only.\n\n$UNITS",
+                "mute-support",
+                arrayOf("support-mute", "mutesupport", "supportmute"),
+                ::applyInfraction
+            )
         )
 
         command(
-                InfractionSetCommand(
-                        this,
-                        InfractionTypes.WARN,
-                        "Officially warn a user for their actions.",
-                        "warn",
-                        arrayOf("w"),
-                        ::applyInfraction
-                )
+            InfractionSetCommand(
+                this,
+                InfractionTypes.WARN,
+                "Officially warn a user for their actions.",
+                "warn",
+                arrayOf("w"),
+                ::applyInfraction
+            )
         )
 
         command(
-                InfractionSetCommand(
-                        this,
-                        InfractionTypes.NOTE,
-                        "Add a note for a user.",
-                        "note",
-                        arrayOf("n"),
-                        ::applyInfraction
-                )
+            InfractionSetCommand(
+                this,
+                InfractionTypes.NOTE,
+                "Add a note for a user.",
+                "note",
+                arrayOf("n"),
+                ::applyInfraction
+            )
         )
         // endregion
 
         // region: Infraction removal commands
         command(
-                InfractionUnsetCommand(
-                        this,
-                        InfractionTypes.BAN,
-                        "Pardon all permanent or temporary bans for a user.",
-                        "unban",
-                        arrayOf("ub", "un-ban"),
-                        ::pardonInfraction
-                )
+            InfractionUnsetCommand(
+                this,
+                InfractionTypes.BAN,
+                "Pardon all permanent or temporary bans for a user.",
+                "unban",
+                arrayOf("ub", "un-ban"),
+                ::pardonInfraction
+            )
         )
         command(
-                InfractionUnsetCommand(
-                        this,
-                        InfractionTypes.NICK_LOCK,
-                        "Pardon all nick-lock infractions for a user.",
-                        "un-nick-lock",
-                        arrayOf("un-nicklock", "unnick-lock", "unnicklock", "unl"),
-                        ::pardonInfraction
-                )
-        )
-
-        command(
-                InfractionUnsetCommand(
-                        this,
-                        InfractionTypes.MUTE,
-                        "Pardon all permanent or temporary server-wide mutes for a user.",
-                        "unmute",
-                        arrayOf("um", "un-mute"),
-                        ::pardonInfraction
-                )
+            InfractionUnsetCommand(
+                this,
+                InfractionTypes.NICK_LOCK,
+                "Pardon all nick-lock infractions for a user.",
+                "un-nick-lock",
+                arrayOf("un-nicklock", "unnick-lock", "unnicklock", "unl"),
+                ::pardonInfraction
+            )
         )
 
         command(
-                InfractionUnsetCommand(
-                        this,
-                        InfractionTypes.META_MUTE,
-                        "Pardon all permanent or temporary meta channel mutes for a user.",
-                        "unmute-meta",
-                        arrayOf(
-                                "un-mute-meta", "meta-unmute", "meta-un-mute", "un-meta-mute", "unmeta-mute",
-                                "unmutemeta", "metaunmute", "unmetamute"
-                        ),
-                        ::pardonInfraction
-                )
+            InfractionUnsetCommand(
+                this,
+                InfractionTypes.MUTE,
+                "Pardon all permanent or temporary server-wide mutes for a user.",
+                "unmute",
+                arrayOf("um", "un-mute"),
+                ::pardonInfraction
+            )
         )
 
         command(
-                InfractionUnsetCommand(
-                        this,
-                        InfractionTypes.REACTION_MUTE,
-                        "Pardon all permanent or temporary reaction mutes for a user.",
-                        "unmute-reactions",
-                        arrayOf(
-                                "un-mute-reactions", "reactions-unmute", "reactions-un-mute",
-                                "unmutereactions", "reactionsunmute",
-                                "un-mute-reaction", "reaction-unmute", "reaction-un-mute",
-                                "unmutereaction", "reactionunmute",
-                                "un-reactions-mute", "un-reaction-mute",
-                                "un-reactionsmute", "un-reactionmute",
-                                "unreactionsmute", "unreactionmute"
-                        ),
-                        ::pardonInfraction
-                )
+            InfractionUnsetCommand(
+                this,
+                InfractionTypes.META_MUTE,
+                "Pardon all permanent or temporary meta channel mutes for a user.",
+                "unmute-meta",
+                arrayOf(
+                    "un-mute-meta", "meta-unmute", "meta-un-mute", "un-meta-mute", "unmeta-mute",
+                    "unmutemeta", "metaunmute", "unmetamute"
+                ),
+                ::pardonInfraction
+            )
         )
 
         command(
-                InfractionUnsetCommand(
-                        this,
-                        InfractionTypes.REQUESTS_MUTE,
-                        "Pardon all permanent or temporary requests channel mutes for a user.",
-                        "unmute-requests",
-                        arrayOf(
-                                "un-mute-requests", "unmuterequests",
-                                "requests-un-mute", "requests-unmute", "requestsunmute",
-                                "un-requests-mute", "un-requestsmute", "unrequestsmute"
-                        ),
-                        ::pardonInfraction
-                )
+            InfractionUnsetCommand(
+                this,
+                InfractionTypes.REACTION_MUTE,
+                "Pardon all permanent or temporary reaction mutes for a user.",
+                "unmute-reactions",
+                arrayOf(
+                    "un-mute-reactions", "reactions-unmute", "reactions-un-mute",
+                    "unmutereactions", "reactionsunmute",
+                    "un-mute-reaction", "reaction-unmute", "reaction-un-mute",
+                    "unmutereaction", "reactionunmute",
+                    "un-reactions-mute", "un-reaction-mute",
+                    "un-reactionsmute", "un-reactionmute",
+                    "unreactionsmute", "unreactionmute"
+                ),
+                ::pardonInfraction
+            )
         )
 
         command(
-                InfractionUnsetCommand(
-                        this,
-                        InfractionTypes.SUPPORT_MUTE,
-                        "Pardon all permanent or temporary support channel mutes for a user.",
-                        "unmute-support",
-                        arrayOf(
-                                "un-mute-support", "unmutesupport",
-                                "support-un-mute", "support-unmute", "supportunmute",
-                                "un-support-mute", "un-supportmute", "unsupportmute"
-                        ),
-                        ::pardonInfraction
-                )
+            InfractionUnsetCommand(
+                this,
+                InfractionTypes.REQUESTS_MUTE,
+                "Pardon all permanent or temporary requests channel mutes for a user.",
+                "unmute-requests",
+                arrayOf(
+                    "un-mute-requests", "unmuterequests",
+                    "requests-un-mute", "requests-unmute", "requestsunmute",
+                    "un-requests-mute", "un-requestsmute", "unrequestsmute"
+                ),
+                ::pardonInfraction
+            )
+        )
+
+        command(
+            InfractionUnsetCommand(
+                this,
+                InfractionTypes.SUPPORT_MUTE,
+                "Pardon all permanent or temporary support channel mutes for a user.",
+                "unmute-support",
+                arrayOf(
+                    "un-mute-support", "unmutesupport",
+                    "support-un-mute", "support-unmute", "supportunmute",
+                    "un-support-mute", "un-supportmute", "unsupportmute"
+                ),
+                ::pardonInfraction
+            )
         )
         // endregion
 
@@ -833,8 +848,8 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
 
         event<MemberUpdateEvent> {
             check(
-                    inGuild(config.getGuild()),
-                    topRoleLower(config.getRole(Roles.TRAINEE_MODERATOR))  // Staff should be immune
+                inGuild(config.getGuild()),
+                topRoleLower(config.getRole(Roles.TRAINEE_MODERATOR))  // Staff should be immune
             )
 
             action {
@@ -845,8 +860,8 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                     logger.debug { "Checking out nick change for user: ${newMember.tag} -> ${newMember.nickname}" }
 
                     val infractions = infQ.getActiveInfractionsByUser(newMember.id.value)
-                            .executeAsList()
-                            .filter { it.infraction_type == InfractionTypes.NICK_LOCK }
+                        .executeAsList()
+                        .filter { it.infraction_type == InfractionTypes.NICK_LOCK }
 
                     if (infractions.isEmpty()) {
                         logger.debug { "User isn't nick-locked, not doing anything." }
@@ -878,8 +893,7 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
 
                         modLog {
                             title = "Nick-lock enforced"
-                            description = "Prevented nickname change for ${newMember.mention} (${newMember.tag} / " +
-                                    "`${newMember.id}`)."
+                            description = "Prevented nickname change for ${newMember.readable()}"
 
                             color = Colors.POSITIVE
 
@@ -893,7 +907,7 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                         modLog {
                             title = "Nick-lock enforcement failed"
                             description = "Failed to enforce nick-lock because user isn't in the cache:" +
-                                    " ${newMember.mention} (${newMember.tag} / `${newMember.id}`)."
+                                    " ${newMember.readable()}"
 
                             color = Colors.NEGATIVE
 
@@ -910,13 +924,13 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
     }
 
     private fun getMemberId(member: User?, id: Long?) =
-            if (member == null && id == null) {
-                null
-            } else if (member != null && id != null) {
-                null
-            } else {
-                member?.id?.value ?: id!!
-            }
+        if (member == null && id == null) {
+            null
+        } else if (member != null && id != null) {
+            null
+        } else {
+            member?.id?.value ?: id!!
+        }
 
 
     /**

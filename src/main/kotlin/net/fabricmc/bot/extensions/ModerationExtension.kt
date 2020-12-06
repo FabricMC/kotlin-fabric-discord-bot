@@ -101,7 +101,7 @@ class ModerationExtension(bot: ExtensibleBot) : Extension(bot) {
                         field {
                             name = "Moderator"
                             value = "${author.mention} (${author.tag} / " +
-                                    "`${author.id}`)"
+                                    "`${author.id.asString}`)"
                         }
 
                         timestamp = Instant.now()
@@ -188,7 +188,7 @@ class ModerationExtension(bot: ExtensibleBot) : Extension(bot) {
                         field {
                             name = "Moderator"
                             value = "${author.mention} (${author.tag} / " +
-                                    "`${author.id}`)"
+                                    "`${author.id.asString}`)"
                         }
 
                         timestamp = Instant.now()
@@ -273,7 +273,7 @@ class ModerationExtension(bot: ExtensibleBot) : Extension(bot) {
                             field {
                                 name = "Moderator"
                                 value = "${author.mention} (${author.tag} / " +
-                                        "`${author.id}`)"
+                                        "`${author.id.asString}`)"
                             }
 
                             timestamp = Instant.now()
@@ -297,7 +297,7 @@ class ModerationExtension(bot: ExtensibleBot) : Extension(bot) {
                             field {
                                 name = "Moderator"
                                 value = "${author.mention} (${author.tag} / " +
-                                        "`${author.id}`)"
+                                        "`${author.id.asString}`)"
                             }
 
                             timestamp = Instant.now()

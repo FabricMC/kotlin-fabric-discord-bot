@@ -9,6 +9,7 @@ import dev.kord.core.event.message.MessageCreateEvent
 import dev.kord.core.event.message.MessageUpdateEvent
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import com.kotlindiscord.kord.extensions.utils.getUrl
+import net.fabricmc.bot.utils.readable
 
 /**
  * Filter class intended for finding removing messages, and alerting staff when selfbots and
@@ -99,6 +100,6 @@ class EmbedFilter(bot: ExtensibleBot) : Filter(bot) {
             "$count suspicious embed/s posted"
         }
 
-        return "$jumpMessage by ${user.mention} (`${user.id.value}`) $channelMessage:"
+        return "$jumpMessage by ${user.readable()} $channelMessage:"
     }
 }

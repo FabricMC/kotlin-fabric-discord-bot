@@ -17,6 +17,7 @@ import net.fabricmc.bot.enums.Roles
 import net.fabricmc.bot.extensions.infractions.instantToDisplay
 import net.fabricmc.bot.isNew
 import net.fabricmc.bot.utils.alert
+import net.fabricmc.bot.utils.readable
 
 private const val KICK_MESSAGE = "" +
         "Hello, thanks for joining the server!\n\n" +
@@ -56,8 +57,7 @@ class DefconExtension(bot: ExtensibleBot) : Extension(bot) {
                     description = "Prevented a user from joining as their account was created within the last " +
                             "three days.\n\n" +
 
-                            "**User ID:** `${event.member.id}`\n" +
-                            "**User tag:** `${event.member.tag}`\n" +
+                            "**User:** `${event.member.readable()}`\n" +
                             "**Creation date:** `${instantToDisplay(event.member.id.timeStamp)}`"
 
                     color = Colors.NEGATIVE

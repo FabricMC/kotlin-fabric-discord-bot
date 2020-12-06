@@ -294,14 +294,14 @@ class ActionLogExtension(bot: ExtensibleBot) : Extension(bot) {
         title = "Action log rotation"
         color = Colors.POSITIVE
 
-        description = "Channel created: **#${channel.name} (`${channel.id}`)**"
+        description = "Channel created: **#${channel.name} (`${channel.id.asString}`)**"
     }
 
     private suspend fun logDeletion(channel: GuildMessageChannel) = modLog {
         title = "Action log rotation"
         color = Colors.NEGATIVE
 
-        description = "Channel removed: **#${channel.name} (`${channel.id}`)**"
+        description = "Channel removed: **#${channel.name} (`${channel.id.asString}`)**"
     }
 
     /** @suppress **/

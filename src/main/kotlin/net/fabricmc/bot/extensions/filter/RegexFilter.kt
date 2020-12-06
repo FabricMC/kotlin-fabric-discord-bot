@@ -8,6 +8,7 @@ import dev.kord.core.event.message.MessageCreateEvent
 import dev.kord.core.event.message.MessageUpdateEvent
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import com.kotlindiscord.kord.extensions.utils.getUrl
+import net.fabricmc.bot.utils.readable
 
 private val flagRegex = "\\(\\?[a-z]+\\)".toRegex()
 
@@ -88,7 +89,7 @@ class RegexFilter(bot: ExtensibleBot) : Filter(bot) {
         }
 
         return "Regex filter triggered by " +
-                "${user.mention} (`${user.id.value}`) $channelMessage, " +
+                "${user.readable()} $channelMessage, " +
                 "with $jumpMessage (${matches.size} matches):\n\n" +
                 "${message.content}\n\n" +
                 "**Matches:** $matchesString"

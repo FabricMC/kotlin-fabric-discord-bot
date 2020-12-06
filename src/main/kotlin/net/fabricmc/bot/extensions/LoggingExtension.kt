@@ -280,7 +280,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
 
                                 footer {
                                     text = if (delta == null) {
-                                        "Not cached: ${new.id}"
+                                        "Not cached: ${new.id.asString}"
                                     } else {
                                         new.id.asString
                                     }
@@ -713,7 +713,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
 
                             footer {
                                 text = if (delta == null) {
-                                    "Not cached: ${user.id}"
+                                    "Not cached: ${user.id.asString}"
                                 } else {
                                     user.id.asString
                                 }

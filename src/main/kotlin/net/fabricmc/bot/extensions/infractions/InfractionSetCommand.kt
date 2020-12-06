@@ -22,6 +22,7 @@ import net.fabricmc.bot.defaultCheck
 import net.fabricmc.bot.enums.InfractionTypes
 import net.fabricmc.bot.enums.Roles
 import net.fabricmc.bot.utils.modLog
+import net.fabricmc.bot.utils.readable
 import net.fabricmc.bot.utils.requireMainGuild
 import java.time.Duration
 import java.time.Instant
@@ -158,9 +159,10 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
                     description += "\n\n**Note:** Failed to DM the user, they may have their DMs disabled."
                 }
 
-                footer {
-                    text = "ID: ${infraction.id}"
-                }
+                // Don't send the ID in public for now
+//                footer {
+//                    text = "ID: ${infraction.id}"
+//                }
 
                 timestamp = Instant.now()
             }
@@ -172,7 +174,7 @@ class InfractionSetCommand(extension: Extension, private val type: InfractionTyp
         var descriptionText = getInfractionMessage(true, infraction, expires)
 
         descriptionText += "\n\n**User ID:** `${infraction.target_id}`"
-        descriptionText += "\n**Moderator:** ${actor.mention} (${actor.tag} / `${actor.id}`)"
+        descriptionText += "\n**Moderator:** ${actor.readable()}"
 
         modLog {
             color = Colors.NEGATIVE

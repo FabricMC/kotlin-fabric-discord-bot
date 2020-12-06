@@ -23,6 +23,7 @@ import net.fabricmc.bot.defaultCheck
 import net.fabricmc.bot.enums.InfractionTypes
 import net.fabricmc.bot.enums.Roles
 import net.fabricmc.bot.utils.modLog
+import net.fabricmc.bot.utils.readable
 import net.fabricmc.bot.utils.requireMainGuild
 import java.time.Instant
 import java.util.*
@@ -137,7 +138,7 @@ class InfractionUnsetCommand(extension: Extension, private val type: InfractionT
         var descriptionText = getInfractionMessage(true, infraction, true)
 
         descriptionText += "\n\n**User ID:** `${infraction.target_id}`"
-        descriptionText += "\n**Moderator:** ${actor.mention} (${actor.tag} / `${actor.id}`)"
+        descriptionText += "\n**Moderator:** ${actor.readable()}"
 
         modLog {
             color = Colors.POSITIVE
