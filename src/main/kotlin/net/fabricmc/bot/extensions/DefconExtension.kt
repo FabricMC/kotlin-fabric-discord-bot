@@ -15,7 +15,7 @@ import net.fabricmc.bot.constants.Colors
 import net.fabricmc.bot.defaultCheck
 import net.fabricmc.bot.enums.Roles
 import net.fabricmc.bot.extensions.infractions.instantToDisplay
-import net.fabricmc.bot.isNew
+import net.fabricmc.bot.utils.isNew
 import net.fabricmc.bot.utils.alert
 import net.fabricmc.bot.utils.readable
 

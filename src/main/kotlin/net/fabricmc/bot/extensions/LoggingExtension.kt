@@ -26,6 +26,7 @@ import net.fabricmc.bot.constants.Colors
 import net.fabricmc.bot.enums.Channels
 import net.fabricmc.bot.extensions.infractions.instantToDisplay
 import net.fabricmc.bot.utils.actionLog
+import net.fabricmc.bot.utils.isNew
 import net.fabricmc.bot.utils.modLog
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter

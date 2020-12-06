@@ -1,14 +1,8 @@
-package net.fabricmc.bot
+package net.fabricmc.bot.utils
 
 import dev.kord.core.entity.Role
-import dev.kord.core.entity.User
-import com.kotlindiscord.kord.extensions.utils.createdAt
 import net.fabricmc.bot.conf.config
 import net.fabricmc.bot.enums.Roles
-import java.time.Instant
-import java.time.temporal.ChronoUnit
-
-private const val NEW_DAYS = 3L
 
 /**
  * Convenience function to convert a [Role] object to a [Roles] enum value.
@@ -25,10 +19,3 @@ fun Role.toEnum(): Roles? {
 
     return null
 }
-
-/**
- * Check whether this is a user that was created recently.
- *
- * @return Whether the user was created in the last 3 days.
- */
-fun User.isNew(): Boolean = this.createdAt.isAfter(Instant.now().minus(NEW_DAYS, ChronoUnit.DAYS))
