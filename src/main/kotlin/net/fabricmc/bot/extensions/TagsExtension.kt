@@ -1,12 +1,5 @@
 package net.fabricmc.bot.extensions
 
-import dev.kord.common.kColor
-import dev.kord.core.behavior.channel.createEmbed
-import dev.kord.core.behavior.channel.createMessage
-import dev.kord.core.entity.Embed
-import dev.kord.core.entity.channel.GuildMessageChannel
-import dev.kord.core.event.gateway.ReadyEvent
-import dev.kord.core.event.message.MessageCreateEvent
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import com.kotlindiscord.kord.extensions.Paginator
 import com.kotlindiscord.kord.extensions.commands.converters.coalescedString
@@ -17,6 +10,13 @@ import com.kotlindiscord.kord.extensions.utils.deleteWithDelay
 import com.kotlindiscord.kord.extensions.utils.parse
 import com.kotlindiscord.kord.extensions.utils.respond
 import com.kotlindiscord.kord.extensions.utils.runSuspended
+import dev.kord.common.kColor
+import dev.kord.core.behavior.channel.createEmbed
+import dev.kord.core.behavior.channel.createMessage
+import dev.kord.core.entity.Embed
+import dev.kord.core.entity.channel.GuildMessageChannel
+import dev.kord.core.event.gateway.ReadyEvent
+import dev.kord.core.event.message.MessageCreateEvent
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -70,9 +70,9 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
                     var description = "The following errors were encountered while loading tags.\n\n"
 
                     description += errors.toList()
-                            .sortedBy { it.first }
-                            .take(MAX_ERRORS)
-                            .joinToString("\n\n") { "**${it.first} »** ${it.second}" }
+                        .sortedBy { it.first }
+                        .take(MAX_ERRORS)
+                        .joinToString("\n\n") { "**${it.first} »** ${it.second}" }
 
                     if (errors.size > MAX_ERRORS) {
                         description += "\n\n**...plus ${errors.size - MAX_ERRORS} more.**"
@@ -174,10 +174,10 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
 
                 if (tags.size > 1) {
                     event.message.respond(
-                            "Multiple tags have been found with that name. " +
-                                    "Please pick one of the following:\n\n" +
+                        "Multiple tags have been found with that name. " +
+                                "Please pick one of the following:\n\n" +
 
-                                    tags.joinToString(", ") { t -> "`${t.name}`" }
+                                tags.joinToString(", ") { t -> "`${t.name}`" }
                     ).deleteWithDelay(DELETE_DELAY)
                     event.message.deleteWithDelay(DELETE_DELAY)
 
@@ -193,16 +193,16 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
 
                     if (tag == null) {
                         event.message.respond(
-                                "Invalid alias - no such alias target: " +
-                                        "`$tagName` -> `${data.target}`"
+                            "Invalid alias - no such alias target: " +
+                                    "`$tagName` -> `${data.target}`"
                         )
                         return@action
                     }
 
                     if (tag.data is AliasTag) {
                         event.message.respond(
-                                "Invalid alias - this alias points to another alias: " +
-                                        "`$tagName` -> `${data.target}`"
+                            "Invalid alias - this alias points to another alias: " +
+                                    "`$tagName` -> `${data.target}`"
                         )
                         return@action
                     }
@@ -455,13 +455,13 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
                             }
 
                             val paginator = Paginator(
-                                    bot,
-                                    message.channel,
-                                    "Search: $totalMatches match" + if (totalMatches > 1) "es" else "",
-                                    pages,
-                                    message.author,
-                                    PAGE_TIMEOUT,
-                                    true
+                                bot,
+                                message.channel,
+                                "Search: $totalMatches match" + if (totalMatches > 1) "es" else "",
+                                pages,
+                                message.author,
+                                PAGE_TIMEOUT,
+                                true
                             )
 
                             paginator.send()
@@ -524,13 +524,13 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
                     }
 
                     val paginator = Paginator(
-                            bot,
-                            message.channel,
-                            "All tags (${parser.tags.size})",
-                            pages,
-                            message.author,
-                            PAGE_TIMEOUT,
-                            true
+                        bot,
+                        message.channel,
+                        "All tags (${parser.tags.size})",
+                        pages,
+                        message.author,
+                        PAGE_TIMEOUT,
+                        true
                     )
 
                     paginator.send()

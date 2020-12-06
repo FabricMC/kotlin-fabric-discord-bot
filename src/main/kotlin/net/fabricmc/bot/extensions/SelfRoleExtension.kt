@@ -1,8 +1,8 @@
 package net.fabricmc.bot.extensions
 
-import dev.kord.core.behavior.channel.createEmbed
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import com.kotlindiscord.kord.extensions.extensions.Extension
+import dev.kord.core.behavior.channel.createEmbed
 
 /**
  * Extension to allow users to apply roles to themselves.
