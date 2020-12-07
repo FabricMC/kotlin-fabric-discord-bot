@@ -72,6 +72,15 @@ class UtilsExtension(bot: ExtensibleBot) : Extension(bot) {
                             return@runSuspended
                         }
 
+                        breadcrumb(
+                            category = "command.user",
+                            type = "debug",
+
+                            message = "Retrieving member info",
+
+                            data = mapOf("member.id" to memberId.asString)
+                        )
+
                         val member = config.getGuild().getMemberOrNull(memberId)
 
                         if (member == null) {
@@ -81,12 +90,34 @@ class UtilsExtension(bot: ExtensibleBot) : Extension(bot) {
                             return@runSuspended
                         }
 
+                        breadcrumb(
+                            category = "command.user",
+                            type = "debug",
+
+                            message = "Retrieving infractions for member",
+                            data = mapOf(
+                                "member.tag" to member.tag
+                            )
+                        )
+
                         val infractions = config.db.infractionQueries.getActiveInfractionsByUser(memberId.value)
                                 .executeAsList().filter { it.infraction_type != InfractionTypes.NOTE }
 
                         val activeInfractions = infractions.count { it.active }
-
                         val roles = member.roles.toList()
+
+                        breadcrumb(
+                            category = "command.user",
+                            type = "debug",
+
+                            message = "Sending response",
+
+                            data = mapOf(
+                                "member.roles" to roles.size,
+                                "member.infractions.non-note" to infractions.size,
+                                "member.infractions.active" to activeInfractions
+                            )
+                        )
 
                         message.respond {
                             embed {
@@ -145,6 +176,18 @@ class UtilsExtension(bot: ExtensibleBot) : Extension(bot) {
                 val guild = config.getGuild()
                 val members = guild.members.toList()
 
+                breadcrumb(
+                    category = "command.server",
+                    type = "debug",
+
+                    message = "Retrieving guild information",
+                    data = mapOf(
+                        "guild.name" to guild.name,
+                        "guild.id" to guild.id.asString,
+                        "guild.members" to members.size
+                    )
+                )
+
                 val iconUrl = guild.getIconUrl(Image.Format.PNG)
 
                 val emojiAway = EmojiExtension.getEmoji(Emojis.STATUS_AWAY)
@@ -188,13 +231,45 @@ class UtilsExtension(bot: ExtensibleBot) : Extension(bot) {
                 val newestEmojis = guild.emojis.toList().sortedBy { it.id.timeStamp }.take(LATEST_EMOJI_COUNT)
                 val totalEmojis = guild.emojis.toSet().size
 
+                val created = instantToDisplay(guild.id.timeStamp)
+
+                breadcrumb(
+                    category = "command.server",
+                    type = "debug",
+
+                    message = "Sending response",
+                    data = mapOf(
+                        "guild.created" to (created ?: "N/A"),
+
+                        "guild.owner.id" to guild.owner.id.asString,
+                        "guild.owner.tag" to guild.owner.asMember().tag,
+
+                        "guild.region" to guild.data.region,
+
+                        "guild.channels.total" to guildChannels.size,
+                        "guild.channels.category" to (channels["Category"] ?: 0),
+                        "guild.channels.news" to (channels["News"] ?: 0),
+                        "guild.channels.text" to (channels["Text"] ?: 0),
+                        "guild.channels.voice" to (channels["Voice"] ?: 0),
+
+                        "guild.members.total" to members.size,
+                        "guild.members.online" to (statuses[PresenceStatus.Online] ?: 0),
+                        "guild.members.idle" to (statuses[PresenceStatus.Idle] ?: 0),
+                        "guild.members.dnd" to (statuses[PresenceStatus.DoNotDisturb] ?: 0),
+                        "guild.members.offline" to offline,
+
+                        "guild.emojis.total" to totalEmojis,
+                        "guild.features" to guild.features.map { it.value }
+                    )
+                )
+
                 message.respond {
                     embed {
                         title = guild.name
                         color = Colors.BLURPLE
                         timestamp = Instant.now()
 
-                        description = "**Created:** ${instantToDisplay(guild.id.timeStamp)}\n" +
+                        description = "**Created:** $created\n" +
                                 "**Owner:** ${guild.owner.mention}\n" +
                                 "**Roles:** ${guild.roleIds.size}\n" +
                                 "**Voice Region:** ${guild.data.region}"

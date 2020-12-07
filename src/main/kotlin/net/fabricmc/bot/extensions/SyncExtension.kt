@@ -17,6 +17,7 @@ import com.kotlindiscord.kord.extensions.checks.topRoleHigherOrEqual
 import com.kotlindiscord.kord.extensions.extensions.Extension
 import com.kotlindiscord.kord.extensions.utils.respond
 import com.kotlindiscord.kord.extensions.utils.runSuspended
+import io.sentry.Breadcrumb
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.toList
 import mu.KotlinLogging
@@ -52,19 +53,19 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
                 logger.info { "Beginning sync." }
 
                 runSuspended {
-                    initialSync()
+                    initialSync(breadcrumbs)
                 }
             }
         }
 
-        event<RoleCreateEvent> { action { runSuspended { roleUpdated(event.role) } } }
-        event<RoleUpdateEvent> { action { runSuspended { roleUpdated(event.role) } } }
-        event<RoleDeleteEvent> { action { runSuspended { roleDeleted(event.roleId) } } }
+        event<RoleCreateEvent> { action { runSuspended { roleUpdated(event.role, breadcrumbs) } } }
+        event<RoleUpdateEvent> { action { runSuspended { roleUpdated(event.role, breadcrumbs) } } }
+        event<RoleDeleteEvent> { action { runSuspended { roleDeleted(event.roleId, breadcrumbs) } } }
 
-        event<MemberJoinEvent> { action { runSuspended { memberJoined(event.member) } } }
-        event<MemberUpdateEvent> { action { runSuspended { memberUpdated(event.member) } } }
-        event<MemberLeaveEvent> { action { runSuspended { memberLeft(event.user.id) } } }
-        event<UserUpdateEvent> { action { runSuspended { userUpdated(event.user) } } }
+        event<MemberJoinEvent> { action { runSuspended { memberJoined(event.member, breadcrumbs) } } }
+        event<MemberUpdateEvent> { action { runSuspended { memberUpdated(event.member, breadcrumbs) } } }
+        event<MemberLeaveEvent> { action { runSuspended { memberLeft(event.user.id, breadcrumbs) } } }
+        event<UserUpdateEvent> { action { runSuspended { userUpdated(event.user, breadcrumbs) } } }
 
         command {
             name = "sync"
@@ -114,12 +115,12 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
         }
     }
 
-    private suspend inline fun initialSync() {
+    private suspend inline fun initialSync(breadcrumbs: MutableList<Breadcrumb>? = null) {
         logger.debug { "Starting initial sync..." }
 
-        val (rolesUpdated, rolesRemoved) = updateRoles()
-        val (usersUpdated, usersAbsent) = updateUsers()
-        val (allInfractions, expiredInfractions) = infractionSync()
+        val (rolesUpdated, rolesRemoved) = updateRoles(breadcrumbs)
+        val (usersUpdated, usersAbsent) = updateUsers(breadcrumbs)
+        val (allInfractions, expiredInfractions) = infractionSync(breadcrumbs)
 
         logger.debug { "Initial sync done." }
         actionLog {
@@ -148,13 +149,26 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
         }
     }
 
-    private suspend inline fun infractionSync(): Pair<Long, Int> {
+    private suspend inline fun infractionSync(breadcrumbs: MutableList<Breadcrumb>? = null): Pair<Long, Int> {
         logger.debug { "Updating infractions: Getting active expirable infractions from DB" }
         val infractions = config.db.infractionQueries.getActiveExpirableInfractions().executeAsList()
 
         logger.debug { "Updating infractions: Getting all infractions from DB" }
         val allInfractions = config.db.infractionQueries.getInfractionCount().executeAsOne()
         var expiredInfractions = 0
+
+        breadcrumbs?.add(
+            bot.sentry.createBreadcrumb(
+                category = "sync.users",
+                type = "debug",
+
+                message = "Synchronising infractions",
+                data = mapOf(
+                    "infractions.active-expirable" to infractions.size,
+                    "infractions.total" to allInfractions
+                )
+            )
+        )
 
         infractions.forEach {
             val memberId = Snowflake(it.target_id)
@@ -181,10 +195,24 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
         return Pair(allInfractions, expiredInfractions)
     }
 
-    private inline fun roleUpdated(role: Role) {
+    private inline fun roleUpdated(role: Role, breadcrumbs: MutableList<Breadcrumb>? = null) {
         logger.debug { "Role updated: ${role.name} (${role.id})" }
 
         val dbRole = roles.getRole(role.id.value).executeAsOneOrNull()
+
+        breadcrumbs?.add(
+            bot.sentry.createBreadcrumb(
+                category = "sync.roles",
+                type = "debug",
+
+                message = "Updating role",
+                data = mapOf(
+                    "inserting" to (dbRole == null),
+                    "role.id" to role.id.asString,
+                    "role.name" to role.name
+                )
+            )
+        )
 
         if (dbRole == null) {
             roles.insertRole(role.id.value, role.color.rgb, role.name)
@@ -193,33 +221,75 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
         }
     }
 
-    private inline fun roleDeleted(roleId: Snowflake) {
+    private inline fun roleDeleted(roleId: Snowflake, breadcrumbs: MutableList<Breadcrumb>? = null) {
         logger.debug { "Role deleted: ${roleId.value}" }
+
+        breadcrumbs?.add(
+            bot.sentry.createBreadcrumb(
+                category = "sync.roles",
+                type = "debug",
+
+                message = "Removing role",
+                data = mapOf(
+                    "role.id" to roleId.asString
+                )
+            )
+        )
 
         junction.dropUserRoleByRole(roleId.value)
         roles.dropRole(roleId.value)
     }
 
-    private suspend inline fun memberJoined(member: Member) {
+    private suspend inline fun memberJoined(member: Member, breadcrumbs: MutableList<Breadcrumb>? = null) {
         logger.debug { "Member Joined: ${member.tag} (${member.id})" }
 
-        memberUpdated(member)
+        memberUpdated(member, breadcrumbs)
 
         val infractions = config.db.infractionQueries
                 .getActiveInfractionsByUser(member.id.value)
                 .executeAsList()
                 .filter { it.infraction_type.expires }
 
+
+        breadcrumbs?.add(
+            bot.sentry.createBreadcrumb(
+                category = "sync.members",
+                type = "debug",
+
+                message = "Reapplying member infractions",
+                data = mapOf(
+                    "member.id" to member.id.asString,
+                    "member.tag" to member.tag,
+                    "infractions" to infractions.size
+                )
+            )
+        )
+
         infractions.forEach {
             applyInfraction(it, member.id, null)  // Expiry already scheduled at this point
         }
     }
 
-    private suspend inline fun memberUpdated(member: Member) {
+    private suspend inline fun memberUpdated(member: Member, breadcrumbs: MutableList<Breadcrumb>? = null) {
         logger.debug { "Member updated: ${member.tag} (${member.id})" }
 
         val memberId = member.id
         val dbUser = users.getUser(memberId.value).executeAsOneOrNull()
+
+        breadcrumbs?.add(
+            bot.sentry.createBreadcrumb(
+                category = "sync.members",
+                type = "debug",
+
+                message = "Updating member",
+                data = mapOf(
+                    "member.id" to member.id.asString,
+                    "member.tag" to member.tag,
+
+                    "insert" to (dbUser == null)
+                )
+            )
+        )
 
         if (dbUser == null) {
             users.insertUser(memberId.value, member.avatar.url, member.discriminator, true, member.username)
@@ -233,6 +303,19 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
         val rolesToAdd = currentRoles.filter { !dbRoles.contains(it) }.map { it.value }
         val rolesToRemove = dbRoles.filter { !currentRoles.contains(it) }
 
+        breadcrumbs?.add(
+            bot.sentry.createBreadcrumb(
+                category = "sync.roles",
+                type = "debug",
+
+                message = "Updating member roles",
+                data = mapOf(
+                    "roles.adding" to rolesToAdd.size,
+                    "roles.removing" to rolesToRemove.size
+                )
+            )
+        )
+
         rolesToAdd.forEach {
             junction.insertUserRole(it, memberId.value)
         }
@@ -242,21 +325,48 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
         }
     }
 
-    private inline fun memberLeft(userId: Snowflake) {
+    private inline fun memberLeft(userId: Snowflake, breadcrumbs: MutableList<Breadcrumb>? = null) {
         logger.debug { "User left: $userId" }
 
         val dbUser = users.getUser(userId.value).executeAsOneOrNull()
+
+        breadcrumbs?.add(
+            bot.sentry.createBreadcrumb(
+                category = "sync.users",
+                type = "debug",
+
+                message = "Marking user as absent",
+                data = mapOf(
+                    "user.id" to userId.asString
+                )
+            )
+        )
 
         if (dbUser != null) {
             users.updateUser(dbUser.avatarUrl, dbUser.discriminator, false, dbUser.username, dbUser.id)
         }
     }
 
-    private suspend inline fun userUpdated(user: User) {
+    private suspend inline fun userUpdated(user: User, breadcrumbs: MutableList<Breadcrumb>? = null) {
         logger.debug { "User updated: ${user.tag} (${user.id})" }
 
         val member = config.getGuild().getMemberOrNull(user.id)
         val dbUser = users.getUser(user.id.value).executeAsOneOrNull()
+
+        breadcrumbs?.add(
+            bot.sentry.createBreadcrumb(
+                category = "sync.users",
+                type = "debug",
+
+                message = "Updating user",
+                data = mapOf(
+                    "user.id" to user.id.asString,
+                    "user.tag" to user.tag,
+
+                    "insert" to (dbUser == null)
+                )
+            )
+        )
 
         if (dbUser == null) {
             users.insertUser(user.id.value, user.avatar.url, user.discriminator, member != null, user.username)
@@ -265,7 +375,7 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
         }
     }
 
-    private suspend inline fun updateRoles(): Pair<Int, Int> {
+    private suspend inline fun updateRoles(breadcrumbs: MutableList<Breadcrumb>? = null): Pair<Int, Int> {
         logger.debug { "Updating roles: Getting roles from DB" }
         val dbRoles = roles.getAllRoles().executeAsList().map { it.id to it }.toMap()
 
@@ -277,6 +387,23 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
         val rolesToAdd = discordRoles.keys.filter { it !in dbRoles }
         val rolesToRemove = dbRoles.keys.filter { it !in discordRoles }
         val rolesToUpdate = dbRoles.keys.filter { it in discordRoles }
+
+        breadcrumbs?.add(
+            bot.sentry.createBreadcrumb(
+                category = "sync.roles",
+                type = "debug",
+
+                message = "Synchronising roles",
+                data = mapOf(
+                    "roles.database" to dbRoles.size,
+                    "roles.discord" to discordRoles.size,
+
+                    "roles.adding" to rolesToAdd.size,
+                    "roles.removing" to rolesToRemove.size,
+                    "roles.updating" to rolesToUpdate.size
+                )
+            )
+        )
 
         var rolesUpdated = 0
 
@@ -305,7 +432,7 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
         return Pair(rolesUpdated, rolesToRemove.size)
     }
 
-    private suspend inline fun updateUsers(): Pair<Int, Int> {
+    private suspend inline fun updateUsers(breadcrumbs: MutableList<Breadcrumb>? = null): Pair<Int, Int> {
         logger.debug { "Updating users: Getting users from DB" }
         val dbUsers = users.getAllUsers().executeAsList().map { it.id to it }.toMap()
 
@@ -317,6 +444,23 @@ class SyncExtension(bot: ExtensibleBot) : Extension(bot) {
         val usersToAdd = discordUsers.keys.filter { it !in dbUsers }
         val usersToRemove = dbUsers.keys.filter { it !in discordUsers && (dbUsers[it] ?: error("???")).present }
         val usersToUpdate = dbUsers.keys.filter { it in discordUsers }
+
+        breadcrumbs?.add(
+            bot.sentry.createBreadcrumb(
+                category = "sync.users",
+                type = "debug",
+
+                message = "Synchronising users",
+                data = mapOf(
+                    "users.database" to dbUsers.size,
+                    "users.discord" to discordUsers.size,
+
+                    "users.adding" to usersToAdd.size,
+                    "users.removing" to usersToRemove.size,
+                    "users.updating" to usersToUpdate.size
+                )
+            )
+        )
 
         var usersUpdated = 0
 

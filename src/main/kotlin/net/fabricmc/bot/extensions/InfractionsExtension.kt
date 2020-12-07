@@ -178,13 +178,6 @@ class InfractionsExtension(bot: ExtensibleBot) : Extension(bot) {
                     return@action
                 }
 
-                breadcrumb(
-                    category = "command.nick",
-                    type = "debug",
-
-                    message = "Parsing arguments"
-                )
-
                 val args = parse(::InfractionNickCommandArgs)
 
                 if (args.target != null && args.targetId != null) {
