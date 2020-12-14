@@ -27,6 +27,7 @@
 \btow?l-?head+s*\b
 \btrann*y\b
 \b(?:wo)?mansplain(?:ing)?\b
+\brap(e|ing|ists?)\b
 
 # Regexes that may be present within words
 ch+u+d+s*
