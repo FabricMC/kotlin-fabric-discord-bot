@@ -35,8 +35,13 @@ repositories {
     }
 
     maven {
-        name = 'KotDis'
+        name = 'KotDis Snapshots'
         url = 'https://maven.kotlindiscord.com/repository/maven-snapshots/'
+    }
+
+    maven {
+        name = 'KotDis Releases'
+        url = 'https://maven.kotlindiscord.com/repository/maven-releases/'
     }
 
     maven {
@@ -60,7 +65,7 @@ dependencies {
     implementation 'org.jetbrains.kotlin:kotlin-reflect'
 
     // Kord Extensions framework
-    implementation 'com.kotlindiscord.kord.extensions:kord-extensions:1.4-SNAPSHOT'
+    implementation 'com.kotlindiscord.kord.extensions:kord-extensions:1.4.0-RC1'
 
     // Config framework
     implementation 'com.uchuhimo:konf:0.23.0'
