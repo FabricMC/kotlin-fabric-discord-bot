@@ -30,7 +30,7 @@ private const val UPDATE_CHECK_DELAY = 1000L * 30L  // 30 seconds, consider kotl
 private const val SETUP_DELAY = 1000L * 10L  // 10 seconds
 
 private var JIRA_URL = "https://bugs.mojang.com/rest/api/latest/project/MC/versions"
-private var MINECRAFT_URL = "https://launchermeta.mojang.com/mc/game/version_manifest.json"
+private var MINECRAFT_URL = "https://launchermeta.mojang.com/mc/game/version_manifest_v2.json"
 
 private val logger = KotlinLogging.logger {}
 
