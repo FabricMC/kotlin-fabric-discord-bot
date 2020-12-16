@@ -395,7 +395,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                                 else -> "**__Message content not edited__**"
                             }
 
-                            footer { text = event.messageId.toString() }
+                            footer { text = "Author: ${new.author?.id ?: "Unknown"} Message Id: ${event.messageId}" }
                         }
                     }
 
@@ -448,7 +448,9 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
 
                             field { name = "Message"; value = message.getUrl() }
 
-                            footer { text = event.messageId.toString() }
+                            footer {
+                                text = "Author: ${message.author?.id ?: "Unknown"} Message Id: ${event.messageId}"
+                            }
                         }
                     }
 
@@ -469,7 +471,9 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
 
                             field { name = "Message"; value = message.getUrl() }
 
-                            footer { text = event.messageId.toString() }
+                            footer {
+                                text = "Author: ${message.author?.id ?: "Unknown"} Message Id: ${event.messageId}"
+                            }
                         }
                     }
 
