@@ -135,6 +135,13 @@ jar {
     }
 }
 
+tasks.withType(JavaCompile).configureEach {
+    // The bot requires JDK11. Make sure binaries are built for 11
+    if (JavaVersion.current().isJava12Compatible()) {
+        it.options.release = 11
+    }
+}
+
 compileKotlin.configure {
     dependsOn "generateMainFabricBotDBMigrations"
 }
