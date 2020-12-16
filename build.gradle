@@ -65,7 +65,7 @@ dependencies {
     implementation 'org.jetbrains.kotlin:kotlin-reflect'
 
     // Kord Extensions framework
-    implementation 'com.kotlindiscord.kord.extensions:kord-extensions:1.4.0-RC1'
+    implementation 'com.kotlindiscord.kord.extensions:kord-extensions:1.4.0-RC2'
 
     // Config framework
     implementation 'com.uchuhimo:konf:0.23.0'
