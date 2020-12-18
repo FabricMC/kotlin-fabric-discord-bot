@@ -36,3 +36,10 @@ fa+g+s*
 fa+g+o+t+s*
 nigg+(?:e*r+|a+h*?|u+h+)s?
 卐|卍
+
+# Regexes which may be used to indicate moderators of topics that trolls may use to light up a conflict.
+# This is so mods can keep an eye open when certain topics are being discussed.
+# Entries may be shifted around pretty frequently depending on what could be most common for trolls to bring up or due to regex having false positives.
+# These topics aren't prohibited for say and regex in this category should not include forbidden topics.
+# Make a new category for forbidden stuff if you need it.
+\b(trans(?:gender)?)\b
