@@ -13,6 +13,22 @@ class BuildInfo {
         props.getProperty("version")
     }
 
+    /** Commit hash for the current build of the bot. **/
+    val commit: String by lazy {
+        props.getProperty("commit")
+    }
+
+    /** Version (without the -SNAPSHOT) and commit hash combined. **/
+    val sentryVersion by lazy {
+        val v = if ("-" in version) {
+            version.split('-').first()
+        } else {
+            version
+        }
+
+        "$v-$commit"
+    }
+
     /** @suppress **/
     fun load(): BuildInfo {
         props.load(Thread.currentThread().contextClassLoader.getResourceAsStream("build.properties"))

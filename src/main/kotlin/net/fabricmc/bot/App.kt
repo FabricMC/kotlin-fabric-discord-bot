@@ -3,8 +3,8 @@
  */
 package net.fabricmc.bot
 
-import com.gitlab.kordlib.gateway.Intents
-import com.gitlab.kordlib.gateway.PrivilegedIntent
+import dev.kord.gateway.Intents
+import dev.kord.gateway.PrivilegedIntent
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import mu.KotlinLogging
 import net.fabricmc.bot.conf.buildInfo
@@ -14,11 +14,11 @@ import net.fabricmc.bot.extensions.*
 
 /** The current instance of the bot. **/
 val bot = ExtensibleBot(
-        prefix = config.prefix,
-        token = config.token,
+    prefix = config.prefix,
+    token = config.token,
 
-        guildsToFill = listOf(config.guildSnowflake.value),
-        fillPresences = true
+    guildsToFill = listOf(config.guildSnowflake),
+    fillPresences = true
 )
 
 /**
@@ -29,6 +29,16 @@ suspend fun main() {
     val logger = KotlinLogging.logger {}
 
     logger.info { "Starting Fabric Discord Bot, version ${buildInfo.version}." }
+
+    if (System.getenv().getOrDefault("SENTRY_DSN", null) != null) {
+        bot.sentry.init {
+            dsn = System.getenv("SENTRY_DSN")
+            environment = System.getenv().getOrDefault("SENTRY_ENVIRONMENT", "production")
+            release = buildInfo.sentryVersion
+
+            isDebug = System.getenv().getOrDefault("ENVIRONMENT", "production") != "production"
+        }
+    }
 
     Migrator.migrate()
 
@@ -49,12 +59,12 @@ suspend fun main() {
     bot.addExtension(VersionCheckExtension::class)
 
     bot.start(
-            presenceBuilder = {
-                playing("${config.prefix}help for command help")
-            },
+        presenceBuilder = {
+            playing("${config.prefix}help for command help")
+        },
 
-            intents = {
-                +Intents.all
-            }
+        intents = {
+            +Intents.all
+        }
     )
 }

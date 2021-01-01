@@ -1,11 +1,9 @@
 package net.fabricmc.bot.extensions.infractions
 
-import com.gitlab.kordlib.common.entity.Snowflake
-import com.gitlab.kordlib.core.behavior.channel.MessageChannelBehavior
-import com.gitlab.kordlib.core.behavior.channel.createEmbed
-import com.gitlab.kordlib.core.entity.Message
-import com.gitlab.kordlib.core.entity.User
-import com.gitlab.kordlib.core.event.message.MessageCreateEvent
+import dev.kord.common.entity.Snowflake
+import dev.kord.core.entity.Message
+import dev.kord.core.entity.User
+import dev.kord.core.event.message.MessageCreateEvent
 import com.kotlindiscord.kord.extensions.checks.topRoleHigherOrEqual
 import com.kotlindiscord.kord.extensions.commands.Command
 import com.kotlindiscord.kord.extensions.commands.CommandContext
@@ -14,24 +12,26 @@ import com.kotlindiscord.kord.extensions.commands.converters.optionalUser
 import com.kotlindiscord.kord.extensions.commands.parser.Arguments
 import com.kotlindiscord.kord.extensions.extensions.Extension
 import com.kotlindiscord.kord.extensions.utils.dm
+import com.kotlindiscord.kord.extensions.utils.respond
 import com.kotlindiscord.kord.extensions.utils.runSuspended
 import mu.KotlinLogging
 import net.fabricmc.bot.bot
 import net.fabricmc.bot.conf.config
-import net.fabricmc.bot.constants.Colours
+import net.fabricmc.bot.constants.Colors
 import net.fabricmc.bot.database.Infraction
 import net.fabricmc.bot.defaultCheck
 import net.fabricmc.bot.enums.InfractionTypes
 import net.fabricmc.bot.enums.Roles
 import net.fabricmc.bot.utils.modLog
+import net.fabricmc.bot.utils.readable
 import net.fabricmc.bot.utils.requireMainGuild
 import java.time.Instant
 import java.util.*
 
-/** Data class representing the arguments for the infraction pardoning command.
+/** Class representing the arguments for the infraction pardoning command.
  *
- * @param member The member to pardon.
- * @param memberLong The ID of the member to pardon, if they're not on the server.
+ * @property member The member to pardon.
+ * @property memberLong The ID of the member to pardon, if they're not on the server.
  */
 @Suppress("UndocumentedPublicProperty")
 class InfractionUnsetCommandArgs : Arguments() {
@@ -58,7 +58,7 @@ class InfractionUnsetCommand(extension: Extension, private val type: InfractionT
                              aliasList: Array<String> = arrayOf(),
         // This can't be suspending, see comment in InfractionActions.applyInfraction
                              private val infrAction: Infraction.(
-                                     targetId: Long, expires: Instant?
+                                     targetId: Snowflake, expires: Instant?
                              ) -> Unit
 ) : Command(extension) {
     private val queries = config.db.infractionQueries
@@ -101,7 +101,7 @@ class InfractionUnsetCommand(extension: Extension, private val type: InfractionT
 
             targetObj?.dm {
                 embed {
-                    color = Colours.POSITIVE
+                    color = Colors.POSITIVE
                     title = type.actionText.capitalize() + "!"
 
                     description = getInfractionMessage(false, infraction, true)
@@ -117,18 +117,20 @@ class InfractionUnsetCommand(extension: Extension, private val type: InfractionT
         }
     }
 
-    private suspend fun sendToChannel(channel: MessageChannelBehavior, infraction: Infraction) {
-        channel.createEmbed {
-            color = Colours.POSITIVE
-            title = "Infraction pardoned"
+    private suspend fun sendToChannel(message: Message, infraction: Infraction) {
+        message.respond {
+            embed {
+                color = Colors.POSITIVE
+                title = "Infraction pardoned"
 
-            description = getInfractionMessage(true, infraction)
+                description = getInfractionMessage(true, infraction)
 
-            footer {
-                text = "ID: ${infraction.id}"
+                footer {
+                    text = "ID: ${infraction.id}"
+                }
+
+                timestamp = Instant.now()
             }
-
-            timestamp = Instant.now()
         }
     }
 
@@ -136,10 +138,10 @@ class InfractionUnsetCommand(extension: Extension, private val type: InfractionT
         var descriptionText = getInfractionMessage(true, infraction, true)
 
         descriptionText += "\n\n**User ID:** `${infraction.target_id}`"
-        descriptionText += "\n**Moderator:** ${actor.mention} (${actor.tag} / `${actor.id.longValue}`)"
+        descriptionText += "\n**Moderator:** ${actor.readable()}"
 
         modLog {
-            color = Colours.POSITIVE
+            color = Colors.POSITIVE
             title = "Infraction Pardoned"
 
             description = descriptionText
@@ -152,20 +154,20 @@ class InfractionUnsetCommand(extension: Extension, private val type: InfractionT
 
     private suspend fun undoInfraction(memberObj: User?, memberLong: Long?, message: Message) {
         val author = message.author!!
-        val (memberId, memberMessage) = getMemberId(memberObj, memberLong)
+        val (memberId, memberMessage) = getMemberId(memberObj, memberLong?.let { Snowflake(it) })
 
         if (memberId == null) {
-            message.channel.createMessage("${author.mention} $memberMessage")
+            message.respond(memberMessage!!)
             return
         }
 
         val infractions = runSuspended {
-            queries.getActiveInfractionsByUser(memberId).executeAsList()
+            queries.getActiveInfractionsByUser(memberId.value).executeAsList()
         }.filter { it.infraction_type == type }
 
         if (infractions.isEmpty()) {
-            message.channel.createMessage(
-                    "${author.mention} Unable to find a matching active infraction for that user."
+            message.respond(
+                    "Unable to find a matching active infraction for that user."
             )
 
             return
@@ -177,7 +179,7 @@ class InfractionUnsetCommand(extension: Extension, private val type: InfractionT
             infrAction.invoke(infraction, memberId, null)
 
             sendToUser(infraction)
-            sendToChannel(message.channel, infraction)
+            sendToChannel(message, infraction)
             sendToModLog(infraction, message.author!!)
         }
     }

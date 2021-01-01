@@ -1,13 +1,15 @@
 package net.fabricmc.bot.extensions.filter
 
-import com.gitlab.kordlib.common.entity.ChannelType
-import com.gitlab.kordlib.core.entity.Message
-import com.gitlab.kordlib.core.entity.User
-import com.gitlab.kordlib.core.entity.channel.Channel
-import com.gitlab.kordlib.core.event.message.MessageCreateEvent
-import com.gitlab.kordlib.core.event.message.MessageUpdateEvent
+import dev.kord.common.entity.ChannelType
+import dev.kord.common.entity.optional.Optional
+import dev.kord.core.entity.Message
+import dev.kord.core.entity.User
+import dev.kord.core.entity.channel.Channel
+import dev.kord.core.event.message.MessageCreateEvent
+import dev.kord.core.event.message.MessageUpdateEvent
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import com.kotlindiscord.kord.extensions.utils.getUrl
+import net.fabricmc.bot.utils.readable
 
 /**
  * Filter class intended for finding removing messages, and alerting staff when selfbots and
@@ -42,7 +44,7 @@ class EmbedFilter(bot: ExtensibleBot) : Filter(bot) {
                 embed {
                     if (messageEmbed.color != null) color = messageEmbed.color
                     if (messageEmbed.description != null) description = messageEmbed.description
-                    if (messageEmbed.data.image != null) image = messageEmbed.data.image!!.url
+                    if (messageEmbed.data.image is Optional.Value) image = messageEmbed.data.image.value?.url?.value
                     if (messageEmbed.timestamp != null) timestamp = messageEmbed.timestamp
                     if (messageEmbed.title != null) title = messageEmbed.title
                     if (messageEmbed.url != null) url = messageEmbed.url
@@ -98,6 +100,6 @@ class EmbedFilter(bot: ExtensibleBot) : Filter(bot) {
             "$count suspicious embed/s posted"
         }
 
-        return "$jumpMessage by ${user.mention} (`${user.id.value}`) $channelMessage:"
+        return "$jumpMessage by ${user.readable()} $channelMessage:"
     }
 }

@@ -1,27 +1,32 @@
 package net.fabricmc.bot.extensions
 
-import com.gitlab.kordlib.core.behavior.channel.createEmbed
-import com.gitlab.kordlib.core.behavior.channel.createMessage
-import com.gitlab.kordlib.core.entity.Embed
-import com.gitlab.kordlib.core.entity.channel.GuildMessageChannel
-import com.gitlab.kordlib.core.event.gateway.ReadyEvent
-import com.gitlab.kordlib.core.event.message.MessageCreateEvent
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import com.kotlindiscord.kord.extensions.Paginator
 import com.kotlindiscord.kord.extensions.commands.converters.coalescedString
 import com.kotlindiscord.kord.extensions.commands.converters.string
 import com.kotlindiscord.kord.extensions.commands.parser.Arguments
 import com.kotlindiscord.kord.extensions.extensions.Extension
+import com.kotlindiscord.kord.extensions.sentry.tag
 import com.kotlindiscord.kord.extensions.utils.deleteWithDelay
+import com.kotlindiscord.kord.extensions.utils.parse
 import com.kotlindiscord.kord.extensions.utils.respond
 import com.kotlindiscord.kord.extensions.utils.runSuspended
+import dev.kord.common.kColor
+import dev.kord.core.behavior.channel.createEmbed
+import dev.kord.core.behavior.channel.createMessage
+import dev.kord.core.entity.Embed
+import dev.kord.core.entity.channel.GuildMessageChannel
+import dev.kord.core.event.gateway.ReadyEvent
+import dev.kord.core.event.message.MessageCreateEvent
+import io.sentry.Breadcrumb
+import io.sentry.Sentry
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
 import net.fabricmc.bot.TagMissingArgumentException
 import net.fabricmc.bot.conf.config
-import net.fabricmc.bot.constants.Colours
+import net.fabricmc.bot.constants.Colors
 import net.fabricmc.bot.defaultCheck
 import net.fabricmc.bot.enums.Channels
 import net.fabricmc.bot.extensions.infractions.instantToDisplay
@@ -60,17 +65,39 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
             action {
                 logger.debug { "Current branch: ${git.repository.branch} (${git.repository.fullBranch})" }
 
+                breadcrumb(
+                    category = "event.ready",
+                    type = "debug",
+
+                    message = "Pulling git repository",
+                    data = mapOf(
+                        "branch" to config.git.tagsRepoBranch,
+                        "path" to config.git.tagsRepoPath,
+                        "url" to config.git.tagsRepoUrl
+                    )
+                )
+
                 git.pull().call()
 
                 val errors = parser.loadAll()
+
+                breadcrumb(
+                    category = "event.ready",
+                    type = "debug",
+
+                    message = "Loaded tags",
+                    data = mapOf(
+                        "errors" to errors.size
+                    )
+                )
 
                 if (errors.isNotEmpty()) {
                     var description = "The following errors were encountered while loading tags.\n\n"
 
                     description += errors.toList()
-                            .sortedBy { it.first }
-                            .take(MAX_ERRORS)
-                            .joinToString("\n\n") { "**${it.first} »** ${it.second}" }
+                        .sortedBy { it.first }
+                        .take(MAX_ERRORS)
+                        .joinToString("\n\n") { "**${it.first} »** ${it.second}" }
 
                     if (errors.size > MAX_ERRORS) {
                         description += "\n\n**...plus ${errors.size - MAX_ERRORS} more.**"
@@ -79,7 +106,7 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
                     description += "\n\n${parser.tags.size} tags loaded successfully."
 
                     (config.getChannel(Channels.ALERTS) as GuildMessageChannel).createEmbed {
-                        color = Colours.NEGATIVE
+                        color = Colors.NEGATIVE
                         title = "Tag-loading errors"
 
                         this.description = description
@@ -88,9 +115,18 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
 
                 logger.info { "Loaded ${parser.tags.size} tags." }
 
+                breadcrumb(
+                    category = "event.ready",
+                    type = "debug",
+
+                    message = "Scheduling check job"
+                )
+
                 checkJob = bot.kord.launch {
                     while (true) {
                         delay(UPDATE_CHECK_DELAY)
+
+                        val breadcrumbs = mutableListOf<Breadcrumb>()
 
                         runSuspended {
                             logger.debug { "Pulling tags repo." }
@@ -126,15 +162,55 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
 //                                    val errors = parser.loadAll()
 //                                }
 //
+
+                                breadcrumbs.add(
+                                    bot.sentry.createBreadcrumb(
+                                        category = "tags",
+                                        type = "debug",
+
+                                        message = "Pulling git repository",
+                                        data = mapOf(
+                                            "branch" to config.git.tagsRepoBranch,
+                                            "path" to config.git.tagsRepoPath,
+                                            "url" to config.git.tagsRepoUrl
+                                        )
+                                    )
+                                )
+
                                 val result = git.pull().call()
 
                                 if (result.mergeResult.mergeStatus == MergeResult.MergeStatus.ALREADY_UP_TO_DATE) {
                                     return@runSuspended
                                 }
 
-                                parser.loadAll()
-                            } catch (e: Throwable) {
-                                logger.catching(e)
+                                val parserErrors = parser.loadAll()
+
+                                breadcrumbs.add(
+                                    bot.sentry.createBreadcrumb(
+                                        category = "tags",
+                                        type = "debug",
+
+                                        message = "Loaded tags",
+                                        data = mapOf(
+                                            "errors" to parserErrors.size,
+                                        )
+                                    )
+                                )
+                            } catch (t: Throwable) {
+                                val sentry = extension.bot.sentry
+
+                                if (sentry.enabled) {
+                                    Sentry.withScope {
+                                        it.tag("extension", name)
+                                        it.tag("event", event::class.simpleName ?: "Unknown")
+
+                                        breadcrumbs.forEach { breadcrumb -> it.addBreadcrumb(breadcrumb) }
+
+                                        Sentry.captureException(t, "Failed to update tags.")
+                                    }
+                                }
+
+                                logger.catching(t)
                             }
                         }
                     }
@@ -147,33 +223,58 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
             check { it.message.content.startsWith(config.tagPrefix) }
 
             action {
-                val givenArgs = it.message.content.removePrefix(config.tagPrefix)
+                val givenArgs = event.message.content.removePrefix(config.tagPrefix)
 
                 if (givenArgs.isEmpty() || givenArgs.startsWith(' ')) {
                     return@action
                 }
 
-                val (tagName, args) = parseArgs(givenArgs)
+                val splitArgs = event.message.parse().toMutableList()
+
+                splitArgs[0] = splitArgs[0].removePrefix(config.tagPrefix)
+
+                val (tagName, args) = parseArgs(splitArgs)
+
+                bot.sentry.createBreadcrumb(
+                    category = "tags",
+                    type = "debug",
+
+                    message = "Retrieving tags",
+                    data = mapOf(
+                        "tag.name" to tagName,
+                        "tag.args" to args
+                    )
+                )
 
                 val tags = parser.getTags(tagName)
 
+                bot.sentry.createBreadcrumb(
+                    category = "tags",
+                    type = "debug",
+
+                    message = "Tags retrieved",
+                    data = mapOf(
+                        "tag.count" to tags.size
+                    )
+                )
+
                 if (tags.isEmpty()) {
                     if (tagName.replace("?", "").isNotBlank()) {
-                        it.message.respond("No such tag: `$tagName`").deleteWithDelay(DELETE_DELAY)
-                        it.message.deleteWithDelay(DELETE_DELAY)
+                        event.message.respond("No such tag: `$tagName`").deleteWithDelay(DELETE_DELAY)
+                        event.message.deleteWithDelay(DELETE_DELAY)
                     }
 
                     return@action
                 }
 
                 if (tags.size > 1) {
-                    it.message.respond(
-                            "Multiple tags have been found with that name. " +
-                                    "Please pick one of the following:\n\n" +
+                    event.message.respond(
+                        "Multiple tags have been found with that name. " +
+                                "Please pick one of the following:\n\n" +
 
-                                    tags.joinToString(", ") { t -> "`${t.name}`" }
+                                tags.joinToString(", ") { t -> "`${t.name}`" }
                     ).deleteWithDelay(DELETE_DELAY)
-                    it.message.deleteWithDelay(DELETE_DELAY)
+                    event.message.deleteWithDelay(DELETE_DELAY)
 
                     return@action
                 }
@@ -183,34 +284,64 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
                 if (tag!!.data is AliasTag) {
                     val data = tag.data as AliasTag
 
+                    bot.sentry.createBreadcrumb(
+                        category = "tags",
+                        type = "debug",
+
+                        message = "Handling alias tag",
+                        data = mapOf(
+                            "alias.target" to data.target
+                        )
+                    )
+
                     tag = parser.getTag(data.target)
 
                     if (tag == null) {
-                        it.message.respond(
-                                "Invalid alias - no such alias target: " +
-                                        "`$tagName` -> `${data.target}`"
+                        event.message.respond(
+                            "Invalid alias - no such alias target: " +
+                                    "`$tagName` -> `${data.target}`"
                         )
                         return@action
                     }
 
                     if (tag.data is AliasTag) {
-                        it.message.respond(
-                                "Invalid alias - this alias points to another alias: " +
-                                        "`$tagName` -> `${data.target}`"
+                        event.message.respond(
+                            "Invalid alias - this alias points to another alias: " +
+                                    "`$tagName` -> `${data.target}`"
                         )
                         return@action
                     }
                 }
 
+                bot.sentry.createBreadcrumb(
+                    category = "tags",
+                    type = "debug",
+
+                    message = "Handling tag",
+                    data = mapOf(
+                        "tag.type" to tag.data.type,
+                    )
+                )
+
                 val markdown = try {
                     substitute(tag.markdown, args)
                 } catch (e: TagMissingArgumentException) {
-                    it.message.respond(e.toString())
+                    event.message.respond(e.toString())
                     return@action
                 }
 
                 if (tag.data is TextTag) {
-                    it.message.channel.createMessage {
+                    bot.sentry.createBreadcrumb(
+                        category = "tags",
+                        type = "debug",
+
+                        message = "Relaying text tag",
+                        data = mapOf(
+                            "tag.content.size" to (markdown?.length ?: 0),
+                        )
+                    )
+
+                    event.message.channel.createMessage {
                         content = markdown!!  // If it's a text tag, the markdown is not null
 
                         allowedMentions { }  // Nope
@@ -218,25 +349,22 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
                 } else if (tag.data is EmbedTag) {
                     val data = tag.data as EmbedTag
 
-                    it.message.channel.createEmbed {
+                    bot.sentry.createBreadcrumb(
+                        category = "tags",
+                        type = "debug",
+
+                        message = "Relaying embed tag"
+                    )
+
+                    event.message.channel.createEmbed {
                         Embed(data.embed, bot.kord).apply(this)
 
-                        data.embed.fields.forEach {
-                            // They'll fix this, but for now...
-                            field {
-                                inline = it.inline ?: false
+                        description = markdown ?: data.embed.description.value
 
-                                name = it.name
-                                value = it.value
-                            }
-                        }
+                        if (data.color != null) {
+                            val colorString = data.color!!.toLowerCase()
 
-                        description = markdown ?: data.embed.description
-
-                        if (data.colour != null) {
-                            val colourString = data.colour!!.toLowerCase()
-
-                            color = Colours.fromName(colourString) ?: Color.decode(colourString)
+                            color = Colors.fromName(colorString) ?: Color.decode(colorString).kColor
                         }
                     }
                 }
@@ -248,13 +376,14 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
             aliases = arrayOf("tag", "tricks", "trick", "t")
             description = "Commands for querying the loaded tags.\n\n" +
                     "To get the content of a tag, use `${config.tagPrefix}<tagname>`. Some tags support " +
-                    "substitutions, which can be supplied as further arguments."
+                    "substitutions, which can be supplied as further arguments. If your substitution contains " +
+                    "a space, \"surround it with quotes\"."
 
             check(::defaultCheck)
 
             command {
                 name = "show"
-                aliases = arrayOf("get", "s", "g")
+                aliases = arrayOf("get", "g")
                 description = "Get basic information about a specific tag."
 
                 signature(::TagArgs)
@@ -271,7 +400,6 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
 
                         if (tag == null) {
                             message.respond("No such tag: `$tagName`").deleteWithDelay(DELETE_DELAY)
-                            message.deleteWithDelay(DELETE_DELAY)
                             return@action
                         }
 
@@ -280,62 +408,77 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
                         val log = git.log().addPath(path).setMaxCount(1).call()
                         val rev = log.firstOrNull()
 
-                        message.channel.createEmbed {
-                            title = "Tag: $tagName"
-                            color = Colours.BLURPLE
+                        bot.sentry.createBreadcrumb(
+                            category = "command.tag.show",
+                            type = "debug",
 
-                            description = when {
-                                tag.data is AliasTag -> {
-                                    val data = tag.data as AliasTag
+                            message = "Relaying tag info",
+                            data = mapOf(
+                                "tag.name" to tag.name,
+                                "tag.type" to tag.data.type,
+                                "tag.url" to url,
+                                "tag.revision" to (rev?.name ?: "N/A")
+                            )
+                        )
 
-                                    "This **alias tag** targets the following tag: `${data.target}`"
+                        message.respond {
+                            embed {
+                                title = "Tag: $tagName"
+                                color = Colors.BLURPLE
+
+                                description = when {
+                                    tag.data is AliasTag -> {
+                                        val data = tag.data as AliasTag
+
+                                        "This **alias tag** targets the following tag: `${data.target}`"
+                                    }
+                                    tag.markdown != null -> "This **${tag.data.type} tag** contains " +
+                                            "**${tag.markdown!!.length} characters** of Markdown in its body."
+
+                                    else -> "This **${tag.data.type} tag** contains no Markdown body."
                                 }
-                                tag.markdown != null -> "This **${tag.data.type} tag** contains " +
-                                        "**${tag.markdown!!.length} characters** of Markdown in its body."
 
-                                else -> "This **${tag.data.type} tag** contains no Markdown body."
-                            }
+                                description += "\n\n:link: [Open tag file in browser]($url)"
 
-                            description += "\n\n:link: [Open tag file in browser]($url)"
+                                if (rev != null) {
+                                    val author = rev.authorIdent
 
-                            if (rev != null) {
-                                val author = rev.authorIdent
+                                    if (author != null) {
+                                        field {
+                                            name = "Last author"
+                                            value = author.name
 
-                                if (author != null) {
+                                            inline = true
+                                        }
+                                    }
+
+                                    val committer = rev.committerIdent
+
+                                    if (committer != null && committer.name != author.name) {
+                                        field {
+                                            name = "Last committer"
+                                            value = committer.name
+
+                                            inline = true
+                                        }
+                                    }
+
+                                    val committed = instantToDisplay(Instant.ofEpochSecond(rev.commitTime.toLong()))!!
+
                                     field {
-                                        name = "Last author"
-                                        value = author.name
+                                        name = "Last edit"
+                                        value = committed
 
                                         inline = true
                                     }
-                                }
 
-                                val committer = rev.committerIdent
-
-                                if (committer != null && committer.name != author.name) {
+                                    @Suppress("MagicNumber")
                                     field {
-                                        name = "Last committer"
-                                        value = committer.name
+                                        name = "Current SHA"
+                                        value = "`${rev.name.substring(0, 8)}`"
 
                                         inline = true
                                     }
-                                }
-
-                                val committed = instantToDisplay(Instant.ofEpochSecond(rev.commitTime.toLong()))!!
-
-                                field {
-                                    name = "Last edit"
-                                    value = committed
-
-                                    inline = true
-                                }
-
-                                @Suppress("MagicNumber")
-                                field {
-                                    name = "Current SHA"
-                                    value = "`${rev.name.substring(0, 8)}`"
-
-                                    inline = true
                                 }
                             }
                         }
@@ -363,6 +506,16 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
                         val nameMatches = mutableSetOf<String>()
                         val markdownMatches = mutableSetOf<String>()
 
+                        bot.sentry.createBreadcrumb(
+                            category = "command.tag.search",
+                            type = "query",
+
+                            message = "Executing tag search",
+                            data = mapOf(
+                                "query" to query
+                            )
+                        )
+
                         parser.tags.forEach { (name, tag) ->
                             if (name.contains(query)) {
                                 nameMatches.add(name)
@@ -381,15 +534,11 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
                             } else if (tag.data is EmbedTag) {
                                 val data = tag.data as EmbedTag
 
-                                for (field in data.embed.fields) {
+                                data.embed.fields.value?.forEach { field ->
                                     if (field.name.contains(query)) {
                                         embedFieldMatches.add(name)
-                                        break
-                                    }
-
-                                    if (field.value.contains(query)) {
+                                    } else if (field.value.contains(query)) {
                                         embedFieldMatches.add(name)
-                                        break
                                     }
                                 }
                             }
@@ -401,10 +550,12 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
                                 markdownMatches.size
 
                         if (totalMatches < 1) {
-                            message.channel.createEmbed {
-                                title = "Search: No matches"
-                                description = "We tried our best, but we can't find a tag containing your query. " +
-                                        "Please try again with a different query!"
+                            message.respond {
+                                embed {
+                                    title = "Search: No matches"
+                                    description = "We tried our best, but we can't find a tag containing your query. " +
+                                            "Please try again with a different query!"
+                                }
                             }
                         } else {
                             val pages = mutableListOf<String>()
@@ -457,14 +608,25 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
                                 }
                             }
 
+                            bot.sentry.createBreadcrumb(
+                                category = "command.tag.search",
+                                type = "debug",
+
+                                message = "Relaying search results",
+                                data = mapOf(
+                                    "results" to totalMatches,
+                                    "pages" to pages.size
+                                )
+                            )
+
                             val paginator = Paginator(
-                                    bot,
-                                    message.channel,
-                                    "Search: $totalMatches match" + if (totalMatches > 1) "es" else "",
-                                    pages,
-                                    message.author,
-                                    PAGE_TIMEOUT,
-                                    true
+                                bot,
+                                message.channel,
+                                "Search: $totalMatches match" + if (totalMatches > 1) "es" else "",
+                                pages,
+                                message.author,
+                                PAGE_TIMEOUT,
+                                true
                             )
 
                             paginator.send()
@@ -526,14 +688,25 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
                         }
                     }
 
+                    bot.sentry.createBreadcrumb(
+                        category = "command.tag.list",
+                        type = "query",
+
+                        message = "Relaying list of tags",
+                        data = mapOf(
+                            "tags.total" to parser.tags.size,
+                            "pages" to pages.size
+                        )
+                    )
+
                     val paginator = Paginator(
-                            bot,
-                            message.channel,
-                            "All tags (${parser.tags.size})",
-                            pages,
-                            message.author,
-                            PAGE_TIMEOUT,
-                            true
+                        bot,
+                        message.channel,
+                        "All tags (${parser.tags.size})",
+                        pages,
+                        message.author,
+                        PAGE_TIMEOUT,
+                        true
                     )
 
                     paginator.send()
@@ -547,11 +720,9 @@ class TagsExtension(bot: ExtensibleBot) : Extension(bot) {
      *
      * @param args String of argument to parse.
      */
-    private fun parseArgs(args: String): Pair<String, List<String>> {
-        val split = args.split("\\s".toRegex())
-
-        val tag = split.first()
-        val arguments = split.drop(1)
+    private fun parseArgs(args: List<String>): Pair<String, List<String>> {
+        val tag = args.first()
+        val arguments = args.drop(1)
 
         return Pair(tag, arguments)
     }

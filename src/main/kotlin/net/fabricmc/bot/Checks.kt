@@ -1,7 +1,7 @@
 package net.fabricmc.bot
 
-import com.gitlab.kordlib.core.entity.channel.DmChannel
-import com.gitlab.kordlib.core.event.Event
+import dev.kord.core.entity.channel.DmChannel
+import dev.kord.core.event.Event
 import com.kotlindiscord.kord.extensions.checks.*
 import mu.KotlinLogging
 import net.fabricmc.bot.conf.config
@@ -39,7 +39,7 @@ suspend fun defaultCheck(event: Event): Boolean {
             false
         }
 
-        message.author!!.isBot == true -> {
+        message.author!!.isBot -> {
             logger.debug { "Failing check: This message was sent by another bot" }
             false
         }
@@ -113,7 +113,7 @@ suspend fun isNotBot(event: Event): Boolean {
             true
         }
 
-        user.asUser().isBot == true -> {
+        user.asUser().isBot -> {
             logger.debug { "Failing check: User $user is a bot." }
             false
         }

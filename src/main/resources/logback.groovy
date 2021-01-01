@@ -1,13 +1,16 @@
+import ch.qos.logback.classic.filter.ThresholdFilter
 import ch.qos.logback.core.joran.spi.ConsoleTarget
+import io.sentry.logback.SentryAppender
 
 def environment = System.getenv().getOrDefault("ENVIRONMENT", "production")
+def sentry_dsn = System.getenv().getOrDefault("SENTRY_DSN", null)
 
 def defaultLevel = DEBUG
 
 if (environment == "production") {
     defaultLevel = INFO
 } else if (environment == "spam") {
-    logger("com.gitlab.kordlib.gateway.DefaultGateway", TRACE)
+    logger("dev.kord.gateway.DefaultGateway", TRACE)
     logger("net.fabricmc.bot.tags.TagParser", TRACE)
 } else {
     // Silence warning about missing native PRNG
@@ -42,4 +45,14 @@ appender("FILE", FileAppender) {
     }
 }
 
-root(defaultLevel, ["CONSOLE", "FILE"])
+if (sentry_dsn != null) {
+    appender("SENTRY", SentryAppender) {
+        filter(ThresholdFilter) {
+            level = WARN
+        }
+    }
+
+    root(defaultLevel, ["CONSOLE", "FILE", "SENTRY"])
+} else {
+    root(defaultLevel, ["CONSOLE", "FILE"])
+}

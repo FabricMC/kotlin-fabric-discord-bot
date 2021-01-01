@@ -1,13 +1,5 @@
 package net.fabricmc.bot.extensions
 
-import com.gitlab.kordlib.core.event.*
-import com.gitlab.kordlib.core.event.channel.*
-import com.gitlab.kordlib.core.event.gateway.*
-import com.gitlab.kordlib.core.event.guild.*
-import com.gitlab.kordlib.core.event.message.*
-import com.gitlab.kordlib.core.event.role.RoleCreateEvent
-import com.gitlab.kordlib.core.event.role.RoleDeleteEvent
-import com.gitlab.kordlib.core.event.role.RoleUpdateEvent
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import com.kotlindiscord.kord.extensions.checks.inGuild
 import com.kotlindiscord.kord.extensions.extensions.Extension
@@ -15,23 +7,35 @@ import com.kotlindiscord.kord.extensions.utils.createdAt
 import com.kotlindiscord.kord.extensions.utils.deltas.MemberDelta
 import com.kotlindiscord.kord.extensions.utils.deltas.UserDelta
 import com.kotlindiscord.kord.extensions.utils.getUrl
+import dev.kord.core.event.*
+import dev.kord.core.event.channel.*
+import dev.kord.core.event.gateway.*
+import dev.kord.core.event.guild.*
+import dev.kord.core.event.message.*
+import dev.kord.core.event.role.RoleCreateEvent
+import dev.kord.core.event.role.RoleDeleteEvent
+import dev.kord.core.event.role.RoleUpdateEvent
+import dev.kord.core.event.user.PresenceUpdateEvent
+import dev.kord.core.event.user.UserUpdateEvent
+import dev.kord.core.event.user.VoiceStateUpdateEvent
 import kotlinx.coroutines.flow.toSet
 import mu.KotlinLogging
 import net.fabricmc.bot.*
 import net.fabricmc.bot.conf.config
-import net.fabricmc.bot.constants.Colours
+import net.fabricmc.bot.constants.Colors
 import net.fabricmc.bot.enums.Channels
 import net.fabricmc.bot.extensions.infractions.instantToDisplay
 import net.fabricmc.bot.utils.actionLog
+import net.fabricmc.bot.utils.isNew
 import net.fabricmc.bot.utils.modLog
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.*
 
 private val timeFormatter = DateTimeFormatter
-        .ofPattern("dd/MM/yyyy HH:mm:ss '(UTC)'")
-        .withLocale(Locale.UK)
-        .withZone(ZoneId.of("UTC"))
+    .ofPattern("dd/MM/yyyy HH:mm:ss '(UTC)'")
+    .withLocale(Locale.UK)
+    .withZone(ZoneId.of("UTC"))
 
 private val logger = KotlinLogging.logger {}
 
@@ -48,115 +52,133 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
     override suspend fun setup() {
         event<Event> {
             check(
-                    inGuild(config.getGuild()),
-                    ::isNotBot,
-                    ::isNotIgnoredChannel
+                inGuild(config.getGuild()),
+                ::isNotBot,
+                ::isNotIgnoredChannel
             )
 
             action {
-                when (it) {
+                when (event) {
                     is BanAddEvent -> modLog {
-                        color = Colours.NEGATIVE
+                        val event = event as BanAddEvent
+
+                        color = Colors.NEGATIVE
                         title = "User banned"
 
-                        field { name = "Username"; value = it.user.username; inline = true }
-                        field { name = "Discrim"; value = it.user.discriminator; inline = true }
+                        field { name = "Username"; value = event.user.username; inline = true }
+                        field { name = "Discrim"; value = event.user.discriminator; inline = true }
 
-                        footer { text = it.user.id.value }
-                        thumbnail { url = it.user.avatar.url }
+                        footer { text = event.user.id.asString }
+                        thumbnail { url = event.user.avatar.url }
                     }
 
                     is BanRemoveEvent -> modLog {
-                        color = Colours.POSITIVE
+                        val event = event as BanRemoveEvent
+
+                        color = Colors.POSITIVE
                         title = "User unbanned"
 
-                        field { name = "Username"; value = it.user.username; inline = true }
-                        field { name = "Discrim"; value = it.user.discriminator; inline = true }
+                        field { name = "Username"; value = event.user.username; inline = true }
+                        field { name = "Discrim"; value = event.user.discriminator; inline = true }
 
-                        footer { text = it.user.id.value }
-                        thumbnail { url = it.user.avatar.url }
+                        footer { text = event.user.id.asString }
+                        thumbnail { url = event.user.avatar.url }
                     }
 
                     is CategoryCreateEvent -> modLog {
-                        color = Colours.POSITIVE
+                        val event = event as CategoryCreateEvent
+
+                        color = Colors.POSITIVE
                         title = "Category created"
 
-                        field { name = "Name"; value = it.channel.name; inline = true }
-                        field { name = "Mention"; value = it.channel.mention; inline = true }
+                        field { name = "Name"; value = event.channel.name; inline = true }
+                        field { name = "Mention"; value = event.channel.mention; inline = true }
 
-                        footer { text = it.channel.id.value }
+                        footer { text = event.channel.id.asString }
                     }
 
                     is CategoryDeleteEvent -> modLog {
-                        color = Colours.NEGATIVE
+                        val event = event as CategoryDeleteEvent
+
+                        color = Colors.NEGATIVE
                         title = "Category deleted"
 
-                        field { name = "Name"; value = it.channel.name; inline = true }
-                        field { name = "Mention"; value = it.channel.mention; inline = true }
+                        field { name = "Name"; value = event.channel.name; inline = true }
+                        field { name = "Mention"; value = event.channel.mention; inline = true }
 
-                        footer { text = it.channel.id.value }
+                        footer { text = event.channel.id.asString }
                     }
 
                     is InviteCreateEvent -> actionLog {
-                        color = Colours.POSITIVE
+                        val event = event as InviteCreateEvent
+
+                        color = Colors.POSITIVE
                         title = "Invite created"
 
-                        field { name = "Channel"; value = it.channel.mention; inline = true }
-                        field { name = "Code"; value = "`${it.code}`"; inline = true }
-                        field { name = "Inviter"; value = it.inviter.mention; inline = true }
+                        field { name = "Channel"; value = event.channel.mention; inline = true }
+                        field { name = "Code"; value = "`${event.code}`"; inline = true }
+                        field { name = "Inviter"; value = event.inviter?.mention ?: "Unknown"; inline = true }
                     }
 
                     is InviteDeleteEvent -> modLog {
-                        color = Colours.NEGATIVE
+                        val event = event as InviteDeleteEvent
+
+                        color = Colors.NEGATIVE
                         title = "Invite deleted"
 
-                        field { name = "Channel"; value = it.channel.mention; inline = true }
-                        field { name = "Code"; value = "`${it.code}`"; inline = true }
+                        field { name = "Channel"; value = event.channel.mention; inline = true }
+                        field { name = "Code"; value = "`${event.code}`"; inline = true }
                     }
 
                     is MemberJoinEvent -> actionLog {
-                        color = Colours.POSITIVE
+                        val event = event as MemberJoinEvent
+
+                        color = Colors.POSITIVE
                         title = "Member joined"
 
-                        field { name = "Username"; value = it.member.username; inline = true }
-                        field { name = "Discrim"; value = it.member.discriminator; inline = true }
+                        field { name = "Username"; value = event.member.username; inline = true }
+                        field { name = "Discrim"; value = event.member.discriminator; inline = true }
 
-                        val createdAt = timeFormatter.format(it.member.createdAt)
+                        val createdAt = timeFormatter.format(event.member.createdAt)
 
                         field {
                             name = "Created"
 
-                            value = if (it.member.isNew()) {
+                            value = if (event.member.isNew()) {
                                 ":new: $createdAt"
                             } else {
                                 createdAt
                             }
                         }
 
-                        footer { text = it.member.id.value }
-                        thumbnail { url = it.member.avatar.url }
+                        footer { text = event.member.id.asString }
+                        thumbnail { url = event.member.avatar.url }
                     }
 
                     is MemberLeaveEvent -> actionLog {
-                        color = Colours.NEGATIVE
+                        val event = event as MemberLeaveEvent
+
+                        color = Colors.NEGATIVE
                         title = "Member left"
 
-                        field { name = "Username"; value = it.user.username; inline = true }
-                        field { name = "Discrim"; value = it.user.discriminator; inline = true }
+                        field { name = "Username"; value = event.user.username; inline = true }
+                        field { name = "Discrim"; value = event.user.discriminator; inline = true }
 
-                        footer { text = it.user.id.value }
-                        thumbnail { url = it.user.avatar.url }
+                        footer { text = event.user.id.asString }
+                        thumbnail { url = event.user.avatar.url }
                     }
 
                     is MemberUpdateEvent -> {
-                        val new = it.getMember()
-                        val delta = MemberDelta.from(it.old, new)
+                        val event = event as MemberUpdateEvent
+
+                        val new = event.member
+                        val delta = MemberDelta.from(event.old, new)
 
                         if (delta?.changes?.isEmpty() == true) {
                             logger.debug { "No changes found." }
                         } else {
                             actionLog {
-                                color = Colours.BLURPLE
+                                color = Colors.BLURPLE
                                 title = "Member updated"
 
                                 field {
@@ -232,7 +254,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                                 }
 
                                 if (delta?.roles != null) {
-                                    val oldRoles = it.old?.roles?.toSet() ?: setOf()
+                                    val oldRoles = event.old?.roles?.toSet() ?: setOf()
                                     val newRoles = new.roles.toSet()
 
                                     if (oldRoles != newRoles) {
@@ -259,9 +281,9 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
 
                                 footer {
                                     text = if (delta == null) {
-                                        "Not cached: ${new.id.longValue}"
+                                        "Not cached: ${new.id.asString}"
                                     } else {
-                                        new.id.value
+                                        new.id.asString
                                     }
                                 }
 
@@ -273,19 +295,22 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                     is MessageBulkDeleteEvent -> modLog {
                         // TODO: There's a Flow<Message> we could use for something.
                         // I don't think outputting all the messages to the channel is a good idea, though.
+                        val event = event as MessageBulkDeleteEvent
 
-                        color = Colours.NEGATIVE
+                        color = Colors.NEGATIVE
                         title = "Bulk message delete"
 
-                        field { name = "Channel"; value = it.channel.mention; inline = true }
-                        field { name = "Count"; value = it.messageIds.size.toString(); inline = true }
+                        field { name = "Channel"; value = event.channel.mention; inline = true }
+                        field { name = "Count"; value = event.messageIds.size.toString(); inline = true }
                     }
 
                     is MessageDeleteEvent -> actionLog {
-                        color = Colours.NEGATIVE
+                        val event = event as MessageDeleteEvent
+
+                        color = Colors.NEGATIVE
                         title = "Message deleted"
 
-                        val message = it.message
+                        val message = event.message
 
                         if (message != null) {
                             description = message.content
@@ -296,8 +321,8 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                                 field { name = "Author"; value = "Unknown Author"; inline = true }
                             }
 
-                            field { name = "Channel"; value = it.channel.mention; inline = true }
-                            field { name = "Created"; value = instantToDisplay(it.messageId.timeStamp)!! }
+                            field { name = "Channel"; value = event.channel.mention; inline = true }
+                            field { name = "Created"; value = instantToDisplay(event.messageId.timeStamp)!! }
 
                             field { name = "Attachments"; value = message.attachments.size.toString(); inline = true }
                             field { name = "Embeds"; value = message.embeds.size.toString(); inline = true }
@@ -311,20 +336,22 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                         } else {
                             description = "_Message was not cached, so information about it is unavailable._"
 
-                            field { name = "Channel"; value = it.channel.mention }
-                            field { name = "Created"; value = instantToDisplay(it.messageId.timeStamp)!! }
+                            field { name = "Channel"; value = event.channel.mention }
+                            field { name = "Created"; value = instantToDisplay(event.messageId.timeStamp)!! }
                         }
 
-                        footer { text = it.messageId.value }
+                        footer { text = event.messageId.toString() }
                     }
 
-                    is MessageUpdateEvent -> if (it.getMessage().author != null) {
+                    is MessageUpdateEvent -> if ((event as MessageUpdateEvent).getMessage().author != null) {
+                        val event = event as MessageUpdateEvent
+
                         actionLog {
-                            color = Colours.BLURPLE
+                            color = Colors.BLURPLE
                             title = "Message edited"
 
-                            val old = it.old
-                            val new = it.getMessage()
+                            val old = event.old
+                            val new = event.getMessage()
 
                             field { name = "Author"; value = new.author!!.mention; inline = true }
                             field { name = "Channel"; value = new.channel.mention; inline = true }
@@ -368,88 +395,106 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                                 else -> "**__Message content not edited__**"
                             }
 
-                            footer { text = it.messageId.value }
+                            footer { text = "Author: ${new.author?.id ?: "Unknown"} Message Id: ${event.messageId}" }
                         }
                     }
 
                     is NewsChannelCreateEvent -> modLog {
-                        color = Colours.POSITIVE
+                        val event = event as NewsChannelCreateEvent
+
+                        color = Colors.POSITIVE
                         title = "News channel created"
 
-                        val category = it.channel.category
+                        val category = event.channel.category
 
                         if (category != null) {
                             field { name = "Category"; value = category.asChannel().name; inline = true }
                         }
 
-                        field { name = "Mention"; value = it.channel.mention; inline = true }
-                        field { name = "Name"; value = "#${it.channel.name}"; inline = true }
+                        field { name = "Mention"; value = event.channel.mention; inline = true }
+                        field { name = "Name"; value = "#${event.channel.name}"; inline = true }
 
-                        footer { text = it.channel.id.value }
+                        footer { text = event.channel.id.asString }
                     }
 
                     is NewsChannelDeleteEvent -> modLog {
-                        color = Colours.NEGATIVE
+                        val event = event as NewsChannelDeleteEvent
+
+                        color = Colors.NEGATIVE
                         title = "News channel deleted"
 
-                        val category = it.channel.category
+                        val category = event.channel.category
 
                         if (category != null) {
                             field { name = "Category"; value = category.asChannel().name; inline = true }
                         }
 
-                        field { name = "Channel"; value = "#${it.channel.name}"; inline = true }
+                        field { name = "Channel"; value = "#${event.channel.name}"; inline = true }
 
-                        footer { text = it.channel.id.value }
+                        footer { text = event.channel.id.asString }
                     }
 
-                    is ReactionRemoveAllEvent -> if (it.getMessage().author != null) {
+                    is ReactionRemoveAllEvent -> if ((event as ReactionRemoveAllEvent).getMessage().author != null) {
+                        val event = event as ReactionRemoveAllEvent
+
                         modLog {
-                            color = Colours.NEGATIVE
+                            color = Colors.NEGATIVE
                             title = "All reactions removed"
 
-                            val message = it.getMessage()
+                            val message = event.getMessage()
 
                             field { name = "Author"; value = message.author!!.mention; inline = true }
                             field { name = "Channel"; value = message.channel.mention; inline = true }
 
                             field { name = "Message"; value = message.getUrl() }
 
-                            footer { text = it.messageId.value }
+                            footer {
+                                text = "Author: ${message.author?.id ?: "Unknown"} Message Id: ${event.messageId}"
+                            }
                         }
                     }
 
-                    is ReactionRemoveEmojiEvent -> if (it.getMessage().author != null) {
+                    is ReactionRemoveEmojiEvent -> if (
+                        (event as ReactionRemoveEmojiEvent).getMessage().author != null
+                    ) {
+                        val event = event as ReactionRemoveEmojiEvent
+
                         modLog {
-                            color = Colours.NEGATIVE
+                            color = Colors.NEGATIVE
                             title = "All reactions removed"
 
-                            val message = it.getMessage()
+                            val message = event.getMessage()
 
                             field { name = "Author"; value = message.author!!.mention; inline = true }
                             field { name = "Channel"; value = message.channel.mention; inline = true }
-                            field { name = "Emoji"; value = it.emoji.mention; inline = true }
+                            field { name = "Emoji"; value = event.emoji.mention; inline = true }
 
                             field { name = "Message"; value = message.getUrl() }
 
-                            footer { text = it.messageId.value }
+                            footer {
+                                text = "Author: ${message.author?.id ?: "Unknown"} Message Id: ${event.messageId}"
+                            }
                         }
                     }
 
                     is RoleCreateEvent -> modLog {
-                        color = Colours.POSITIVE
+                        val event = event as RoleCreateEvent
+
+                        color = Colors.POSITIVE
                         title = "Role created"
 
-                        field { name = "Name"; value = it.role.name; inline = true }
+                        field { name = "Name"; value = event.role.name; inline = true }
 
-                        footer { text = it.role.id.value }
+                        footer { text = event.role.id.asString }
                     }
 
                     is RoleDeleteEvent -> modLog {
-                        color = Colours.NEGATIVE
+                        val event = event as RoleDeleteEvent
+
+                        color = Colors.NEGATIVE
                         title = "Role deleted"
 
-                        val role = it.role
+                        val role = event.role
 
                         if (role == null) {
                             description = "_Role was not cached, so information about it is unavailable._"
@@ -457,154 +502,166 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
                             field { name = "Name"; value = role.name; inline = true }
                         }
 
-                        footer { text = it.roleId.value }
+                        footer { text = event.roleId.toString() }
                     }
 
                     is StoreChannelCreateEvent -> modLog {
-                        color = Colours.POSITIVE
+                        val event = event as StoreChannelCreateEvent
+
+                        color = Colors.POSITIVE
                         title = "Store channel created"
 
-                        val category = it.channel.category
+                        val category = event.channel.category
 
                         if (category != null) {
                             field { name = "Category"; value = category.asChannel().name; inline = true }
                         }
 
-                        field { name = "Mention"; value = it.channel.mention; inline = true }
-                        field { name = "Name"; value = "#${it.channel.name}"; inline = true }
+                        field { name = "Mention"; value = event.channel.mention; inline = true }
+                        field { name = "Name"; value = "#${event.channel.name}"; inline = true }
 
-                        footer { text = it.channel.id.value }
+                        footer { text = event.channel.id.asString }
                     }
 
                     is StoreChannelDeleteEvent -> modLog {
-                        color = Colours.NEGATIVE
+                        val event = event as StoreChannelDeleteEvent
+
+                        color = Colors.NEGATIVE
                         title = "Store channel deleted"
 
-                        val category = it.channel.category
+                        val category = event.channel.category
 
                         if (category != null) {
                             field { name = "Category"; value = category.asChannel().name; inline = true }
                         }
 
-                        field { name = "Channel"; value = "#${it.channel.name}"; inline = true }
+                        field { name = "Channel"; value = "#${event.channel.name}"; inline = true }
 
-                        footer { text = it.channel.id.value }
+                        footer { text = event.channel.id.asString }
                     }
 
                     is TextChannelCreateEvent -> {
-                        val category = it.channel.category
+                        val event = event as TextChannelCreateEvent
+
+                        val category = event.channel.category
 
                         if (
-                                category == null ||
-                                category.id.longValue != config.getChannel(Channels.ACTION_LOG_CATEGORY).id.longValue
+                            category == null ||
+                            category.id != config.getChannel(Channels.ACTION_LOG_CATEGORY).id
                         ) {
                             modLog {
-                                color = Colours.POSITIVE
+                                color = Colors.POSITIVE
                                 title = "Text channel created"
 
                                 if (category != null) {
                                     field { name = "Category"; value = category.asChannel().name; inline = true }
                                 }
 
-                                field { name = "Mention"; value = it.channel.mention; inline = true }
-                                field { name = "Name"; value = "#${it.channel.name}"; inline = true }
+                                field { name = "Mention"; value = event.channel.mention; inline = true }
+                                field { name = "Name"; value = "#${event.channel.name}"; inline = true }
 
-                                footer { text = it.channel.id.value }
+                                footer { text = event.channel.id.asString }
                             }
                         }
                     }
 
                     is TextChannelDeleteEvent -> {
-                        val category = it.channel.category
+                        val event = event as TextChannelDeleteEvent
+
+                        val category = event.channel.category
 
                         if (
-                                category == null ||
-                                category.id.longValue != config.getChannel(Channels.ACTION_LOG_CATEGORY).id.longValue
+                            category == null ||
+                            category.id != config.getChannel(Channels.ACTION_LOG_CATEGORY).id
                         ) {
                             modLog {
-                                color = Colours.NEGATIVE
+                                color = Colors.NEGATIVE
                                 title = "Text channel deleted"
 
                                 if (category != null) {
                                     field { name = "Category"; value = category.asChannel().name; inline = true }
                                 }
 
-                                field { name = "Channel"; value = "#${it.channel.name}"; inline = true }
+                                field { name = "Channel"; value = "#${event.channel.name}"; inline = true }
 
-                                footer { text = it.channel.id.value }
+                                footer { text = event.channel.id.asString }
                             }
                         }
                     }
 
                     is VoiceChannelCreateEvent -> modLog {
-                        color = Colours.POSITIVE
+                        val event = event as VoiceChannelCreateEvent
+
+                        color = Colors.POSITIVE
                         title = "Voice channel created"
 
-                        val category = it.channel.category
+                        val category = event.channel.category
 
                         if (category != null) {
                             field { name = "Category"; value = category.asChannel().name; inline = true }
                         }
 
-                        field { name = "Mention"; value = it.channel.mention; inline = true }
+                        field { name = "Mention"; value = event.channel.mention; inline = true }
                         field { name = "Name"; value = ""; inline = true }
 
-                        footer { text = it.channel.id.value }
+                        footer { text = event.channel.id.asString }
                     }
 
                     is VoiceChannelDeleteEvent -> modLog {
-                        color = Colours.NEGATIVE
+                        val event = event as VoiceChannelDeleteEvent
+
+                        color = Colors.NEGATIVE
                         title = "Voice channel deleted"
 
-                        val category = it.channel.category
+                        val category = event.channel.category
 
                         if (category != null) {
                             field { name = "Category"; value = category.asChannel().name; inline = true }
                         }
 
-                        field { name = "Channel"; value = "#${it.channel.name}"; inline = true }
+                        field { name = "Channel"; value = "#${event.channel.name}"; inline = true }
 
-                        footer { text = it.channel.id.value }
+                        footer { text = event.channel.id.asString }
                     }
 
                     // We're not logging these events, they're either irrelevant or don't
                     // concern a guild. This is an explicit silencing, so we don't trigger
                     // an issue on Sentry.
-                    is CategoryUpdateEvent -> logger.debug { "Ignoring event: $it" }
-                    is ChannelPinsUpdateEvent -> logger.debug { "Ignoring event: $it" }
-                    is ConnectEvent -> logger.debug { "Ignoring event: $it" }
-                    is DMChannelCreateEvent -> logger.debug { "Ignoring event: $it" }
-                    is DMChannelDeleteEvent -> logger.debug { "Ignoring event: $it" }
-                    is DMChannelUpdateEvent -> logger.debug { "Ignoring event: $it" }
-                    is DisconnectEvent -> logger.debug { "Ignoring event: $it" }
-                    is EmojisUpdateEvent -> logger.debug { "Ignoring event: $it" }
-                    is GatewayEvent -> logger.debug { "Ignoring event: $it" }
-                    is GuildCreateEvent -> logger.debug { "Ignoring event: $it" }
-                    is GuildDeleteEvent -> logger.debug { "Ignoring event: $it" }
-                    is GuildUpdateEvent -> logger.debug { "Ignoring event: $it" }
-                    is IntegrationsUpdateEvent -> logger.debug { "Ignoring event: $it" }
-                    is MemberChunksEvent -> logger.debug { "Ignoring event: $it" }
-                    is MessageCreateEvent -> logger.debug { "Ignoring event: $it" }
-                    is NewsChannelUpdateEvent -> logger.debug { "Ignoring event: $it" }
-                    is PresenceUpdateEvent -> logger.debug { "Ignoring event: $it" }
-                    is ReactionAddEvent -> logger.debug { "Ignoring event: $it" }
-                    is ReactionRemoveEvent -> logger.debug { "Ignoring event: $it" }
-                    is ReadyEvent -> logger.debug { "Ignoring event: $it" }
-                    is ResumedEvent -> logger.debug { "Ignoring event: $it" }
-                    is RoleUpdateEvent -> logger.debug { "Ignoring event: $it" }
-                    is StoreChannelUpdateEvent -> logger.debug { "Ignoring event: $it" }
-                    is TextChannelUpdateEvent -> logger.debug { "Ignoring event: $it" }
-                    is TypingStartEvent -> logger.debug { "Ignoring event: $it" }
+                    is CategoryUpdateEvent -> logger.debug { "Ignoring event: $event" }
+                    is ChannelPinsUpdateEvent -> logger.debug { "Ignoring event: $event" }
+                    is ConnectEvent -> logger.debug { "Ignoring event: $event" }
+                    is DMChannelCreateEvent -> logger.debug { "Ignoring event: $event" }
+                    is DMChannelDeleteEvent -> logger.debug { "Ignoring event: $event" }
+                    is DMChannelUpdateEvent -> logger.debug { "Ignoring event: $event" }
+                    is DisconnectEvent -> logger.debug { "Ignoring event: $event" }
+                    is EmojisUpdateEvent -> logger.debug { "Ignoring event: $event" }
+                    is GatewayEvent -> logger.debug { "Ignoring event: $event" }
+                    is GuildCreateEvent -> logger.debug { "Ignoring event: $event" }
+                    is GuildDeleteEvent -> logger.debug { "Ignoring event: $event" }
+                    is GuildUpdateEvent -> logger.debug { "Ignoring event: $event" }
+                    is IntegrationsUpdateEvent -> logger.debug { "Ignoring event: $event" }
+                    is MembersChunkEvent -> logger.debug { "Ignoring event: $event" }
+                    is MessageCreateEvent -> logger.debug { "Ignoring event: $event" }
+                    is NewsChannelUpdateEvent -> logger.debug { "Ignoring event: $event" }
+                    is PresenceUpdateEvent -> logger.debug { "Ignoring event: $event" }
+                    is ReactionAddEvent -> logger.debug { "Ignoring event: $event" }
+                    is ReactionRemoveEvent -> logger.debug { "Ignoring event: $event" }
+                    is ReadyEvent -> logger.debug { "Ignoring event: $event" }
+                    is ResumedEvent -> logger.debug { "Ignoring event: $event" }
+                    is RoleUpdateEvent -> logger.debug { "Ignoring event: $event" }
+                    is StoreChannelUpdateEvent -> logger.debug { "Ignoring event: $event" }
+                    is TextChannelUpdateEvent -> logger.debug { "Ignoring event: $event" }
+                    is TypingStartEvent -> logger.debug { "Ignoring event: $event" }
                     is UserUpdateEvent -> { /* We have more specific handling for this event below. */
                     }
-                    is VoiceChannelUpdateEvent -> logger.debug { "Ignoring event: $it" }
-                    is VoiceServerUpdateEvent -> logger.debug { "Ignoring event: $it" }
-                    is VoiceStateUpdateEvent -> logger.debug { "Ignoring event: $it" }
-                    is WebhookUpdateEvent -> logger.debug { "Ignoring event: $it" }
+                    is VoiceChannelUpdateEvent -> logger.debug { "Ignoring event: $event" }
+                    is VoiceServerUpdateEvent -> logger.debug { "Ignoring event: $event" }
+                    is VoiceStateUpdateEvent -> logger.debug { "Ignoring event: $event" }
+                    is WebhookUpdateEvent -> logger.debug { "Ignoring event: $event" }
 
                     // This is an event we haven't accounted for that we may or
                     // may not want to log.
-                    else -> logger.warn { "Unknown event: $it" }
+                    else -> logger.warn { "Unknown event: $event" }
                 }
             }
         }
@@ -613,7 +670,7 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
             check(::isNotBot)
 
             action {
-                with(it) {
+                with(event) {
                     val guild = config.getGuild()
 
                     if (guild.getMemberOrNull(user.id) == null) {
@@ -661,9 +718,9 @@ class LoggingExtension(bot: ExtensibleBot) : Extension(bot) {
 
                             footer {
                                 text = if (delta == null) {
-                                    "Not cached: ${user.id.longValue}"
+                                    "Not cached: ${user.id.asString}"
                                 } else {
-                                    user.id.value
+                                    user.id.asString
                                 }
                             }
 

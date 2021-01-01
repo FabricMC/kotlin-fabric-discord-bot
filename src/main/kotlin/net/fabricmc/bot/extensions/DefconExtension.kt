@@ -1,7 +1,7 @@
 package net.fabricmc.bot.extensions
 
-import com.gitlab.kordlib.core.event.gateway.ReadyEvent
-import com.gitlab.kordlib.core.event.guild.MemberJoinEvent
+import dev.kord.core.event.gateway.ReadyEvent
+import dev.kord.core.event.guild.MemberJoinEvent
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import com.kotlindiscord.kord.extensions.checks.inGuild
 import com.kotlindiscord.kord.extensions.checks.topRoleHigherOrEqual
@@ -11,12 +11,13 @@ import com.kotlindiscord.kord.extensions.extensions.Extension
 import com.kotlindiscord.kord.extensions.utils.dm
 import com.kotlindiscord.kord.extensions.utils.respond
 import net.fabricmc.bot.conf.config
-import net.fabricmc.bot.constants.Colours
+import net.fabricmc.bot.constants.Colors
 import net.fabricmc.bot.defaultCheck
 import net.fabricmc.bot.enums.Roles
 import net.fabricmc.bot.extensions.infractions.instantToDisplay
-import net.fabricmc.bot.isNew
+import net.fabricmc.bot.utils.isNew
 import net.fabricmc.bot.utils.alert
+import net.fabricmc.bot.utils.readable
 
 private const val KICK_MESSAGE = "" +
         "Hello, thanks for joining the server!\n\n" +
@@ -48,19 +49,18 @@ class DefconExtension(bot: ExtensibleBot) : Extension(bot) {
             check { it.member.isNew() }
 
             action {
-                it.member.dm(KICK_MESSAGE)
-                it.member.kick("DEFCON enforcement")
+                event.member.dm(KICK_MESSAGE)
+                event.member.kick("DEFCON enforcement")
 
                 alert(false) {
                     title = "DEFCON enforcement"
                     description = "Prevented a user from joining as their account was created within the last " +
                             "three days.\n\n" +
 
-                            "**User ID:** `${it.member.id.longValue}`\n" +
-                            "**User tag:** `${it.member.tag}`\n" +
-                            "**Creation date:** `${instantToDisplay(it.member.id.timeStamp)}`"
+                            "**User:** `${event.member.readable()}`\n" +
+                            "**Creation date:** `${instantToDisplay(event.member.id.timeStamp)}`"
 
-                    color = Colours.NEGATIVE
+                    color = Colors.NEGATIVE
                 }
             }
         }
@@ -86,19 +86,19 @@ class DefconExtension(bot: ExtensibleBot) : Extension(bot) {
                 with(parse(::DefconArguments)) {
                     if (enable == null) {
                         message.respond(
-                                "Defcon status: **${statusText(isEnabled).capitalize()}**"
+                                "DEFCON status: **${statusText(isEnabled).capitalize()}**"
                         )
 
                         return@action
                     }
 
                     if (enable == isEnabled) {
-                        message.respond("Defcon is already ${statusText(isEnabled)}.")
+                        message.respond("DEFCON is already ${statusText(isEnabled)}.")
                     }
 
                     isEnabled = enable!!
 
-                    message.respond("Defcon is now ${statusText(isEnabled)}.")
+                    message.respond("DEFCON is now ${statusText(isEnabled)}.")
                 }
             }
         }

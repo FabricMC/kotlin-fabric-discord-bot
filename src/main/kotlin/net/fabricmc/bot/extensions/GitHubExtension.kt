@@ -1,11 +1,11 @@
 package net.fabricmc.bot.extensions
 
-import com.gitlab.kordlib.core.behavior.channel.createEmbed
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import com.kotlindiscord.kord.extensions.checks.topRoleHigherOrEqual
 import com.kotlindiscord.kord.extensions.commands.converters.string
 import com.kotlindiscord.kord.extensions.commands.parser.Arguments
 import com.kotlindiscord.kord.extensions.extensions.Extension
+import com.kotlindiscord.kord.extensions.utils.respond
 import io.ktor.client.HttpClient
 import io.ktor.client.features.defaultRequest
 import io.ktor.client.request.*
@@ -14,7 +14,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.encodeURLPath
 import net.fabricmc.bot.conf.config
-import net.fabricmc.bot.constants.Colours
+import net.fabricmc.bot.constants.Colors
 import net.fabricmc.bot.defaultCheck
 import net.fabricmc.bot.enums.Roles
 import net.fabricmc.bot.utils.requireMainGuild
@@ -56,9 +56,11 @@ class GitHubExtension(bot: ExtensibleBot) : Extension(bot) {
 
                     with(parse(::GithubUserArgs)) {
                         if (isBlocked(user)) {
-                            message.channel.createEmbed {
-                                title = "$user is already blocked."
-                                color = Colours.NEGATIVE
+                            message.respond {
+                                embed {
+                                    title = "$user is already blocked."
+                                    color = Colors.NEGATIVE
+                                }
                             }
                         }
 
@@ -67,9 +69,11 @@ class GitHubExtension(bot: ExtensibleBot) : Extension(bot) {
                         }
 
                         if (resp.status == HttpStatusCode.NoContent) {
-                            message.channel.createEmbed {
-                                title = "$user has been blocked from the ${config.githubOrganization} organization."
-                                color = Colours.POSITIVE
+                            message.respond {
+                                embed {
+                                    title = "$user has been blocked from the ${config.githubOrganization} organization."
+                                    color = Colors.POSITIVE
+                                }
                             }
                         }
                     }
@@ -89,9 +93,11 @@ class GitHubExtension(bot: ExtensibleBot) : Extension(bot) {
 
                     with(parse(::GithubUserArgs)) {
                         if (!isBlocked(user)) {
-                            message.channel.createEmbed {
-                                title = "$user is not blocked."
-                                color = Colours.NEGATIVE
+                            message.respond {
+                                embed {
+                                    title = "$user is not blocked."
+                                    color = Colors.NEGATIVE
+                                }
                             }
                         }
 
@@ -100,9 +106,12 @@ class GitHubExtension(bot: ExtensibleBot) : Extension(bot) {
                         }
 
                         if (resp.status == HttpStatusCode.NoContent) {
-                            message.channel.createEmbed {
-                                title = "$user has been unblocked from the ${config.githubOrganization} organization."
-                                color = Colours.POSITIVE
+                            message.respond {
+                                embed {
+                                    title = "$user has been unblocked from the ${config.githubOrganization} " +
+                                            "organization."
+                                    color = Colors.POSITIVE
+                                }
                             }
                         }
                     }

@@ -6,8 +6,11 @@ import io.ktor.client.features.json.JsonFeature
 import io.ktor.client.features.json.serializer.KotlinxSerializer
 import io.ktor.client.request.get
 import io.ktor.client.request.request
+import io.sentry.Breadcrumb
+import io.sentry.SentryLevel
 import kotlinx.serialization.json.Json
 import mu.KotlinLogging
+import net.fabricmc.bot.bot
 import net.fabricmc.bot.conf.config
 import net.fabricmc.mapping.tree.*
 import java.net.URLEncoder
@@ -74,8 +77,11 @@ class MappingsManager {
      * @param query Class name to match against
      * @return List of mappings results, or null if there's no matching Yarn version for the given Minecraft version
      */
-    suspend fun getClassMappings(minecraftVersion: String, query: String): List<MappingsResult>? {
-        val mappings = openMappings(minecraftVersion) ?: return null
+    suspend fun getClassMappings(
+            breadcrumbs: MutableList<Breadcrumb>?,
+            minecraftVersion: String, query: String
+    ): List<MappingsResult>? {
+        val mappings = openMappings(breadcrumbs, minecraftVersion) ?: return null
         val rewrittenQuery = preProcessClassQuery(query)
 
         return mappings.classes
@@ -87,9 +93,9 @@ class MappingsManager {
     /**
      * Preprocesses a class mapping query, adapting the query value to make more ergonomic lookups possible.
      *
-     * For allowing more ergonomic lookup of methods, we allow several parsing cases.
+     * For allowing more ergonomic lookup of classes, we allow several parsing cases.
      * More preprocessing cases may be added in the future.
-     * Methods may be specified as shown below:
+     * Classes may be specified as shown below:
      *
      * Obfuscated: aac
      *
@@ -114,8 +120,11 @@ class MappingsManager {
      * @param query Method name to match against
      * @return List of mappings results, or null if there's no matching Yarn version for the given Minecraft version
      */
-    suspend fun getMethodMappings(minecraftVersion: String, query: String): List<MappingsResult>? {
-        val mappings = openMappings(minecraftVersion) ?: return null
+    suspend fun getMethodMappings(
+            breadcrumbs: MutableList<Breadcrumb>?,
+            minecraftVersion: String, query: String
+    ): List<MappingsResult>? {
+        val mappings = openMappings(breadcrumbs, minecraftVersion) ?: return null
 
         return getMappingsResults(mappings, preProcessMethodQuery(query), ClassDef::getMethods)
     }
@@ -150,8 +159,11 @@ class MappingsManager {
      * @param query Field name to match against
      * @return List of mappings results, or null if there's no matching Yarn version for the given Minecraft version
      */
-    suspend fun getFieldMappings(minecraftVersion: String, query: String): List<MappingsResult>? {
-        val mappings = openMappings(minecraftVersion) ?: return null
+    suspend fun getFieldMappings(
+            breadcrumbs: MutableList<Breadcrumb>?,
+            minecraftVersion: String, query: String
+    ): List<MappingsResult>? {
+        val mappings = openMappings(breadcrumbs, minecraftVersion) ?: return null
 
         return getMappingsResults(mappings, preProcessFieldQuery(query), ClassDef::getFields)
     }
@@ -199,7 +211,7 @@ class MappingsManager {
      * @param release Release version to cache
      * @param snapshot Snapshot version to cache
      */
-    suspend fun cacheMappings(release: String, snapshot: String) {
+    suspend fun cacheMappings(breadcrumbs: MutableList<Breadcrumb>?, release: String, snapshot: String) {
         val releaseYarnVersion = getLatestYarnVersion(release)
         val snapshotYarnVersion = getLatestYarnVersion(snapshot)
 
@@ -217,7 +229,7 @@ class MappingsManager {
             logger.debug { "Caching release version: $release" }
 
             if (releaseYarnVersion != null) {
-                var releaseVersion = openMappings(release)
+                var releaseVersion = openMappings(breadcrumbs, release)
 
                 if (releaseVersion == null) {
                     logger.warn { "No mappings found for release version: $release" }
@@ -241,7 +253,7 @@ class MappingsManager {
             logger.debug { "Caching snapshot version: $snapshot" }
 
             if (snapshotYarnVersion != null) {
-                var snapshotVersion = openMappings(snapshot)
+                var snapshotVersion = openMappings(breadcrumbs, snapshot)
 
                 if (snapshotVersion == null) {
                     logger.warn { "No mappings found for snapshot version: $snapshot" }
@@ -267,7 +279,7 @@ class MappingsManager {
      *
      * @param minecraftVersion Minecraft version to retrieve mappings for
      */
-    suspend fun openMappings(minecraftVersion: String): TinyTree? {
+    suspend fun openMappings(breadcrumbs: MutableList<Breadcrumb>?, minecraftVersion: String): TinyTree? {
         val latestVersion = getLatestYarnVersion(minecraftVersion) ?: return null
 
         if (versionCache.containsKey(minecraftVersion)) {
@@ -278,6 +290,13 @@ class MappingsManager {
         val jarPath = cacheDir.resolve("$latestVersion.jar")
 
         if (!Files.exists(tinyPath)) {
+            breadcrumbs?.add(bot.sentry.createBreadcrumb(
+                    category = "mappings",
+                    level = SentryLevel.DEBUG,
+
+                    message = "Resolve mappings for version $minecraftVersion"
+            ))
+
             val response = client.request<ByteArray>(
                     config.mappings.mavenUrl.replace("{VERSION}", latestVersion)
             )
@@ -298,6 +317,13 @@ class MappingsManager {
 
         @Suppress("BlockingMethodInNonBlockingContext")
         return runSuspended {  // This will be run in an I/O thread
+            breadcrumbs?.add(bot.sentry.createBreadcrumb(
+                    category = "mappings",
+                    level = SentryLevel.DEBUG,
+
+                    message = "Reading mappings for version $minecraftVersion"
+            ))
+
             Files.newBufferedReader(tinyPath, UTF_8).use {
                 TinyMappingFactory.loadWithDetection(it)
             }
@@ -335,7 +361,7 @@ suspend fun outputClassMappings(manager: MappingsManager, mcVersion: String, que
     println("\nGetting mappings: MC $mcVersion / $query \n")
 
     outputMappings(
-            manager.getClassMappings(mcVersion, query) ?: listOf()
+            manager.getClassMappings(null, mcVersion, query) ?: listOf()
     )
 }
 
@@ -344,7 +370,7 @@ suspend fun outputMethodMappings(manager: MappingsManager, mcVersion: String, qu
     println("\nGetting mappings: MC $mcVersion / $query \n")
 
     outputMappings(
-            manager.getMethodMappings(mcVersion, query) ?: listOf()
+            manager.getMethodMappings(null, mcVersion, query) ?: listOf()
     )
 }
 
@@ -353,7 +379,7 @@ suspend fun outputFieldMappings(manager: MappingsManager, mcVersion: String, que
     println("\nGetting mappings: MC $mcVersion / $query \n")
 
     outputMappings(
-            manager.getFieldMappings(mcVersion, query) ?: listOf()
+            manager.getFieldMappings(null, mcVersion, query) ?: listOf()
     )
 }
 

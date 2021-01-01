@@ -1,14 +1,15 @@
 package net.fabricmc.bot.extensions.filter
 
-import com.gitlab.kordlib.common.entity.ChannelType
-import com.gitlab.kordlib.core.entity.Message
-import com.gitlab.kordlib.core.entity.User
-import com.gitlab.kordlib.core.entity.channel.Channel
-import com.gitlab.kordlib.core.event.message.MessageCreateEvent
-import com.gitlab.kordlib.core.event.message.MessageUpdateEvent
+import dev.kord.common.entity.ChannelType
+import dev.kord.core.entity.Message
+import dev.kord.core.entity.User
+import dev.kord.core.entity.channel.Channel
+import dev.kord.core.event.message.MessageCreateEvent
+import dev.kord.core.event.message.MessageUpdateEvent
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import com.kotlindiscord.kord.extensions.utils.deleteIgnoringNotFound
 import com.kotlindiscord.kord.extensions.utils.getUrl
+import net.fabricmc.bot.utils.readable
 import org.nibor.autolink.LinkExtractor
 import org.nibor.autolink.LinkType
 
@@ -124,7 +125,7 @@ class UrlFilter(bot: ExtensibleBot) : Filter(bot) {
         }
 
         return "Domain filter triggered by " +
-                "${user.mention} (`${user.id.value}`) $channelMessage, " +
+                "${user.readable()} $channelMessage, " +
                 "with $jumpMessage:\n\n" +
                 message.content
     }

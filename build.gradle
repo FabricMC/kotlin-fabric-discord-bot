@@ -35,8 +35,13 @@ repositories {
     }
 
     maven {
-        name = 'KotDis'
+        name = 'KotDis Snapshots'
         url = 'https://maven.kotlindiscord.com/repository/maven-snapshots/'
+    }
+
+    maven {
+        name = 'KotDis Releases'
+        url = 'https://maven.kotlindiscord.com/repository/maven-releases/'
     }
 
     maven {
@@ -60,7 +65,7 @@ dependencies {
     implementation 'org.jetbrains.kotlin:kotlin-reflect'
 
     // Kord Extensions framework
-    implementation 'com.kotlindiscord.kord.extensions:kord-extensions:1.3-SNAPSHOT'
+    implementation 'com.kotlindiscord.kord.extensions:kord-extensions:1.4.0-RC2'
 
     // Config framework
     implementation 'com.uchuhimo:konf:0.23.0'
@@ -70,6 +75,7 @@ dependencies {
     implementation 'ch.qos.logback:logback-classic:1.2.3'
     implementation 'io.github.microutils:kotlin-logging:2.0.3'
     implementation 'org.codehaus.groovy:groovy:3.0.4'  // For logback config
+    implementation 'io.sentry:sentry-logback:3.2.0'
 
     // Guava
     implementation "com.google.guava:guava:29.0-jre"
@@ -91,8 +97,8 @@ dependencies {
     implementation 'net.fabricmc:tiny-mappings-parser:+'
 
     // HTTP (Already used by kord)
-    implementation 'io.ktor:ktor-http:1.4.0'
-    implementation 'io.ktor:ktor-client-cio:1.4.0'
+    implementation 'io.ktor:ktor-http:1.4.1'
+    implementation 'io.ktor:ktor-client-cio:1.4.1'
 
     // Memoization
     implementation 'com.github.aballano:mnemonik:2.0.1'
@@ -134,13 +140,19 @@ jar {
     }
 }
 
+tasks.withType(JavaCompile).configureEach {
+    // The bot requires JDK11. Make sure binaries are built for 11
+    if (JavaVersion.current().isJava12Compatible()) {
+        it.options.release = 11
+    }
+}
+
 compileKotlin.configure {
     dependsOn "generateMainFabricBotDBMigrations"
 }
 
 compileKotlin {
     kotlinOptions.freeCompilerArgs = [
-            "-XXLanguage:+NewInference",
             "-Xopt-in=kotlin.RequiresOptIn"
     ]
 }
@@ -151,12 +163,18 @@ processResources {
     from "src/main/resources/build.properties"
 }
 
+// https://gist.github.com/JonasGroeger/7620911
+static def gitHash() {
+    'git rev-parse --verify --short HEAD'.execute().text.trim()
+}
+
 task generateBuildInfo() {
     outputs.files "src/main/resources/build.properties"
 
     doLast {
         new File("src/main/resources/build.properties").text = """
             version=$project.version
+            commit=${gitHash()}
         """.stripIndent().strip()
     }
 }

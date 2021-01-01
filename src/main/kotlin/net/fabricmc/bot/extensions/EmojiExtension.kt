@@ -1,11 +1,12 @@
 package net.fabricmc.bot.extensions
 
-import com.gitlab.kordlib.core.entity.GuildEmoji
-import com.gitlab.kordlib.core.event.gateway.ReadyEvent
-import com.gitlab.kordlib.core.event.guild.EmojisUpdateEvent
+import dev.kord.core.entity.GuildEmoji
+import dev.kord.core.event.gateway.ReadyEvent
+import dev.kord.core.event.guild.EmojisUpdateEvent
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import com.kotlindiscord.kord.extensions.checks.inGuild
 import com.kotlindiscord.kord.extensions.extensions.Extension
+import kotlinx.coroutines.flow.toSet
 import net.fabricmc.bot.conf.config
 import net.fabricmc.bot.enums.Emojis
 
@@ -43,7 +44,7 @@ class EmojiExtension(bot: ExtensibleBot) : Extension(bot) {
                 val emojiGuild = config.getEmojiGuild()
                 emojis.clear()
 
-                populateEmojis(emojiGuild.emojis)
+                populateEmojis(emojiGuild.emojis.toSet())
             }
         }
 
@@ -51,7 +52,7 @@ class EmojiExtension(bot: ExtensibleBot) : Extension(bot) {
             check(inGuild(config.getEmojiGuild()))
 
             action {
-                populateEmojis(it.emojis)
+                populateEmojis(event.emojis)
             }
         }
     }

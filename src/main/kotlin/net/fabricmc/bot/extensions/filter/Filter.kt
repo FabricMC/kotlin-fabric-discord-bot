@@ -1,10 +1,10 @@
 package net.fabricmc.bot.extensions.filter
 
-import com.gitlab.kordlib.core.entity.Message
-import com.gitlab.kordlib.core.entity.channel.GuildMessageChannel
-import com.gitlab.kordlib.core.event.message.MessageCreateEvent
-import com.gitlab.kordlib.core.event.message.MessageUpdateEvent
-import com.gitlab.kordlib.rest.builder.message.MessageCreateBuilder
+import dev.kord.core.entity.Message
+import dev.kord.core.entity.channel.GuildMessageChannel
+import dev.kord.core.event.message.MessageCreateEvent
+import dev.kord.core.event.message.MessageUpdateEvent
+import dev.kord.rest.builder.message.MessageCreateBuilder
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import com.kotlindiscord.kord.extensions.utils.deleteWithDelay
 import com.kotlindiscord.kord.extensions.utils.dm

@@ -22,9 +22,43 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.CR_PAT }}
 
+      - name: Sentry Release
+
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+          SENTRY_URL: ${{ secrets.SENTRY_URL }}
+
+        run: |
+          curl -sL https://sentry.io/get-cli/ | bash
+
+          export SENTRY_RELEASE=$(sentry-cli releases propose-version)
+
+          echo Release: $SENTRY_RELEASE
+          echo Project: $SENTRY_PROJECT
+
+          sentry-cli releases new $SENTRY_RELEASE --project $SENTRY_PROJECT
+          sentry-cli releases set-commits --auto $SENTRY_RELEASE
+          sentry-cli releases finalize $SENTRY_RELEASE
+
       - run: docker build -t ghcr.io/fabricmc/fabric-discord-bot:latest -t ghcr.io/fabricmc/fabric-discord-bot:${GITHUB_SHA} .
       - run: docker push ghcr.io/fabricmc/fabric-discord-bot:latest
       - run: docker push ghcr.io/fabricmc/fabric-discord-bot:${GITHUB_SHA}
+      - name: Finalize Sentry
+
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+          SENTRY_URL: ${{ secrets.SENTRY_URL }}
+
+
+        run: |
+          export SENTRY_RELEASE=$(sentry-cli releases propose-version)
+
+          sentry-cli releases deploys $SENTRY_RELEASE new -e production
+          sentry-cli releases finalize $SENTRY_RELEASE
 
   tags:
     runs-on: ubuntu-20.04

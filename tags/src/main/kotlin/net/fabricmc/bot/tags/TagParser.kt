@@ -3,6 +3,8 @@ package net.fabricmc.bot.tags
 import com.charleskorn.kaml.PolymorphismStyle
 import com.charleskorn.kaml.Yaml
 import com.charleskorn.kaml.YamlConfiguration
+import dev.kord.common.entity.optional.Optional
+import dev.kord.common.entity.optional.OptionalInt
 import mu.KotlinLogging
 import java.io.File
 import java.nio.file.Path
@@ -120,7 +122,7 @@ class TagParser(private val rootPath: String) {
 
         val content = file.readText().replace("\r", "")
 
-        var yaml: String = ""
+        var yaml = ""
         var markdown: String? = null
 
         if (!content.contains(SEPARATOR)) {
@@ -146,18 +148,18 @@ class TagParser(private val rootPath: String) {
                 "Tag '$name' is an alias tag, but it contains Markdown content. Please consider removing it."
             }
         } else if (tagData is EmbedTag) {
-            if (tagData.embed.color != null) {
+            if (tagData.embed.color is OptionalInt.Value) {
                 logger.error {
-                    "Embed tag '$name' has the colour property set in the embed object. Set it at root level instead."
+                    "Embed tag '$name' has the color property set in the embed object. Set it at root level instead."
                 }
                 return Pair(
                         null,
-                        "Embed tag '$name' has the colour property set in the embed object. " +
+                        "Embed tag '$name' has the color property set in the embed object. " +
                                 "Set it at root level instead."
                 )
             }
 
-            if (tagData.embed.description != null) {
+            if (tagData.embed.description is Optional.Value) {
                 logger.error {
                     "Embed tag '$name' has the description property set in the embed object. " +
                             "Markdown content should instead be provided after the separator, '---'."

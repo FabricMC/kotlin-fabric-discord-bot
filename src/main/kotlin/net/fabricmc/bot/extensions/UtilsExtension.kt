@@ -1,14 +1,13 @@
 package net.fabricmc.bot.extensions
 
-import com.gitlab.kordlib.common.entity.GuildFeature
-import com.gitlab.kordlib.common.entity.Snowflake
-import com.gitlab.kordlib.common.entity.Status
-import com.gitlab.kordlib.core.behavior.channel.createEmbed
-import com.gitlab.kordlib.core.entity.channel.Category
-import com.gitlab.kordlib.core.entity.channel.NewsChannel
-import com.gitlab.kordlib.core.entity.channel.TextChannel
-import com.gitlab.kordlib.core.entity.channel.VoiceChannel
-import com.gitlab.kordlib.rest.Image
+import dev.kord.common.entity.GuildFeature
+import dev.kord.common.entity.Snowflake
+import dev.kord.common.entity.PresenceStatus
+import dev.kord.core.entity.channel.Category
+import dev.kord.core.entity.channel.NewsChannel
+import dev.kord.core.entity.channel.TextChannel
+import dev.kord.core.entity.channel.VoiceChannel
+import dev.kord.rest.Image
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import com.kotlindiscord.kord.extensions.checks.topRoleHigherOrEqual
 import com.kotlindiscord.kord.extensions.commands.converters.optionalNumber
@@ -17,9 +16,10 @@ import com.kotlindiscord.kord.extensions.commands.parser.Arguments
 import com.kotlindiscord.kord.extensions.extensions.Extension
 import com.kotlindiscord.kord.extensions.utils.*
 import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.flow.toSet
 import net.fabricmc.bot.*
 import net.fabricmc.bot.conf.config
-import net.fabricmc.bot.constants.Colours
+import net.fabricmc.bot.constants.Colors
 import net.fabricmc.bot.enums.Emojis
 import net.fabricmc.bot.enums.InfractionTypes
 import net.fabricmc.bot.enums.Roles
@@ -30,6 +30,8 @@ import net.fabricmc.bot.utils.requireBotChannel
 import java.time.Instant
 
 private const val DELETE_DELAY = 10_000L  // 10 seconds
+private const val LATEST_EMOJI_COUNT = 6
+private const val LATEST_EMOJI_CHUNK_BY = 3
 
 /**
  * Extension providing useful utility commands.
@@ -56,7 +58,7 @@ class UtilsExtension(bot: ExtensibleBot) : Extension(bot) {
                         }
 
                         val isModerator = topRoleHigherOrEqual(config.getRole(Roles.TRAINEE_MODERATOR))(event)
-                        var (memberId, memberMessage) = getMemberId(user, userId)
+                        var (memberId, _) = getMemberId(user, userId?.let { Snowflake(it) })
 
                         if (memberId == null) {
                             memberId = message.data.authorId
@@ -70,7 +72,16 @@ class UtilsExtension(bot: ExtensibleBot) : Extension(bot) {
                             return@runSuspended
                         }
 
-                        val member = config.getGuild().getMemberOrNull(Snowflake(memberId))
+                        breadcrumb(
+                            category = "command.user",
+                            type = "debug",
+
+                            message = "Retrieving member info",
+
+                            data = mapOf("member.id" to memberId.asString)
+                        )
+
+                        val member = config.getGuild().getMemberOrNull(memberId)
 
                         if (member == null) {
                             message.deleteWithDelay(DELETE_DELAY)
@@ -79,46 +90,70 @@ class UtilsExtension(bot: ExtensibleBot) : Extension(bot) {
                             return@runSuspended
                         }
 
-                        val infractions = config.db.infractionQueries.getActiveInfractionsByUser(memberId)
+                        breadcrumb(
+                            category = "command.user",
+                            type = "debug",
+
+                            message = "Retrieving infractions for member",
+                            data = mapOf(
+                                "member.tag" to member.tag
+                            )
+                        )
+
+                        val infractions = config.db.infractionQueries.getActiveInfractionsByUser(memberId.value)
                                 .executeAsList().filter { it.infraction_type != InfractionTypes.NOTE }
 
                         val activeInfractions = infractions.count { it.active }
-
                         val roles = member.roles.toList()
 
-                        message.channel.createEmbed {
-                            title = "User info: ${member.tag}"
+                        breadcrumb(
+                            category = "command.user",
+                            type = "debug",
 
-                            color = member.getTopRole()?.color ?: Colours.BLURPLE
+                            message = "Sending response",
 
-                            description = "**ID:** `$memberId`\n" +
-                                    "**Status:** ${member.getStatusEmoji()}\n"
+                            data = mapOf(
+                                "member.roles" to roles.size,
+                                "member.infractions.non-note" to infractions.size,
+                                "member.infractions.active" to activeInfractions
+                            )
+                        )
 
-                            if (member.nickname != null) {
-                                description += "**Nickname:** ${member.nickname}\n"
+                        message.respond {
+                            embed {
+                                title = "User info: ${member.tag}"
+
+                                color = member.getTopRole()?.color ?: Colors.BLURPLE
+
+                                description = "**ID:** `${memberId.value}`\n" +
+                                        "**Status:** ${member.getStatusEmoji()}\n"
+
+                                if (member.nickname != null) {
+                                    description += "**Nickname:** ${member.nickname}\n"
+                                }
+
+                                description += "\n" +
+                                        "**Created at:** ${instantToDisplay(member.createdAt)}\n" +
+                                        "**Joined at:** ${instantToDisplay(member.joinedAt)}"
+
+                                if (infractions.isNotEmpty()) {
+                                    description += "\n\n" +
+
+                                            "**Infractions:** ${infractions.size} (${activeInfractions} active)"
+                                }
+
+                                if (roles.isNotEmpty()) {
+                                    description += "\n\n" +
+
+                                            "**Roles:** " +
+                                            roles.sortedBy { it.rawPosition }
+                                                    .reversed()
+                                                    .joinToString(" ") { it.mention }
+                                }
+
+                                thumbnail { url = member.avatar.url }
+                                timestamp = Instant.now()
                             }
-
-                            description += "\n" +
-                                    "**Created at:** ${instantToDisplay(member.createdAt)}\n" +
-                                    "**Joined at:** ${instantToDisplay(member.joinedAt)}"
-
-                            if (infractions.isNotEmpty()) {
-                                description += "\n\n" +
-
-                                        "**Infractions:** ${infractions.size} (${activeInfractions} active)"
-                            }
-
-                            if (roles.isNotEmpty()) {
-                                description += "\n\n" +
-
-                                        "**Roles:** " +
-                                        roles.sortedBy { it.rawPosition }
-                                                .reversed()
-                                                .joinToString(" ") { it.mention }
-                            }
-
-                            thumbnail { url = member.avatar.url }
-                            timestamp = Instant.now()
                         }
                     }
                 }
@@ -141,6 +176,18 @@ class UtilsExtension(bot: ExtensibleBot) : Extension(bot) {
                 val guild = config.getGuild()
                 val members = guild.members.toList()
 
+                breadcrumb(
+                    category = "command.server",
+                    type = "debug",
+
+                    message = "Retrieving guild information",
+                    data = mapOf(
+                        "guild.name" to guild.name,
+                        "guild.id" to guild.id.asString,
+                        "guild.members" to members.size
+                    )
+                )
+
                 val iconUrl = guild.getIconUrl(Image.Format.PNG)
 
                 val emojiAway = EmojiExtension.getEmoji(Emojis.STATUS_AWAY)
@@ -148,11 +195,11 @@ class UtilsExtension(bot: ExtensibleBot) : Extension(bot) {
                 val emojiOffline = EmojiExtension.getEmoji(Emojis.STATUS_OFFLINE)
                 val emojiOnline = EmojiExtension.getEmoji(Emojis.STATUS_ONLINE)
 
-                val statuses: MutableMap<Status, Long> = mutableMapOf(
-                        Status.Idle to 0,
-                        Status.DnD to 0,
-                        Status.Offline to 0,
-                        Status.Online to 0,
+                val statuses: MutableMap<PresenceStatus, Long> = mutableMapOf(
+                        PresenceStatus.Idle to 0,
+                        PresenceStatus.DoNotDisturb to 0,
+                        PresenceStatus.Offline to 0,
+                        PresenceStatus.Online to 0,
                 )
 
                 val presences = guild.presences.toList()
@@ -161,7 +208,7 @@ class UtilsExtension(bot: ExtensibleBot) : Extension(bot) {
                     statuses[it.status] = statuses[it.status]!!.plus(1)
                 }
 
-                val offline = members.size - presences.size + statuses[Status.Offline]!!
+                val offline = members.size - presences.size + statuses[PresenceStatus.Offline]!!
 
                 val channels: MutableMap<String, Long> = mutableMapOf(
                         "Category" to 0,
@@ -181,67 +228,106 @@ class UtilsExtension(bot: ExtensibleBot) : Extension(bot) {
                     }
                 }
 
-                val newestEmoji = guild.emojis.sortedBy { it.id.timeStamp }.lastOrNull()
+                val newestEmojis = guild.emojis.toList().sortedBy { it.id.timeStamp }.take(LATEST_EMOJI_COUNT)
+                val totalEmojis = guild.emojis.toSet().size
 
-                message.channel.createEmbed {
-                    title = guild.name
-                    color = Colours.BLURPLE
-                    timestamp = Instant.now()
+                val created = instantToDisplay(guild.id.timeStamp)
 
-                    description = "**Created:** ${instantToDisplay(guild.id.timeStamp)}\n" +
-                            "**Owner:** ${guild.owner.mention}\n" +
-                            "**Roles:** ${guild.roleIds.size}\n" +
-                            "**Voice Region:** ${guild.data.region}"
+                breadcrumb(
+                    category = "command.server",
+                    type = "debug",
 
-                    field {
-                        name = "Channels"
-                        inline = true
+                    message = "Sending response",
+                    data = mapOf(
+                        "guild.created" to (created ?: "N/A"),
 
-                        value = "**Total:** ${guildChannels.size}\n\n" +
+                        "guild.owner.id" to guild.owner.id.asString,
+                        "guild.owner.tag" to guild.owner.asMember().tag,
 
-                                channels.map { "**${it.key}:** ${it.value}" }
-                                        .sorted()
-                                        .joinToString("\n")
-                    }
+                        "guild.region" to guild.data.region,
 
-                    field {
-                        name = "Members"
-                        inline = true
+                        "guild.channels.total" to guildChannels.size,
+                        "guild.channels.category" to (channels["Category"] ?: 0),
+                        "guild.channels.news" to (channels["News"] ?: 0),
+                        "guild.channels.text" to (channels["Text"] ?: 0),
+                        "guild.channels.voice" to (channels["Voice"] ?: 0),
 
-                        value = "**Total:** ${members.size}\n\n" +
+                        "guild.members.total" to members.size,
+                        "guild.members.online" to (statuses[PresenceStatus.Online] ?: 0),
+                        "guild.members.idle" to (statuses[PresenceStatus.Idle] ?: 0),
+                        "guild.members.dnd" to (statuses[PresenceStatus.DoNotDisturb] ?: 0),
+                        "guild.members.offline" to offline,
 
-                                "$emojiOnline ${statuses[Status.Online]}\n" +
-                                "$emojiAway ${statuses[Status.Idle]}\n" +
-                                "$emojiDnd ${statuses[Status.DnD]}\n" +
-                                "$emojiOffline $offline"
-                    }
+                        "guild.emojis.total" to totalEmojis,
+                        "guild.features" to guild.features.map { it.value }
+                    )
+                )
 
-                    field {
-                        name = "Emojis"
-                        inline = true
+                message.respond {
+                    embed {
+                        title = guild.name
+                        color = Colors.BLURPLE
+                        timestamp = Instant.now()
 
-                        value = "**Total:** ${guild.emojis.size}"
+                        description = "**Created:** $created\n" +
+                                "**Owner:** ${guild.owner.mention}\n" +
+                                "**Roles:** ${guild.roleIds.size}\n" +
+                                "**Voice Region:** ${guild.data.region}"
 
-                        if (newestEmoji != null) {
-                            value += "\n**Latest:** ${newestEmoji.mention}"
+                        field {
+                            name = "Channels"
+                            inline = true
+
+                            value = "**Total:** ${guildChannels.size}\n\n" +
+
+                                    channels.map { "**${it.key}:** ${it.value}" }
+                                            .sorted()
+                                            .joinToString("\n")
                         }
-                    }
 
-                    field {
-                        name = "Features"
-                        inline = true
+                        field {
+                            name = "Members"
+                            inline = true
 
-                        value = if (guild.features.isNotEmpty()) {
-                            guild.features
-                                    .filter { it != GuildFeature.Unknown }
-                                    .joinToString("\n") { "`${it.value}`" }
-                        } else {
-                            "No features."
+                            value = "**Total:** ${members.size}\n\n" +
+
+                                    "$emojiOnline ${statuses[PresenceStatus.Online]}\n" +
+                                    "$emojiAway ${statuses[PresenceStatus.Idle]}\n" +
+                                    "$emojiDnd ${statuses[PresenceStatus.DoNotDisturb]}\n" +
+                                    "$emojiOffline $offline"
                         }
-                    }
 
-                    if (iconUrl != null) {
-                        thumbnail { url = iconUrl }
+                        field {
+                            name = "Emojis"
+                            inline = true
+
+                            value = "**Total:** $totalEmojis"
+
+                            if (newestEmojis.isNotEmpty()) {
+                                value += "\n\n" +
+                                        "**Newest**\n\n" +
+                                        newestEmojis.chunked(LATEST_EMOJI_CHUNK_BY).joinToString("\n") {
+                                            it.joinToString(" ") { emoji -> emoji.mention }
+                                        }
+                            }
+                        }
+
+                        field {
+                            name = "Features"
+                            inline = true
+
+                            value = if (guild.features.isNotEmpty()) {
+                                guild.features
+                                        .filter { it !is GuildFeature.Unknown }
+                                        .joinToString("\n") { "`${it.value}`" }
+                            } else {
+                                "No features."
+                            }
+                        }
+
+                        if (iconUrl != null) {
+                            thumbnail { url = iconUrl }
+                        }
                     }
                 }
             }

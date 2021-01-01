@@ -1,18 +1,20 @@
 package net.fabricmc.bot.extensions
 
-import com.gitlab.kordlib.common.entity.ChannelType
-import com.gitlab.kordlib.core.behavior.channel.createEmbed
-import com.gitlab.kordlib.core.event.gateway.ReadyEvent
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import com.kotlindiscord.kord.extensions.checks.topRoleHigherOrEqual
 import com.kotlindiscord.kord.extensions.commands.converters.string
 import com.kotlindiscord.kord.extensions.commands.parser.Arguments
 import com.kotlindiscord.kord.extensions.extensions.Extension
+import com.kotlindiscord.kord.extensions.sentry.tag
 import com.kotlindiscord.kord.extensions.utils.respond
+import dev.kord.common.entity.ChannelType
+import dev.kord.core.event.gateway.ReadyEvent
 import io.ktor.client.HttpClient
 import io.ktor.client.features.json.JsonFeature
 import io.ktor.client.features.json.serializer.KotlinxSerializer
 import io.ktor.client.request.get
+import io.sentry.Breadcrumb
+import io.sentry.Sentry
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -20,7 +22,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import mu.KotlinLogging
 import net.fabricmc.bot.conf.config
-import net.fabricmc.bot.constants.Colours
+import net.fabricmc.bot.constants.Colors
 import net.fabricmc.bot.defaultCheck
 import net.fabricmc.bot.enums.Roles
 import net.fabricmc.bot.events.LatestMinecraftVersionsRetrieved
@@ -79,8 +81,27 @@ class VersionCheckExtension(bot: ExtensibleBot) : Extension(bot) {
 
                 logger.info { "Fetching initial data." }
 
+                breadcrumb(
+                    category = "event.ready",
+                    type = "debug",
+
+                    message = "Fetching initial data"
+                )
+
                 minecraftVersions = getMinecraftVersions()
                 jiraVersions = getJiraVersions()
+
+                breadcrumb(
+                    category = "event.ready",
+                    type = "debug",
+
+                    message = "Initial versions fetched, scheduling check job",
+
+                    data = mapOf(
+                        "minecraft.release" to (latestVersion?.release ?: "N/A"),
+                        "minecraft.snapshot" to (latestVersion?.snapshot ?: "N/A")
+                    )
+                )
 
                 currentlyChecking = false
 
@@ -91,11 +112,27 @@ class VersionCheckExtension(bot: ExtensibleBot) : Extension(bot) {
                         delay(UPDATE_CHECK_DELAY)
 
                         logger.debug { "Running scheduled check." }
+
+                        val breadcrumbs = mutableListOf<Breadcrumb>()
+
                         @Suppress("TooGenericExceptionCaught")
                         try {
-                            updateCheck()
-                        } catch (e: Throwable) {
-                            logger.catching(e)
+                            updateCheck(breadcrumbs)
+                        } catch (t: Throwable) {
+                            val sentry = extension.bot.sentry
+
+                            if (sentry.enabled) {
+                                Sentry.withScope {
+                                    it.tag("extension", name)
+                                    it.tag("event", event::class.simpleName ?: "Unknown")
+
+                                    breadcrumbs.forEach { breadcrumb -> it.addBreadcrumb(breadcrumb) }
+
+                                    Sentry.captureException(t, "Failed to check for Minecraft version updates.")
+                                }
+                            }
+
+                            logger.catching(t)
                         }
                     }
                 }
@@ -109,8 +146,8 @@ class VersionCheckExtension(bot: ExtensibleBot) : Extension(bot) {
             description = "Force running a version check for Jira and Minecraft, for when you can't wait 30 seconds."
 
             check(
-                    ::defaultCheck,
-                    topRoleHigherOrEqual(config.getRole(Roles.MODERATOR))
+                ::defaultCheck,
+                topRoleHigherOrEqual(config.getRole(Roles.MODERATOR))
             )
 
             action {
@@ -125,49 +162,49 @@ class VersionCheckExtension(bot: ExtensibleBot) : Extension(bot) {
                 }
 
                 message.respond(
-                        "Manually executing a version check."
+                    "Manually executing a version check."
                 )
 
                 logger.debug { "Version check requested by command." }
 
                 currentlyChecking = true
 
+                breadcrumb(
+                    category = "command.versioncheck",
+                    type = "debug",
+
+                    message = "Manually executing a version check"
+                )
+
                 @Suppress("TooGenericExceptionCaught")
                 try {
-                    updateCheck()
+                    updateCheck(breadcrumbs)
 
-                    message.channel.createEmbed {
-                        title = "Version check success"
-                        color = Colours.POSITIVE
+                    message.respond {
+                        embed {
+                            title = "Version check success"
+                            color = Colors.POSITIVE
 
-                        description = "Successfully checked for new Minecraft versions and JIRA releases."
+                            description = "Successfully checked for new Minecraft versions and JIRA releases."
 
-                        field {
-                            name = "Latest (JIRA)"
-                            value = jiraVersions.last().name
+                            field {
+                                name = "Latest (JIRA)"
+                                value = jiraVersions.last().name
 
-                            inline = true
-                        }
+                                inline = true
+                            }
 
-                        field {
-                            name = "Latest (Minecraft)"
-                            value = minecraftVersions.first().id
+                            field {
+                                name = "Latest (Minecraft)"
+                                value = minecraftVersions.first().id
 
-                            inline = true
+                                inline = true
+                            }
                         }
                     }
-                } catch (e: Exception) {
-                    message.channel.createEmbed {
-                        title = "Version check error"
-                        color = Colours.NEGATIVE
-
-                        description = "```" +
-                                "$e: ${e.stackTraceToString()}" +
-                                "```"
-                    }
+                } finally {
+                    currentlyChecking = false
                 }
-
-                currentlyChecking = false
             }
         }
 
@@ -183,8 +220,8 @@ class VersionCheckExtension(bot: ExtensibleBot) : Extension(bot) {
                 signature(::UrlCommandArguments)
 
                 check(
-                        ::defaultCheck,
-                        topRoleHigherOrEqual(config.getRole(Roles.ADMIN))
+                    ::defaultCheck,
+                    topRoleHigherOrEqual(config.getRole(Roles.ADMIN))
                 )
 
                 action {
@@ -192,7 +229,7 @@ class VersionCheckExtension(bot: ExtensibleBot) : Extension(bot) {
                         JIRA_URL = url
 
                         message.respond(
-                                "JIRA URL updated to `$url`."
+                            "JIRA URL updated to `$url`."
                         )
                     }
                 }
@@ -207,8 +244,8 @@ class VersionCheckExtension(bot: ExtensibleBot) : Extension(bot) {
                 signature(::UrlCommandArguments)
 
                 check(
-                        ::defaultCheck,
-                        topRoleHigherOrEqual(config.getRole(Roles.ADMIN))
+                    ::defaultCheck,
+                    topRoleHigherOrEqual(config.getRole(Roles.ADMIN))
                 )
 
                 action {
@@ -216,7 +253,7 @@ class VersionCheckExtension(bot: ExtensibleBot) : Extension(bot) {
                         MINECRAFT_URL = url
 
                         message.respond(
-                                "MC URL updated to `$url`."
+                            "MC URL updated to `$url`."
                         )
                     }
                 }
@@ -230,7 +267,7 @@ class VersionCheckExtension(bot: ExtensibleBot) : Extension(bot) {
         checkJob?.cancel()
     }
 
-    private suspend fun updateCheck() {
+    private suspend fun updateCheck(breadcrumbs: MutableList<Breadcrumb>? = null) {
         if (currentlyChecking) {
             logger.warn { "Looks like multiple checks are running concurrently - skipping check." }
             return
@@ -240,12 +277,34 @@ class VersionCheckExtension(bot: ExtensibleBot) : Extension(bot) {
 
         @Suppress("TooGenericExceptionCaught")
         try {
-            val mc = checkForMinecraftUpdates()
+            breadcrumbs?.add(
+                bot.sentry.createBreadcrumb(
+                    category = "minecraft",
+                    type = "debug",
+
+                    message = "Checking for Minecraft version updates"
+                )
+            )
+
+            val mc = checkForMinecraftUpdates(breadcrumbs)
 
             if (mc != null) {
+                breadcrumbs?.add(
+                    bot.sentry.createBreadcrumb(
+                        category = "minecraft",
+                        type = "debug",
+
+                        message = "Relaying new Minecraft version",
+                        data = mapOf(
+                            "version.type" to mc.type,
+                            "version.id" to mc.id
+                        )
+                    )
+                )
+
                 config.getMinecraftUpdateChannels().forEach {
                     val message = it.createMessage(
-                            "A new Minecraft ${mc.type} is out: ${mc.id}"
+                        "A new Minecraft ${mc.type} is out: ${mc.id}"
                     )
 
                     if (it.type == ChannelType.GuildNews) {
@@ -254,12 +313,34 @@ class VersionCheckExtension(bot: ExtensibleBot) : Extension(bot) {
                 }
             }
 
-            val jira = checkForJiraUpdates()
+            breadcrumbs?.add(
+                bot.sentry.createBreadcrumb(
+                    category = "minecraft",
+                    type = "debug",
+
+                    message = "Checking for JIRA updates"
+                )
+            )
+
+            val jira = checkForJiraUpdates(breadcrumbs)
 
             if (jira != null) {
+                breadcrumbs?.add(
+                    bot.sentry.createBreadcrumb(
+                        category = "minecraft",
+                        type = "debug",
+
+                        message = "Relaying JIRA update",
+                        data = mapOf(
+                            "version.name" to jira.name,
+                            "version.id" to jira.id
+                        )
+                    )
+                )
+
                 config.getJiraUpdateChannels().forEach {
                     val message = it.createMessage(
-                            "A new version (${jira.name}) has been added to the Minecraft issue tracker!"
+                        "A new version (${jira.name}) has been added to the Minecraft issue tracker!"
                     )
 
                     if (it.type == ChannelType.GuildNews) {
@@ -267,17 +348,15 @@ class VersionCheckExtension(bot: ExtensibleBot) : Extension(bot) {
                     }
                 }
             }
-        } catch (t: Throwable) {
-            logger.catching(t)
+        } finally {
+            currentlyChecking = false
         }
-
-        currentlyChecking = false
     }
 
-    private suspend fun checkForMinecraftUpdates(): MinecraftVersion? {
+    private suspend fun checkForMinecraftUpdates(breadcrumbs: MutableList<Breadcrumb>? = null): MinecraftVersion? {
         logger.debug { "Checking for Minecraft updates." }
 
-        val versions = getMinecraftVersions()
+        val versions = getMinecraftVersions(breadcrumbs)
         val new = versions.find { it !in minecraftVersions }
 
         logger.debug { "Minecraft | New version: ${new ?: "N/A"}" }
@@ -288,10 +367,10 @@ class VersionCheckExtension(bot: ExtensibleBot) : Extension(bot) {
         return new
     }
 
-    private suspend fun checkForJiraUpdates(): JiraVersion? {
+    private suspend fun checkForJiraUpdates(breadcrumbs: MutableList<Breadcrumb>? = null): JiraVersion? {
         logger.debug { "Checking for JIRA updates." }
 
-        val versions = getJiraVersions()
+        val versions = getJiraVersions(breadcrumbs)
         val new = versions.find { it !in jiraVersions && "future version" !in it.name.toLowerCase() }
 
         logger.debug { "     JIRA | New release: ${new ?: "N/A"}" }
@@ -301,8 +380,22 @@ class VersionCheckExtension(bot: ExtensibleBot) : Extension(bot) {
         return new
     }
 
-    private suspend fun getJiraVersions(): List<JiraVersion> {
+    private suspend fun getJiraVersions(breadcrumbs: MutableList<Breadcrumb>? = null): List<JiraVersion> {
         val response = client.get<List<JiraVersion>>(JIRA_URL)
+
+        breadcrumbs?.add(
+            bot.sentry.createBreadcrumb(
+                category = "http",
+                type = "http",
+
+                message = "Retrieved ${response.size} JIRA versions",
+
+                data = mapOf(
+                    "url" to JIRA_URL,
+                    "method" to "GET"
+                )
+            )
+        )
 
         logger.debug { "     JIRA | Latest release: " + response.last().name }
         logger.debug { "     JIRA | Total releases: " + response.size }
@@ -310,8 +403,22 @@ class VersionCheckExtension(bot: ExtensibleBot) : Extension(bot) {
         return response
     }
 
-    private suspend fun getMinecraftVersions(): List<MinecraftVersion> {
+    private suspend fun getMinecraftVersions(breadcrumbs: MutableList<Breadcrumb>? = null): List<MinecraftVersion> {
         val response = client.get<LauncherMetaResponse>(MINECRAFT_URL)
+
+        breadcrumbs?.add(
+            bot.sentry.createBreadcrumb(
+                category = "http",
+                type = "http",
+
+                message = "Retrieved ${response.versions.size} Minecraft versions",
+
+                data = mapOf(
+                    "url" to MINECRAFT_URL,
+                    "method" to "GET"
+                )
+            )
+        )
 
         latestVersion = response.latest
 
@@ -333,8 +440,8 @@ class VersionCheckExtension(bot: ExtensibleBot) : Extension(bot) {
 
 @Serializable
 private data class MinecraftVersion(
-        val id: String,
-        val type: String,
+    val id: String,
+    val type: String,
 )
 
 /**
@@ -345,18 +452,18 @@ private data class MinecraftVersion(
  */
 @Serializable
 data class MinecraftLatest(
-        val release: String,
-        val snapshot: String,
+    val release: String,
+    val snapshot: String,
 )
 
 @Serializable
 private data class LauncherMetaResponse(
-        val versions: List<MinecraftVersion>,
-        val latest: MinecraftLatest
+    val versions: List<MinecraftVersion>,
+    val latest: MinecraftLatest
 )
 
 @Serializable
 private data class JiraVersion(
-        val id: String,
-        val name: String,
+    val id: String,
+    val name: String,
 )

@@ -1,5 +1,7 @@
 package net.fabricmc.bot
 
+import dev.kord.common.entity.Snowflake
+
 /** A base class for all custom exceptions in our bot framework. **/
 open class FabricBotException : Exception()
 
@@ -8,22 +10,22 @@ open class FabricBotException : Exception()
  *
  * @param id: The numerical ID representing the missing object.
  */
-open class MissingObjectException(val id: Long) : FabricBotException() {
+open class MissingObjectException(val id: Snowflake) : FabricBotException() {
     override fun toString(): String = "Unable to find object with ID: $id"
 }
 
 /** Thrown when a configured role cannot be found. **/
-class MissingRoleException(id: Long) : MissingObjectException(id) {
+class MissingRoleException(id: Snowflake) : MissingObjectException(id) {
     override fun toString(): String = "Unable to find role with ID: $id"
 }
 
 /** Thrown when a configured guild cannot be found. **/
-class MissingGuildException(id: Long) : MissingObjectException(id) {
+class MissingGuildException(id: Snowflake) : MissingObjectException(id) {
     override fun toString(): String = "Unable to find guild with ID: $id"
 }
 
 /** Thrown when a configured channel cannot be found. **/
-class MissingChannelException(id: Long) : MissingObjectException(id) {
+class MissingChannelException(id: Snowflake) : MissingObjectException(id) {
     override fun toString(): String = "Unable to find channel with ID: $id"
 }
 

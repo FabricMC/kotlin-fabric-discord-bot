@@ -1,6 +1,7 @@
 package net.fabricmc.bot.extensions.infractions
 
-import com.gitlab.kordlib.core.entity.User
+import dev.kord.common.entity.Snowflake
+import dev.kord.core.entity.User
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -55,20 +56,21 @@ fun instantToMysql(ts: Instant): String =
         )
 
 /**
- * Given a nullable user object and nullable long, attempt to get a member ID.
+ * Given a nullable user object and nullable snowflake, attempt to get a member ID.
  *
  * This is used to validate command argument.
  *
  * @param member User object, or null.
- * @param id Long representing a user ID, or null.
+ * @param id User snowflake, or null.
  *
  * @return A Pair containing the result and an optional message to return.
  */
-fun getMemberId(member: User?, id: Long?) =
-        if (member == null && id == null) {
-            Pair(null, "Please specify a user argument.")
-        } else if (member != null && id != null) {
-            Pair(null, "Please specify exactly one user argument, not two.")
-        } else {
-            Pair(member?.id?.longValue ?: id!!, null)
-        }
+fun getMemberId(member: User?, id: Snowflake?): Pair<Snowflake?, String?> {
+    return if (member == null && id == null) {
+        Pair(null, "Please specify a user argument.")
+    } else if (member != null && id != null) {
+        Pair(null, "Please specify exactly one user argument, not two.")
+    } else {
+        Pair(member?.id ?: id!!, null)
+    }
+}

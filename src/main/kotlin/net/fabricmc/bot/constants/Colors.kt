@@ -1,25 +1,26 @@
 package net.fabricmc.bot.constants
 
+import dev.kord.common.kColor
 import java.awt.Color
 
 /**
- * Constant values for colours used around the bot.
+ * Constant values for colors used around the bot.
  */
-object Colours {
+object Colors {
     /** @suppress **/
-    val BLURPLE = Color.decode("#7289DA")
+    val BLURPLE = Color.decode("#7289DA").kColor
 
     /** @suppress **/
-    val FABRIC = Color.decode("#DBD0B4")
+    val FABRIC = Color.decode("#DAD1B4").kColor
 
     /** @suppress **/
-    val NEGATIVE = Color.decode("#e74c3c")
+    val NEGATIVE = Color.decode("#E74C3C").kColor
 
     /** @suppress **/
-    val POSITIVE = Color.decode("#2ecc71")
+    val POSITIVE = Color.decode("#2ECC71").kColor
 
     /**
-     * Given a string name, return the corresponding colour.
+     * Given a string name, return the corresponding color.
      *
      * @return A [Color] object, or null if the name doesn't match anything.
      */

@@ -1,8 +1,8 @@
 package net.fabricmc.bot.extensions
 
-import com.gitlab.kordlib.core.behavior.channel.createEmbed
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import com.kotlindiscord.kord.extensions.extensions.Extension
+import dev.kord.core.behavior.channel.createEmbed
 
 /**
  * Extension to allow users to apply roles to themselves.
@@ -19,7 +19,7 @@ class SelfRoleExtension(bot: ExtensibleBot) : Extension(bot) {
                 message.channel.createEmbed {
                     title = "Here's how to hide muted channels:"
                     image = "https://cdn.discordapp.com/attachments/565822936712347658/784465611152425040/guide.png"
-                    @Suppress("MaxLineLength")
+
                     description = "**1)** Right-click on a channel you'd like to hide, and then click on " +
                             "**Mute Channel** (or hover it and click **Until I turn it back on**). You can also " +
                             "click on the channel to view it and click on **the bell icon** at the top of the " +

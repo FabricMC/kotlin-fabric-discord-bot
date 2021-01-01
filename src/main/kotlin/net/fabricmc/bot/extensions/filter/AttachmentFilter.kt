@@ -1,9 +1,9 @@
 package net.fabricmc.bot.extensions.filter
 
-import com.gitlab.kordlib.core.behavior.channel.createMessage
-import com.gitlab.kordlib.core.entity.Message
-import com.gitlab.kordlib.core.event.message.MessageCreateEvent
-import com.gitlab.kordlib.core.event.message.MessageUpdateEvent
+import dev.kord.core.behavior.channel.createMessage
+import dev.kord.core.entity.Message
+import dev.kord.core.event.message.MessageCreateEvent
+import dev.kord.core.event.message.MessageUpdateEvent
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import com.kotlindiscord.kord.extensions.utils.deleteIgnoringNotFound
 

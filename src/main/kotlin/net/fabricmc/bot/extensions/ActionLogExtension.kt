@@ -1,11 +1,11 @@
 package net.fabricmc.bot.extensions
 
-import com.gitlab.kordlib.core.behavior.channel.edit
-import com.gitlab.kordlib.core.behavior.createTextChannel
-import com.gitlab.kordlib.core.entity.channel.Category
-import com.gitlab.kordlib.core.entity.channel.GuildMessageChannel
-import com.gitlab.kordlib.core.entity.channel.TextChannel
-import com.gitlab.kordlib.core.event.gateway.ReadyEvent
+import dev.kord.core.behavior.channel.edit
+import dev.kord.core.behavior.createTextChannel
+import dev.kord.core.entity.channel.Category
+import dev.kord.core.entity.channel.GuildMessageChannel
+import dev.kord.core.entity.channel.TextChannel
+import dev.kord.core.event.gateway.ReadyEvent
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import com.kotlindiscord.kord.extensions.checks.topRoleHigherOrEqual
 import com.kotlindiscord.kord.extensions.commands.converters.defaultingNumber
@@ -18,7 +18,7 @@ import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
 import net.fabricmc.bot.conf.config
-import net.fabricmc.bot.constants.Colours
+import net.fabricmc.bot.constants.Colors
 import net.fabricmc.bot.defaultCheck
 import net.fabricmc.bot.enums.Channels
 import net.fabricmc.bot.enums.Roles
@@ -242,11 +242,10 @@ class ActionLogExtension(bot: ExtensibleBot) : Extension(bot) {
             if (!currentChannelExists) {
                 logger.debug { "Creating this week's channel." }
 
-                val c = config.getGuild().createTextChannel {
-                    val yearPadded = thisYear.toString().padStart(4, '0')
-                    val weekPadded = thisWeek.toString().padStart(2, '0')
+                val yearPadded = thisYear.toString().padStart(4, '0')
+                val weekPadded = thisWeek.toString().padStart(2, '0')
 
-                    name = "action-log-$yearPadded-$weekPadded"
+                val c = config.getGuild().createTextChannel("action-log-$yearPadded-$weekPadded") {
                     parentId = category.id
                 }
 
@@ -293,16 +292,16 @@ class ActionLogExtension(bot: ExtensibleBot) : Extension(bot) {
 
     private suspend fun logCreation(channel: GuildMessageChannel) = modLog {
         title = "Action log rotation"
-        color = Colours.POSITIVE
+        color = Colors.POSITIVE
 
-        description = "Channel created: **#${channel.name} (`${channel.id.longValue}`)**"
+        description = "Channel created: **#${channel.name} (`${channel.id.asString}`)**"
     }
 
     private suspend fun logDeletion(channel: GuildMessageChannel) = modLog {
         title = "Action log rotation"
-        color = Colours.NEGATIVE
+        color = Colors.NEGATIVE
 
-        description = "Channel removed: **#${channel.name} (`${channel.id.longValue}`)**"
+        description = "Channel removed: **#${channel.name} (`${channel.id.asString}`)**"
     }
 
     /** @suppress **/

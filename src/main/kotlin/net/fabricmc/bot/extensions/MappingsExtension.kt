@@ -34,16 +34,16 @@ class MappingsExtension(bot: ExtensibleBot) : Extension(bot) {
 
     override suspend fun setup() {
         config.mappings.defaultVersions.forEach { version ->
-            mappings.openMappings(version)
+            mappings.openMappings(null, version)
         }
 
         event<LatestMinecraftVersionsRetrieved> {
             action {
-                logger.debug { "Caching latest versions: ${it.versions.release} / ${it.versions.snapshot}" }
+                logger.debug { "Caching latest versions: ${event.versions.release} / ${event.versions.snapshot}" }
 
                 @Suppress("TooGenericExceptionCaught")
                 try {
-                    mappings.cacheMappings(it.versions.release, it.versions.snapshot)
+                    mappings.cacheMappings(breadcrumbs, event.versions.release, event.versions.snapshot)
                 } catch (t: Throwable) {
                     logger.error(t) { "Failed to cache mappings." }
                 }
@@ -94,7 +94,14 @@ class MappingsExtension(bot: ExtensibleBot) : Extension(bot) {
                     }
 
                     val mappingsData = try {
-                        mappings.getClassMappings(mcVersion, className)
+                        breadcrumb(
+                                category = "command.mappings.class",
+                                type = "debug",
+
+                                message = "Lookup class \"$className\" for version $mcVersion"
+                        )
+
+                        mappings.getClassMappings(breadcrumbs, mcVersion, className)
                     } catch (e: ClientRequestException) {
                         message.respond(
                                 "Unable to download Yarn for Minecraft `$mcVersion` - " +
@@ -167,7 +174,14 @@ class MappingsExtension(bot: ExtensibleBot) : Extension(bot) {
                     }
 
                     val mappingsData = try {
-                        mappings.getFieldMappings(mcVersion, field)
+                        breadcrumb(
+                            category = "command.mappings.field",
+                            type = "debug",
+
+                            message = "Lookup field \"$field\" for version $mcVersion"
+                        )
+
+                        mappings.getFieldMappings(breadcrumbs, mcVersion, field)
                     } catch (e: ClientRequestException) {
                         message.respond(
                                 "Unable to download Yarn for Minecraft `$mcVersion` - " +
@@ -240,7 +254,14 @@ class MappingsExtension(bot: ExtensibleBot) : Extension(bot) {
                     }
 
                     val mappingsData = try {
-                        mappings.getMethodMappings(mcVersion, method)
+                        breadcrumb(
+                                category = "command.mappings.method",
+                                type = "debug",
+
+                                message = "Lookup method \"$method\" for version $mcVersion"
+                        )
+
+                        mappings.getMethodMappings(breadcrumbs, mcVersion, method)
                     } catch (e: ClientRequestException) {
                         message.respond(
                                 "Unable to download Yarn for Minecraft `$mcVersion` - " +
