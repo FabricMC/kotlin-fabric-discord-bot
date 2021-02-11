@@ -26,7 +26,7 @@ const val NS_INTERMEDIARY = "intermediary"
 /** Namespace for yarn names. **/
 const val NS_NAMED = "named"
 
-private val ONLY_DIGITS = """[\d]""".toRegex()
+private val ONLY_DIGITS = """[\d]+""".toRegex()
 
 private val logger = KotlinLogging.logger {}
 
