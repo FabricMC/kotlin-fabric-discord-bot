@@ -2,6 +2,7 @@ package net.fabricmc.bot.extensions.infractions
 
 import com.gitlab.kordlib.common.entity.Snowflake
 import com.gitlab.kordlib.core.behavior.ban
+import com.kotlindiscord.kord.extensions.utils.hasRole
 import kotlinx.coroutines.launch
 import net.fabricmc.bot.bot
 import net.fabricmc.bot.conf.config
@@ -70,9 +71,14 @@ fun pardonInfraction(infraction: Infraction, id: Long,
 suspend fun ban(infraction: Infraction, id: Long, expires: Instant?, manual: Boolean = false) {
     // Upstream issue means we can't safely pass in the ban reason
 //    config.getGuild().ban(Snowflake(id)) { this.reason = infraction.reason }
-    config.getGuild().ban(Snowflake(id)) { this.reason = "Infraction: ${infraction.id}" }
+    val snowflake = Snowflake(id)
+    val modRole = config.getRole(Roles.MODERATOR)
 
-    unbanAt(id, infraction, expires ?: return, manual)
+    if (!config.getGuild().getMember(snowflake).hasRole(modRole)) {
+        config.getGuild().ban(Snowflake(id)) { this.reason = "Infraction: ${infraction.id}" }
+
+        unbanAt(id, infraction, expires ?: return, manual)
+    }
 }
 
 /**
@@ -183,7 +189,12 @@ fun nickLock(infraction: Infraction, id: Long, expires: Instant?, manual: Boolea
  */
 @Suppress("UnusedPrivateMember")
 suspend fun kick(infraction: Infraction, id: Long, expires: Instant?, manual: Boolean = false) {
-    config.getGuild().kick(Snowflake(id), "Infraction: ${infraction.id}")
+    val snowflake = Snowflake(id)
+    val modRole = config.getRole(Roles.MODERATOR)
+
+    if (!config.getGuild().getMember(snowflake).hasRole(modRole)) {
+        config.getGuild().kick(Snowflake(id), "Infraction: ${infraction.id}")
+    }
 }
 
 /**
