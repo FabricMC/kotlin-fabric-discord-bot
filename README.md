@@ -1,3 +1,5 @@
+The project has been continued by https://github.com/FabricMC/discord-bot
+
 # fabric-discord-bot
 
 This bot is designed for a specific discord server, so it most likely will not fit the needs of your server.
